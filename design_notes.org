@@ -1,0 +1,129 @@
+* general
+- architecture as data
+  - the architecture of a single model should at every point be serializable and deserializable to the same model
+- parameterization should be recursive
+  - eg inner parameterization inherit outer parameterization unless explicitly overwritten
+    - maybe: parameterization such as update strategy and initialization
+  - use this for things like dropout
+- shape must be knowable statically, at least for a fraction of the network
+  - before learned weight initialization
+    - eg. so that fully connected layers know their size
+  - not all layers require shape
+    - eg. conv/maxpool/spatial pyramid pooling
+    - eg. if there is a spatial pyramid pooling layer, don't need to know shapes of conv layers
+- all nodes should behave like data and only data
+  - the interface should be what data it contains
+  - possibly lazy data, though
+- serialization
+  - model architecture should be serialized in human-readable / edittable format
+    - eg. yaml
+    - being able to be serialized to json is probably a pretty safe format
+      - though not necessarily serialized to json
+  - model weights should be in some agnostic key-value store format
+    - a similar architecture should be able to read in weights perfectly
+    - path -> np.array
+  - should be possible to share weights via specifying a similar architecture
+    - since the layer names are absolutely critical to what "similar" means, it seems safe to assume that this sharing can come of the form of converting the other net into this key->value form and having the new net simply read from this blob
+  - all layers can specify how they should be serialized (as data)
+- input parameters
+  - assumption: local networks (local = created together / close together) will have similar parameters
+  - thus we can have local "inheritance" of parameters
+    - eg. outer layer has an immutable dict of parameters, inner layer overwrites them when it has a parameter override, more inner layers can read from parameters with a key
+    - this requires non-ambiguous keys
+      - ie. 2 layers shouldn't have the same key mean different things
+- need metadata on weight parameters
+  - still need to specify backprop-able params, since the gradient needs to be calculated
+  - still need to specify non-bias params, for regularization?
+    - not necessarily, if the layer knows how to handle it's own parameters
+    - this makes it easier if there is a large number of layers expected to be handle the same way
+    - "the expression problem"
+      - you might add a new layer that would want to benefit from all the regularization
+      - you might add new regularization that would wnat to benefit from all layers
+      - what commonality can we extract from this?
+        - different parameters can behave the same way
+        - eg. bias / inputweights
+          - makes sense to have an "escape hatch" where things can work if not fitting within a mold
+  - parameters should have tagging
+    - to work with multiple kinds of regularization
+* best practices
+- store all constructor arguments as is
+  - don't mutate them
+  - don't overwrite them
+  - don't forget to store them as an attribute
+  - rationale: this allows serialization of the original layer
+* assumptions
+- parameter tensors will have a fixed size
+- nodes are in a directed acyclic graph
+  - thus can be traversed in a topological sort
+- initialization schemes can work in a topologically sorted order
+  - eg. not from output to input
+  - not necessarily true, but a simplifying assumption
+- parameter tensors are owned by a single node in the computation graph, and that node is responsible for their updates
+* TODOs
+- model everything as a "layer"
+  - including loss/objective
+  - maybe even represent gradient descent updater as layer node
+    - takes in trees of things to update, and loss, and generates updates
+  - layer : higher level unit than theano node
+    - high level enough that it deserves to both be know and named
+  - compose base layers together with functions
+    - make sure that functions add a named identity layer
+  - use paths instead of strings as names
+- new theano library
+  - issue: how to update an existing architecture to eg. use dropout
+    - have a top level assoc_in
+      - to add new parameters or replace layers
+  - issue: recurrent nets
+    - if everything is kept as a function from parameters -> theano var, it should compose well with recurrent nets
+    - recurrent layers would probably behave something like a multiple input layer
+- substituting
+  - eg. replace ReLU -> PReLU / leaky ReLU
+  - use an update-in operation on the architecture as data that does a tree walk
+    - to substitute in only a subtree
+- consider as a name: treehano
+  - pros
+    - sounds cooler
+  - cons
+    - sounds less like theano
+- use class decorator for registering classes for serialization
+  - look into using a metaclass in the future
+- responsibilities of each "layer"
+  - serialization
+  - deserialization
+  - output(s)
+    - default key for output: "output"
+    - map w/ names
+    - rationale for multiple outputs:
+      - monitoring is one possible use case
+  - shape(s)
+    - optional: can auto-compute
+  - update(s)
+    - optional
+  - dimension(s)
+    - maybe?
+- everything has names and paths
+  - each node needs a name
+  - names are like relative paths
+  - paths are absolute in the network
+    - tuples of names / indexes
+- sharing shared: separate step for initializing shared
+  - pass in a map from path to shared, which can be used instead of creating a new shared variable
+- sharing weights: separate step for initializing weights
+  - pass in a map from path to weights, which can be used instead of creating a new shared variable
+- sharing params:
+  - use a network.assoc_in(path, value)
+    - eg. top_level_network.assoc_in(["deterministic"], True)
+- if shape is not given, print warning and calculate
+- question: how are updates computed?
+- question: when are shareds / weights initialized
+  - initializing shared
+    - prereq: dimensionality, broadcast dims
+  - initializing weights
+    - prereq: shape
+- custom wrapper around shared variables
+  - rationale:
+    - lazy initialized
+    - can have metadata for searching
+- represent updates as deltas, not new values
+  - rationale: can do interesting things like add them together, or multiply by -1 to train adversarially
+- use networkx to represent the graph and make it easy to look for ancestors, etc.
