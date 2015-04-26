@@ -1,4 +1,5 @@
 * treeano
+This is currently a work in progress!
 * Should I use this?
 - Do you not know what a neural network is? Use [[http://scikit-learn.org/stable/][scikit-learn]].
 - Do you want to use only the tried and tested elements of deep learning? Use [[http://caffe.berkeleyvision.org/][Caffe]].
@@ -7,6 +8,7 @@
 - Have you created these novel architectures that are inelegent to do in Lasagne? If you can live with it, keep using [[https://github.com/Lasagne/Lasagne][Lasagne]].
 - Otherwise, maybe this is a good fit. (:
 * Dependencies
+- numpy
 - theano
 - lasagne
 - networkx
