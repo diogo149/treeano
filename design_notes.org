@@ -45,12 +45,123 @@
           - makes sense to have an "escape hatch" where things can work if not fitting within a mold
   - parameters should have tagging
     - to work with multiple kinds of regularization
+- question: should all nodes have a unique name?
+  - pros of unique name
+    - don't need separate concepts for unique / non-unique
+      - and some names do need to be unique (for initialization between networks)
+  - cons
+    - conceptually unnecessary, as long as they have a unique path
+      - eg. don't need to name "convpoolstack_pool" when "pool" has parent "convpoolstack"
+        - this would also be DRY-er and make the architectures more human readable
+  - conclusion: just go with everything having a unique name
+    - this should be easier to understand - and the downsides aren't that bad
+- question: should hyperparameters have global default values
+  - eg. shared initialization (create the var)
+  - eg. weight initialization (0s)
+  - answer: see "question: should parameters and shared variables have different initializations?"
+- question: should parameters and shared variables have different initializations?
+  - pros of different:
+    - they are 2 very different things, no reason to have one know about the other
+      - eg. Uniform initialization shouldn't have to know how to create a shared variable
+    - if they were the same, and there was a subnetwork with different initialization, that subnetwork couldn't be initialized with shared variables from another network
+      - this means that there must be a mechanism by which the shared initialization can overwrite that initialization
+  - cons of different:
+    - this is a purely theano-level concern, thus a conceptual network shouldn't require it
+    - when using shared variables from a different network, you probably don't want to re-initialize
+  - conclusion: should be different - and a weight initialization node should look up the tree for a hyperparameter on shared initialization
+    - and the weight initialization should have a default shared initialization
+      - thus no global shared initialization should be needed
+- should lifecycle methods (init_state, init_shared, init_values, and compute) be separate?
+  - pros of separation
+    - easier to do special schemes like loading existing network
+    - may allow input layers to be partially initialized before initializing
+  - cons
+    - more boilerplate
+    - somewhat more elegant to define everything in a single function
+      - might not even need laziness
+  - misc
+    - seems unlikely that there would be a good use for having partially initialized layers
+  - thought: init_state is different from the others - since initializing the variables can be lazy
+    - alternative: pre_compute and post_compute steps for pre-order and post-order traversal
+    - pros of separating only init_state
+      - if they happen all at once, some nodes would need a pre-order traversal (eg. an initialization node that creates a stateful initializer), while pretty much all nodes need a post-order traversal (to specify output)
+  - conclusion:
+    - separate init_state, but have a single compute step which:
+      - creates shared variables (parameters)
+      - creates outputs
+      - sets initial values of shared variables (parameters)
+- using networkx to represent the graph
+  - pros
+    - a bunch of stuff for free
+      - make it easy to look for ancestors, etc.
+      - topological sort
+      - make cute diagram of an architecture
+  - cons
+    - extra dependency
+- should architecture nodes be separate from state nodes?
+  - they conceptually serve 2 very different purposes
+  - but there implementations are linked together
+    - ie. the data in an architecture node is used for a state node
+  - separating them would require additional verbosity to combine them together
+  - conclusion: keep them together, but make sure not to mutate them
+- question: where are dependencies defined?
+  - NOTE: only containers need to define dependencies
+  - question: how to define a node which is shared between multiple trees (eg. the same thing is processed in 2 places)
+    - just because something is build like a tree, doesn't mean there can't be jumps in it
+      - can have a "get_layer_with_name" node
+  - conclusion:
+    - parents automatically depend on their children
+    - a "get_layer_with_name" node depends on that layer
+    - more dependencies can be defined within nodes
+- question: should we be able to add nodes in the graph after build-ing?
+  - eg. add special intermediate nodes
+  - use case: container node wants to create some sort of state that it's children can depend on
+  - conclusion: no
+    - one would have to make sure it's initialized just like in build
+    - this kind of change seems like it would make it easy to violate assumptions / principle of least surprise
+- how to do composite node dependencies properly
+  - ie. how to pass input of sequential node to first node
+  - how do you have it return the output of its last child? (sequential node)
+    - the input of a composite node will be set by its parent - thus it can't set it's own dependencies on its children
+  - how to express dependencies of first child:
+    - first child depends on input of sequential node
+    - last child depends on other children
+    - sequential node output depends on last child
+    - if first child depends on sequential node, this causes a cycle
+  - there is a true dependency between the input of the sequential node and its first child
+    - thus it makes sense to make this explicit
+  - conclusion:
+    - walk tree from top-level to bottom level, so that a dependency between the input of the sequential node and the first child can be set
+  - alternative:
+    - some form of graph unification
+      - eg.
+        - unify inputs of sequential node with inputs of first child
+        - unify outputs of sequential node with outputs for last child
+- question: how are inputs passed into a node?
+  - parent node should handle it
+- question: how should the input to a node be passed in?
+  - options
+    - function argument
+      - pros
+        - more expected
+        - can enfore the right arity
+      - cons
+        - can't specify which key in the output map
+    - through the graph
+      - eg. self.graph.my_input(some_key="output")
+    - through the graph w/ sugar
+      - eg. self.get_input(some_key="output")
+  - conclusion:
+    - through the graph w/ sugar
+    - no positional arguments (much harder to specify in a graph)
 * best practices
 - store all constructor arguments as is
   - don't mutate them
   - don't overwrite them
   - don't forget to store them as an attribute
   - rationale: this allows serialization of the original layer
+- use https://github.com/ionelmc/python-fields for constructing nodes
+  - helps follow good constructor practices, and provides a nice string representation
 * assumptions
 - parameter tensors will have a fixed size
 - nodes are in a directed acyclic graph
@@ -59,7 +170,7 @@
   - eg. not from output to input
   - not necessarily true, but a simplifying assumption
 - parameter tensors are owned by a single node in the computation graph, and that node is responsible for their updates
-* TODOs
+* random notes
 - model everything as a "layer"
   - including loss/objective
   - maybe even represent gradient descent updater as layer node
@@ -69,24 +180,9 @@
   - compose base layers together with functions
     - make sure that functions add a named identity layer
   - use paths instead of strings as names
-- new theano library
-  - issue: how to update an existing architecture to eg. use dropout
-    - have a top level assoc_in
-      - to add new parameters or replace layers
-  - issue: recurrent nets
-    - if everything is kept as a function from parameters -> theano var, it should compose well with recurrent nets
-    - recurrent layers would probably behave something like a multiple input layer
-- substituting
-  - eg. replace ReLU -> PReLU / leaky ReLU
-  - use an update-in operation on the architecture as data that does a tree walk
-    - to substitute in only a subtree
-- consider as a name: treehano
-  - pros
-    - sounds cooler
-  - cons
-    - sounds less like theano
-- use class decorator for registering classes for serialization
-  - look into using a metaclass in the future
+- issue: how to update an existing architecture to eg. use dropout
+  - have a top level assoc_in
+    - to add new parameters or replace layers
 - responsibilities of each "layer"
   - serialization
   - deserialization
@@ -113,17 +209,85 @@
 - sharing params:
   - use a network.assoc_in(path, value)
     - eg. top_level_network.assoc_in(["deterministic"], True)
-- if shape is not given, print warning and calculate
-- question: how are updates computed?
 - question: when are shareds / weights initialized
   - initializing shared
     - prereq: dimensionality, broadcast dims
   - initializing weights
     - prereq: shape
+- state in a node is divide into:
+  - hyperparameters
+  - shared variables
+  - intermediates
+- how to do shared initialization:
+  - kinds of shared initialization
+    - exact path initialization
+      - eg. ("FCs", "head", 1, "FC")
+    - partial path initialization
+      - eg. ("some_initalization", "something", "my_cool_layer", "FC") equivalent to ("my_cool_layer", "FC")
+  - question: conceptually, how does one perform initialization with existing shareds
+    - SharedInitialization.fromNode(other_network, backup_initialization=NoInitialization())
+      - set default to having no init
+* TODOs
+- test with some identity nodes / input nodes
+- create hyperparameter propagation
+  - test w/ multiply by constant nodes
 - custom wrapper around shared variables
   - rationale:
-    - lazy initialized
+    - lazy
+      - ie. they do no work immediately
+      - can be gradually initialized
     - can have metadata for searching
-- represent updates as deltas, not new values
-  - rationale: can do interesting things like add them together, or multiply by -1 to train adversarially
-- use networkx to represent the graph and make it easy to look for ancestors, etc.
+  - attributes
+    - num_dims
+    - shape
+    - name: name as a string (this is also used to add the lazy variable as an attribute)
+    - broadcast
+      - default: no broadcast
+    - dtype:
+      - default: floatX
+    - shared: Theano shared variable
+    - tags
+      - eg. weight, bias
+  - properties
+    - value
+  - if shape is not given, print warning and calculate
+    - theano.function([x, y], [x], on_unused_input="ignore")(2, 3)
+- create parameter searching (from below)
+- create updating
+  - represent updates as deltas, not new values
+    - rationale: can do interesting things like add them together, or multiply by -1 to train adversarially
+  - update delta container
+    - eg.
+      - UpdateDeltas.apply(lambda x: x * 2)
+        - multiplies each update by 2
+- create Node.function() as syntactic sugar for creating theano.function's
+- fix architecture to data / from data / copy
+  - problem: what if node has children in its state
+    - some sort of walk needs to occur converting everything into data and back
+- wrap lasagne
+- create graph transformations
+  - eg.
+    - substitution
+      - eg. replace ReLU -> PReLU / leaky ReLU
+        - use an update-in operation on the architecture as data that does a tree walk
+      - to substitute in only a subtree
+    - adding different initialization
+- break up into different modules
+- create pretty printing of nodes
+  - like how theano prints it's computation graph
+- demos
+  - vanilla mnist
+  - fully connected layer mnist with num_hidden, activation specified once
+  - separate conv layers from FC layers
+    - different dropout and L2 for conv
+- use class decorator for registering classes for serialization
+  - look into using a metaclass in the future
+- consider as a name: treehano
+  - pros
+    - sounds cooler
+  - cons
+    - sounds less like theano
+- issue: recurrent nets
+  - if everything is kept as a function from parameters -> theano var, it should compose well with recurrent nets
+  - recurrent layers would probably behave something like a multiple input layer
+  - if a net is recurrent, this seems like it would just take an orthogonal compilation step to convert the resulting net to use scan
