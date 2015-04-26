@@ -4,8 +4,13 @@
 - Do you want to use only the tried and tested elements of deep learning? Use [[http://caffe.berkeleyvision.org/][Caffe]].
 - Do you want to create novel architectures? Use [[https://github.com/Lasagne/Lasagne][Lasagne]].
 - Do you want to create novel architectures that are inelegant to do in Lasagne? Use [[https://github.com/Lasagne/Lasagne][Lasagne]].
-- Have you created novel architectures in Lasagne? If you can live with it, keep using [[https://github.com/Lasagne/Lasagne][Lasagne]].
+- Have you created these novel architectures that are inelegent to do in Lasagne? If you can live with it, keep using [[https://github.com/Lasagne/Lasagne][Lasagne]].
 - Otherwise, maybe this is a good fit. (:
+* Dependencies
+- theano
+- lasagne
+- networkx
+- [[https://github.com/ionelmc/python-fields][fields]]
 * What's with the name?
 - DAGano doesn't have the same ring to it
 - architectures are constructed as immutable trees, and this allows you to customize the behavior of subtrees instead of manipulating a single global network
