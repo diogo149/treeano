@@ -3,16 +3,84 @@ from __future__ import print_function, unicode_literals
 
 import inspect
 import types
+import operator
 import numpy as np
 import theano
 import theano.tensor as T
 from fields import Fields
+import toolz
 import networkx as nx
 
 floatX = theano.config.floatX
 ENABLE_TEST_VALUE = theano.config.compute_test_value != "off"
 
 # TODO move everything under treeano.core
+
+# TODO move to update_delta module
+
+
+class UpdateDeltas(object):
+
+    def __init__(self, deltas):
+        assert isinstance(deltas, dict)
+        self.deltas = deltas
+
+    def to_updates(self):
+        updates = []
+        for var, delta in self.deltas.items():
+            updates.append((var, var + delta))
+        # sorting updates by name so that the order is deterministic
+        updates.sort(key=lambda pair: pair[0].name)
+        return updates
+
+    @classmethod
+    def from_updates(cls, updates):
+        if isinstance(updates, list):
+            delta_dict = {var: (new_value - var)
+                          for var, new_value in updates}
+        elif isinstance(updates, dict):
+            delta_dict = {var: (new_value - var)
+                          for var, new_value in updates.items()}
+        else:
+            raise ValueError("Can't handle updates of the given type")
+        return cls(delta_dict)
+
+    def apply(self, fn):
+        return UpdateDeltas({k: fn(v) for k, v in self.deltas.items()})
+
+    def __add__(self, other):
+        if isinstance(other, UpdateDeltas):
+            return UpdateDeltas(toolz.merge_with(sum,
+                                                 self.deltas,
+                                                 other.deltas))
+        else:
+            return self.apply(lambda x: x + other)
+
+    def __mul__(self, other):
+        if isinstance(other, UpdateDeltas):
+            def product(iterable):
+                return reduce(operator.mul, iterable, 1)
+            # TODO this will currently make it such that if one instance
+            # has updates and another doesn't, it will return the same value
+            # (another approach would be returning 0 if the value isn't in
+            # both)
+            # TODO is multiply by another set of deltas ever desired?
+            return UpdateDeltas(toolz.merge_with(product,
+                                                 self.deltas,
+                                                 other.deltas))
+        else:
+            return self.apply(lambda x: x * other)
+
+x = theano.shared(0, name="x")
+ud = UpdateDeltas({x: 0})
+ud += 1
+ud *= 2
+fn = theano.function([], updates=ud.to_updates())
+fn()
+assert x.get_value() == 2
+fn()
+assert x.get_value() == 4
+
 
 # TODO move to variable module
 
@@ -377,7 +445,7 @@ class Node(object):
             node.init_state()
         # compute and cache outputs
         for node in graph.nodes(order="computation"):
-            output = node.compute()
+            output = node.compute_output()
             node.output = output
         return root_node
 
@@ -400,12 +468,33 @@ class Node(object):
             self.variables = []
         self.variables.append(variable)
 
-    def function(self, inputs, outputs=None, generate_updates=False, **kwargs):
-        # FIXME handle generate_updates
+    def function(self,
+                 inputs,
+                 outputs=None,
+                 generate_updates=False,
+                 updates=None,
+                 **kwargs):
         if outputs is None:
             outputs = []
         assert isinstance(inputs, list)
         assert isinstance(outputs, list)
+
+        if generate_updates:
+            # compute and cache updates
+            all_deltas = UpdateDeltas({})
+            for node in self.graph.nodes(order="computation"):
+                if not hasattr(node, "update_deltas"):
+                    update_deltas = node.compute_update_deltas()
+                    node.update_deltas = update_deltas
+                all_deltas += node.update_deltas
+
+            # combine with manually specified updates
+            if updates is not None:
+                update_deltas = UpdateDeltas.from_updates(updates)
+                all_deltas += update_deltas
+
+            # convert into format expected by theano.function
+            updates = all_deltas.to_updates()
 
         def transform(item):
             """
@@ -424,6 +513,7 @@ class Node(object):
 
         fn = theano.function(inputs=transformed_inputs,
                              outputs=transformed_outputs,
+                             updates=updates,
                              **kwargs)
         return fn
 
@@ -472,11 +562,20 @@ class Node(object):
         can assume that all dependencies have completed their init_state call
         """
 
-    def compute(self):
+    def compute_output(self):
         """
-        computes output of a node
+        computes output of a node as a dictionary from string key to
+        output LazyWrappedVariable
         """
         raise NotImplementedError
+
+    def compute_update_deltas(self):
+        """
+        computes updates of a node as UpdateDeltas
+
+        optional to define - if the node doesn't update itself
+        """
+        return UpdateDeltas({})
 
 
 class ReferenceNode(Fields.name.reference, Node):
@@ -489,7 +588,7 @@ class ReferenceNode(Fields.name.reference, Node):
     def init_state(self):
         self.graph.add_dependency(self.reference, self.name)
 
-    def compute(self):
+    def compute_output(self):
         return dict(
             default=self.get_input()
         )
@@ -523,7 +622,7 @@ class SequentialNode(Fields.name.nodes, Node):
                                   self.name,
                                   to_key="last_child")
 
-    def compute(self):
+    def compute_output(self):
         """
         returns output of final child
         """
@@ -538,7 +637,7 @@ class InputNode(Fields.name.shape.dtype[floatX].broadcastable[None], Node):
     an entry point into the network
     """
 
-    def compute(self):
+    def compute_output(self):
         self.create_variable(
             name="input_var",
             shape=self.shape,
@@ -558,7 +657,7 @@ class IdentityNode(Fields.name, Node):
     returns input
     """
 
-    def compute(self):
+    def compute_output(self):
         return dict(
             default=self.get_input()
         )
@@ -574,8 +673,7 @@ class ContainerNode(Fields.name.nodes, Node):
     def architecture_children(self):
         return self.nodes
 
-    def compute(self):
-        # TODO add an input index and an output index
+    def compute_output(self):
         pass
 
 
@@ -636,9 +734,72 @@ assert np.allclose(fn3(x), x)
 # def test_nested_sequential_network():
 current_node = InputNode("foo", (3, 4, 5))
 for name in map(str, range(10)):
-    current_node = SequentialNode(name, [current_node,
-                                         IdentityNode(name + "i")])
+    current_node = SequentialNode("sequential" + name,
+                                  [current_node,
+                                   IdentityNode("identity" + name)])
 network = current_node.build()
-fn = network.function(["foo"], ["9"])
+fn = network.function(["foo"], ["sequential9"])
 x = np.random.rand(3, 4, 5).astype(floatX)
 assert np.allclose(fn(x), x)
+if False:
+    # NOTE: ugly
+    import pylab
+    nx.draw_networkx(
+        network.graph.computation_graph,
+        nx.spring_layout(network.graph.computation_graph),
+        node_size=500)
+    pylab.show()
+if False:
+    # plot computation_graph
+    import pylab
+    nx.draw_networkx(
+        network.graph.computation_graph,
+        nx.graphviz_layout(network.graph.computation_graph),
+        node_size=500)
+    pylab.show()
+if False:
+    # plot architectural_tree
+    import pylab
+    nx.draw_networkx(
+        network.graph.architectural_tree,
+        nx.graphviz_layout(network.graph.architectural_tree),
+        node_size=500)
+    pylab.show()
+
+# def test_toy_updater_node():
+
+
+class ToyUpdaterNode(Fields.name, Node):
+
+    """
+    example node to test compute_update_deltas
+    """
+
+    def compute_output(self):
+        shape = (2, 3, 4)
+        self.create_variable(
+            name="state",
+            shape=shape,
+            is_shared=True,
+            tags=["state"],
+        )
+        init_value = np.arange(np.prod(shape)).reshape(*shape).astype(floatX)
+        self.state.value = init_value
+        return dict(
+            default=self.state
+        )
+
+    def compute_update_deltas(self):
+        return UpdateDeltas({
+            self.state.variable: 42
+        })
+
+
+network = ToyUpdaterNode("a").build()
+fn1 = network.function([], ["a"])
+init_value = fn1()
+fn2 = network.function([], ["a"], generate_updates=True)
+assert np.allclose(init_value, fn2())
+assert np.allclose(init_value[0] + 42, fn2())
+assert np.allclose(init_value[0] + 84, fn1())
+assert np.allclose(init_value[0] + 84, fn1())

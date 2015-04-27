@@ -248,26 +248,29 @@
     - SharedInitialization.fromNode(other_network, backup_initialization=NoInitialization())
       - set default to having no init
 * TODOs
-- test with some identity nodes / input nodes
 - create hyperparameter propagation
   - test w/ multiply by constant nodes
-- custom wrapper around variables
-  - if shape is not given, print warning and calculate
-    - theano.function([x, y], [x], on_unused_input="ignore")(2, 3)
-- create Node.function() as syntactic sugar for creating theano.function's
 - create parameter searching
 - create updating
   - handle generate_updates in function
   - represent updates as deltas, not new values
     - rationale: can do interesting things like add them together, or multiply by -1 to train adversarially
-  - update delta container
-    - eg.
-      - UpdateDeltas.apply(lambda x: x * 2)
-        - multiplies each update by 2
+- create initialization
+- test:
+  - container node
+  - theano.tag.test_value
+    - http://deeplearning.net/software/theano/tutorial/debug_faq.html
 - fix architecture to data / from data / copy
   - problem: what if node has children in its state
     - some sort of walk needs to occur converting everything into data and back
 - wrap lasagne
+- custom wrapper around variables
+  - if shape is not given, print warning and calculate
+    - theano.function([x, y], [x], on_unused_input="ignore")(2, 3)
+  - walk the theano graph:
+    - var.owner.inputs
+      - var.owner is None when var is not derived
+    - http://deeplearning.net/software/theano/tutorial/symbolic_graphs.html
 - create graph transformations
   - eg.
     - substitution
@@ -302,3 +305,6 @@
   - monitor
   - state
     - eg. batch normalization state
+- look into drawing:
+  - https://github.com/Lasagne/Lasagne/issues/174
+    - https://github.com/ebenolson/Lasagne/blob/master/examples/draw_net.py
