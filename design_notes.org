@@ -187,6 +187,9 @@
   - rationale: this allows serialization of the original layer
 - use https://github.com/ionelmc/python-fields for constructing nodes
   - helps follow good constructor practices, and provides a nice string representation
+  - make sure that the fields super class is defined after the node super class
+    - this is so that node methods take precedence
+      - this was a issue particularly for __hash__
 * assumptions
 - shared variables (eg. parameter tensors) will have a fixed size
 - nodes are in a directed acyclic graph
@@ -263,6 +266,12 @@
   - [X] 1 cost
     - combine container w/ reference node
   - [ ] 1 updates
+- question: should nodes update themselves or should a higher level node do it?
+  - pros if nodes updates themselves:
+    - nodes can make sure each update only occurs once
+  - pros of higher level node doing it:
+    - code might be cleaner - because it can update all the weights in a single batch
+  - question: is there any way to set higher level nodes to only update the weight of a unit once?
 - NOTE: hyperparameters are never accessed directly, because of propagation - should always use find_hyperparameter
   - perhaps we can use some syntactic sugar to do an auto-search
     - override __getattribute__ for hyperparameters

@@ -581,6 +581,9 @@ class Node(object):
     all nodes require a unique name attribute as a string
     """
 
+    def __hash__(self):
+        return hash((self.__class__, self.name))
+
     @classmethod
     def from_architecture_data(cls, data):
         """
@@ -736,7 +739,7 @@ class Node(object):
                              **kwargs)
         return fn
 
-    def find_variables(self, tag_filters):
+    def find_variables_in_subtree(self, tag_filters):
         """
         return variables matching all of the given tags
         """
@@ -859,7 +862,7 @@ class WrapperNode(Node):
         )
 
 
-class ReferenceNode(Fields.name.reference, Node):
+class ReferenceNode(Node, Fields.name.reference):
 
     """
     provides dependencies into separate parts of the tree, allowing
@@ -875,7 +878,7 @@ class ReferenceNode(Fields.name.reference, Node):
         )
 
 
-class SequentialNode(Fields.name.nodes, WrapperNode):
+class SequentialNode(WrapperNode, Fields.name.nodes):
 
     """
     applies several nodes sequentially
@@ -895,7 +898,7 @@ class SequentialNode(Fields.name.nodes, WrapperNode):
         self.take_input_from(children_names[-1])
 
 
-class ContainerNode(Fields.name.nodes, WrapperNode):
+class ContainerNode(WrapperNode, Fields.name.nodes):
 
     """
     holds several nodes together without explicitly creating dependencies
@@ -915,7 +918,7 @@ class ContainerNode(Fields.name.nodes, WrapperNode):
         self.take_input_from(self.nodes[0].name)
 
 
-class HyperparameterNode(Fields.name.node.hyperparameters, WrapperNode):
+class HyperparameterNode(WrapperNode, Fields.name.node.hyperparameters):
 
     """
     for providing hyperparameters to a subtree
@@ -936,7 +939,7 @@ class HyperparameterNode(Fields.name.node.hyperparameters, WrapperNode):
         self.take_input_from(self.node.name)
 
 
-class InputNode(Fields.name.shape.dtype[floatX].broadcastable[None], Node):
+class InputNode(Node, Fields.name.shape.dtype[floatX].broadcastable[None]):
 
     """
     an entry point into the network
@@ -956,7 +959,7 @@ class InputNode(Fields.name.shape.dtype[floatX].broadcastable[None], Node):
         )
 
 
-class IdentityNode(Fields.name, Node):
+class IdentityNode(Node, Fields.name):
 
     """
     returns input
@@ -968,7 +971,7 @@ class IdentityNode(Fields.name, Node):
         )
 
 
-class FullyConnectedNode(Fields.name.num_units[None], Node):
+class FullyConnectedNode(Node, Fields.name.num_units[None]):
 
     """
     node wrapping lasagne's DenseLayer
@@ -1012,7 +1015,7 @@ class FullyConnectedNode(Fields.name.num_units[None], Node):
         )
 
 
-class ReLUNode(Fields.name, Node):
+class ReLUNode(Node, Fields.name):
 
     """
     rectified linear unit
@@ -1038,8 +1041,8 @@ LOSS_AGGREGATORS = {
 }
 
 
-class CostNode(Fields.name.target_reference.loss_function.loss_aggregator,
-               Node):
+class CostNode(Node,
+               Fields.name.target_reference.loss_function.loss_aggregator):
 
     """
     takes in a loss function and a reference to a target node, and computes
@@ -1084,17 +1087,46 @@ class CostNode(Fields.name.target_reference.loss_function.loss_aggregator,
         )
 
 
+class SGDNode(WrapperNode,
+              Fields.name.node.cost_reference[None].learning_rate[None]):
+
+    """
+    node that provides updates via SGD
+    """
+
+    def architecture_children(self):
+        return [self.node]
+
+    def init_state(self):
+        cost_reference = self.find_hyperparameter("cost_reference")
+        self.graph.add_dependency(cost_reference,
+                                  self.name,
+                                  to_key="cost")
+        self.forward_input_to(self.node.name)
+        self.take_input_from(self.node.name)
+
+    def compute_update_deltas(self):
+        cost = self.get_input(to_key="cost").variable
+        parameters = self.find_variables_in_subtree(["parameter"])
+        learning_rate = self.find_hyperparameter("learning_rate")
+        updates = lasagne.updates.sgd(cost,
+                                      [parameter.variable
+                                       for parameter in parameters],
+                                      learning_rate)
+        return UpdateDeltas.from_updates(updates)
+
+
 # def test node_constructor_arguments():
 
 
-class foo(Fields.a.b.c, Node):
+class foo(Node, Fields.a.b.c):
     pass
 
 assert foo.constructor_arguments() == ["a", "b", "c"]
 
 
 # def test_node_to_from_architecture_data():
-class foo(Fields.a.b.c, Node):
+class foo(Node, Fields.a.b.c):
     pass
 
 f = foo(3, 4, 5)
@@ -1103,7 +1135,7 @@ assert f == f.from_architecture_data(f.to_architecture_data())
 
 
 # def test_architecture_test_node_copy():
-class foo(Fields.a.b.c, Node):
+class foo(Node, Fields.a.b.c):
     pass
 
 f = foo(3, 4, 5)
@@ -1169,7 +1201,7 @@ if False:
 # def test_toy_updater_node():
 
 
-class ToyUpdaterNode(Fields.name, Node):
+class ToyUpdaterNode(Node, Fields.name):
 
     """
     example node to test compute_update_deltas
@@ -1216,6 +1248,8 @@ assert a_node.find_hyperparameter("foo") == 3
 
 
 # def test_ones_initialization():
+np.random.seed(42)
+
 
 class OnesInitialization(SharedInitialization):
 
@@ -1247,6 +1281,7 @@ fn = network.function([], ["dummy"])
 assert np.allclose(fn(), np.ones((1, 2, 3)).astype(floatX))
 
 # def test_fully_connected_node():
+np.random.seed(42)
 nodes = [
     InputNode("a", (3, 4, 5)),
     FullyConnectedNode("b"),
@@ -1263,6 +1298,7 @@ res = np.dot(x.reshape(3, 20), np.ones((20, 14))) + np.ones(14)
 assert np.allclose(fn(x), res)
 
 # def test_fully_connected_and_relu_node():
+np.random.seed(42)
 nodes = [
     InputNode("a", (3, 4, 5)),
     FullyConnectedNode("b"),
@@ -1280,6 +1316,7 @@ res = np.dot(x.reshape(3, 20), np.ones((20, 14))) + np.ones(14)
 assert np.allclose(fn(x), np.clip(res, 0, np.inf))
 
 # def test_glorot_uniform_initialization():
+np.random.seed(42)
 nodes = [
     InputNode("a", (3, 4, 5)),
     FullyConnectedNode("b"),
@@ -1299,6 +1336,7 @@ assert np.allclose(np.zeros(1000), fc_node.b.value)
 
 
 # def test_cost_node():
+np.random.seed(42)
 network = HyperparameterNode(
     "g",
     ContainerNode("f", [
@@ -1321,3 +1359,82 @@ res = np.clip(res, 0, np.inf)
 y = np.random.randn(3, 14).astype(floatX)
 res = np.mean((y - res) ** 2)
 assert np.allclose(fn(x, y), res)
+
+# test_update_node():
+np.random.seed(42)
+nodes = [
+    InputNode("a", (3, 4, 5)),
+    FullyConnectedNode("b"),
+    ReLUNode("e"),
+]
+sequential = SequentialNode("c", nodes)
+hp_node = HyperparameterNode("d",
+                             sequential,
+                             num_units=1000,
+                             shared_initializations=[GlorotUniform()])
+network = hp_node.build()
+fc_node = network.node.nodes[1]
+W_value = fc_node.W.value
+assert np.allclose(0, W_value.mean(), atol=1e-2)
+assert np.allclose(np.sqrt(2.0 / (20 + 1000)), W_value.std(), atol=1e-2)
+assert np.allclose(np.zeros(1000), fc_node.b.value)
+
+
+# def test_cost_node():
+np.random.seed(42)
+network = HyperparameterNode(
+    "g",
+    ContainerNode("f", [
+        SequentialNode("e", [
+            InputNode("input", (3, 4, 5)),
+            FullyConnectedNode("b"),
+            ReLUNode("c"),
+            CostNode("cost", "target"),
+        ]),
+        InputNode("target", (3, 14)),
+    ]),
+    num_units=14,
+    loss_function=lasagne.objectives.mse,
+    shared_initializations=[OnesInitialization()]
+).build()
+fn = network.function(["input", "target"], ["cost"])
+x = np.random.randn(3, 4, 5).astype(floatX)
+res = np.dot(x.reshape(3, 20), np.ones((20, 14))) + np.ones(14)
+res = np.clip(res, 0, np.inf)
+y = np.random.randn(3, 14).astype(floatX)
+res = np.mean((y - res) ** 2)
+assert np.allclose(fn(x, y), res)
+
+
+# def test_sgd_node():
+np.random.seed(42)
+network = HyperparameterNode(
+    "g",
+    SGDNode("sgd",
+            ContainerNode("f", [
+                SequentialNode("e", [
+                    InputNode("input", (3, 4, 5)),
+                    FullyConnectedNode("b"),
+                    ReLUNode("c"),
+                    CostNode("cost", "target"),
+                ]),
+                InputNode("target", (3, 14)),
+            ])),
+    num_units=14,
+    loss_function=lasagne.objectives.mse,
+    shared_initializations=[OnesInitialization()],
+    cost_reference="cost",
+    learning_rate=0.01,
+).build()
+fn = network.function(["input", "target"], ["cost"])
+fn2 = network.function(["input", "target"], ["cost"], generate_updates=True)
+x = np.random.randn(3, 4, 5).astype(floatX)
+y = np.random.randn(3, 14).astype(floatX)
+initial_cost = fn(x, y)
+next_cost = fn(x, y)
+assert np.allclose(initial_cost, next_cost)
+prev_cost = fn2(x, y)
+for _ in range(10):
+    current_cost = fn2(x, y)
+    assert prev_cost > current_cost
+    prev_cost = current_cost
