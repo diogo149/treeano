@@ -111,10 +111,32 @@ class LazyWrappedVariable(object):
         self.tags_ = tags
         self.ndim_ = ndim
         self.variable_ = variable
+        self.validate()
 
-    def verify_tags(self):
-        # shorten for less line noise
-        tags = self.tags
+    def validate(self):
+        shape = self.shape_
+        dtype = self.dtype_
+        broadcastable = self.broadcastable_
+        is_shared = self.is_shared_
+        tags = self.tags_
+        ndim = self.ndim_
+        variable = self.variable_
+
+        if ndim is not None and shape is not None:
+            assert len(shape) == ndim
+        if ndim is not None and variable is not None:
+            assert ndim == variable.ndim
+        if broadcastable is not None and variable is not None:
+            assert broadcastable == variable.broadcastable
+        if is_shared is not None and variable is not None:
+            assert is_shared == isinstance(self.variable,
+                                           theano.compile.SharedVariable)
+        if dtype is not None and variable is not None:
+            assert dtype == variable.dtype
+        if tags is not None:
+            self.verify_tags(set(tags))
+
+    def verify_tags(self, tags):
         for tag in tags:
             assert tag in VALID_TAGS
         if self.is_shared:
@@ -124,7 +146,7 @@ class LazyWrappedVariable(object):
                 # only one of weight and bias should be set
                 assert ("weight" in tags) != ("bias" in tags)
             # the only valid tags for shared are the following:
-            assert len({"weight", "bias", "parameter", "state"} - tags) == 0
+            assert len(tags - {"weight", "bias", "parameter", "state"}) == 0
         else:
             assert len({"weight", "bias", "parameter", "state"} & tags) == 0
 
@@ -143,7 +165,7 @@ class LazyWrappedVariable(object):
             self.tags_ = []
         if not isinstance(self.tags_, set):
             self.tags_ = set(self.tags_)
-        self.verify_tags()
+        self.verify_tags(self.tags_)
         return self.tags_
 
     @property
