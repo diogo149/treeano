@@ -154,6 +154,25 @@
   - conclusion:
     - through the graph w/ sugar
     - no positional arguments (much harder to specify in a graph)
+- why have wrapped variables?
+  - additonal metadata
+    - eg. shape, tags
+  - custom rules
+    - eg. related to tags
+      - shared variables should be parameters and either weight / bias
+      - weight / bias -> also parameter
+    - eg. parameters must be shared
+  - why make them lazy?
+    - original motivation: to allow stage-wise initialization
+      - eg.
+        - first create the shareds
+        - then perform operation with them
+        - then adds some values in
+  - pros of unwrapped variables
+    - can directly look at the computation graph for dependencies
+  - solution:
+    - include a reference to the wrapped variable in the theano variable
+      - so that the computation graph can still be walked for dependencies
 * best practices
 - store all constructor arguments as is
   - don't mutate them
@@ -231,36 +250,19 @@
 - test with some identity nodes / input nodes
 - create hyperparameter propagation
   - test w/ multiply by constant nodes
-- custom wrapper around shared variables
-  - rationale:
-    - lazy
-      - ie. they do no work immediately
-      - can be gradually initialized
-    - can have metadata for searching
-  - attributes
-    - num_dims
-    - shape
-    - name: name as a string (this is also used to add the lazy variable as an attribute)
-    - broadcast
-      - default: no broadcast
-    - dtype:
-      - default: floatX
-    - shared: Theano shared variable
-    - tags
-      - eg. weight, bias
-  - properties
-    - value
+- custom wrapper around variables
   - if shape is not given, print warning and calculate
     - theano.function([x, y], [x], on_unused_input="ignore")(2, 3)
-- create parameter searching (from below)
+- create Node.function() as syntactic sugar for creating theano.function's
+- create parameter searching
 - create updating
+  - handle generate_updates in function
   - represent updates as deltas, not new values
     - rationale: can do interesting things like add them together, or multiply by -1 to train adversarially
   - update delta container
     - eg.
       - UpdateDeltas.apply(lambda x: x * 2)
         - multiplies each update by 2
-- create Node.function() as syntactic sugar for creating theano.function's
 - fix architecture to data / from data / copy
   - problem: what if node has children in its state
     - some sort of walk needs to occur converting everything into data and back
@@ -291,3 +293,11 @@
   - if everything is kept as a function from parameters -> theano var, it should compose well with recurrent nets
   - recurrent layers would probably behave something like a multiple input layer
   - if a net is recurrent, this seems like it would just take an orthogonal compilation step to convert the resulting net to use scan
+- list of possible variable tags:
+  - input
+  - weight
+  - bias
+  - parameter
+  - monitor
+  - state
+    - eg. batch normalization state

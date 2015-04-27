@@ -2,16 +2,169 @@ from __future__ import division, absolute_import
 from __future__ import print_function, unicode_literals
 
 import inspect
+import types
+import numpy as np
+import theano
+import theano.tensor as T
 from fields import Fields
 import networkx as nx
+
+floatX = theano.config.floatX
+ENABLE_TEST_VALUE = theano.config.compute_test_value != "off"
 
 # TODO move everything under treeano.core
 
 # TODO move to variable module
 
+VALID_TAGS = set("""
+input
+weight
+bias
+parameter
+monitor
+state
+""".split())
 
-class LazyVariable(object):
+
+class LazyWrappedVariable(object):
+
+    def __init__(self,
+                 name,
+                 shape=None,
+                 dtype=None,
+                 broadcastable=None,
+                 is_shared=None,
+                 tags=None,
+                 ndim=None,
+                 variable=None,):
+        self.name = name
+        self.shape_ = shape
+        self.dtype_ = dtype
+        self.broadcastable_ = broadcastable
+        self.is_shared_ = is_shared
+        self.tags_ = tags
+        self.ndim_ = ndim
+        self.variable_ = variable
+
+    def verify_tags(self):
+        tags = set(self.tags)
+        for tag in tags:
+            assert tag in VALID_TAGS
+        if self.is_shared:
+            # only one of parameter and state should be set
+            assert ("parameter" in tags) != ("state" in tags)
+            if "parameter" in tags:
+                # only one of weight and bias should be set
+                assert ("weight" in tags) != ("bias" in tags)
+            # the only valid tags for shared are the following:
+            assert len({"weight", "bias", "parameter", "state"} - tags) == 0
+        else:
+            assert len({"weight", "bias", "parameter", "state"} & tags) == 0
+
+    @property
+    def is_shared(self):
+        if self.is_shared_ is None:
+            # if is_shared is not supplied, a variable must be supplied
+            assert self.variable is not None
+            self.is_shared_ = isinstance(self.variable,
+                                         theano.compile.SharedVariable)
+        return self.is_shared_
+
+    @property
+    def tags(self):
+        if self.tags_ is None:
+            self.tags_ = []
+        self.verify_tags()
+        return self.tags_
+
+    @property
+    def ndim(self):
+        if self.shape_ is not None:
+            self.ndim_ = len(self.shape_)
+        assert self.ndim_ is not None
+        return self.ndim_
+
+    @property
+    def dtype(self):
+        if self.dtype_ is None:
+            self.dtype_ = floatX
+        return self.dtype_
+
+    @property
+    def broadcastable(self):
+        if self.broadcastable_ is None:
+            self.broadcastable_ = (False, ) * self.ndim
+        return self.broadcastable_
+
+    @property
+    def variable(self):
+        if self.variable_ is None:
+            if self.is_shared:
+                kwargs = {}
+                if len(self.broadcastable) > 0:
+                    kwargs["broadcastable"] = self.broadcastable
+                    value = np.zeros(self.shape)
+                else:
+                    value = 0
+                kwargs["name"] = self.name
+                kwargs["value"] = np.array(value).astype(self.dtype)
+                variable = theano.shared(**kwargs)
+            else:
+                variable = T.TensorType(self.dtype,
+                                        self.broadcastable)(self.name)
+            # add current variable
+            variable.tag.lazy_wrapped_variable = self
+            self.variable_ = variable
+
+            # for ease of debugging, add test values
+            # ---
+            # this must be done after self.variable_ is set to avoid a
+            # recursive loop when calling self.shape
+            if ENABLE_TEST_VALUE:
+                test_value = np.random.rand(*self.shape).astype(self.dtype)
+                variable.tag.test_value = test_value
+        return self.variable_
+
+    @property
+    def shape(self):
+        if self.shape_ is None:
+            # cannot derive shape for shared variable
+            assert not self.is_shared
+
+            # FIXME calculate shape
+            assert False
+        return self.shape_
+
+    @property
+    def value(self):
+        assert self.is_shared
+        return self.variable.get_value()
+
+    @value.setter
+    def value(self, new_value):
+        assert new_value.dtype == self.dtype
+        assert new_value.shape == self.shape
+        self.variable.set_value(new_value)
+
+i = T.iscalar()
+o = LazyWrappedVariable("foo", variable=i).variable
+fn = theano.function([i], o)
+for _ in range(10):
+    x = np.random.randint(1e6)
+    assert fn(x) == x
+
+s = LazyWrappedVariable("foo", shape=(3, 4, 5), is_shared=True)
+assert s.value.sum() == 0
+x = np.random.randn(3, 4, 5)
+s.value = x
+assert np.allclose(s.value, x)
+try:
+    s.value = np.random.randn(5, 4, 3)
+except:
     pass
+else:
+    assert False
+
 
 # TODO move to graph module
 
@@ -38,6 +191,9 @@ def init_architectural_tree(name_to_node):
     # DFS traversal
     for node in name_to_node.values():
         name = node.name
+        # need to manually add the node, because no nodes are added in the
+        # case of a single node graph
+        g.add_node(name)
         children = node.architecture_children()
         for child in children:
             # set edge from child to parent to reflect dependency of parent
@@ -60,9 +216,6 @@ class TreeanoGraph(object):
     def __init__(self, root_node):
         self.name_to_node = init_name_to_node(root_node)
         self.architectural_tree = init_architectural_tree(self.name_to_node)
-        # making architectural tree immutable - hopefully this doesn't
-        # hurt flexibility
-        self.architectural_tree = self.architectural_tree.freeze()
         # since all parents automatically depend on their children,
         # we can initialize the computation grpah as a copy of the
         # architectural tree
@@ -119,12 +272,6 @@ class TreeanoGraph(object):
             # TODO maybe use a custom exception
             raise
 
-    def freeze(self):
-        """
-        prevents mutation of internal graph
-        """
-        self.computation_graph = self.computation_graph.freeze()
-
     def input_edge_for_node(self, node_name, to_key="default"):
         """
         searches for the input node and from_key of a given node with a given
@@ -146,6 +293,12 @@ class TreeanoGraph(object):
         node = self.name_to_node[edge_from]
         return node.output[from_key]
 
+    def output_for_node(self, node_name, from_key="default"):
+        """
+        returns the output of a node with the given key
+        """
+        node = self.name_to_node[node_name]
+        return node.output[from_key]
 
 # TODO move to node module
 
@@ -217,8 +370,6 @@ class Node(object):
             node.graph = graph
             # recursively init nodes
             node.init_state()
-        # make graph immutable
-        graph.freeze()
         # compute and cache outputs
         # ---
         # this is reversed so that outer nodes have their state initialized
@@ -235,6 +386,46 @@ class Node(object):
         returns input of the current node in the graph for a given key
         """
         return self.graph.input_for_node(self.name, to_key)
+
+    def create_variable(self, name, *args, **kwargs):
+        # we don't want to overwrite an existing attribute
+        assert not hasattr(self, name)
+        new_name = "%s.%s" % (self.name, name)
+        # create the variable
+        variable = LazyWrappedVariable(new_name, *args, **kwargs)
+        # set variable as attribute for easy access
+        setattr(self, name, variable)
+        # register variable for future searching of parameters
+        if not hasattr(self, "variables"):
+            self.variables = []
+        self.variables.append(variable)
+
+    def function(self, inputs, outputs=None, generate_updates=False, **kwargs):
+        # FIXME handle generate_updates
+        if outputs is None:
+            outputs = []
+        assert isinstance(inputs, list)
+        assert isinstance(outputs, list)
+
+        def transform(item):
+            """
+            converts node names into their corresponding variables, with
+            optional keys of which of the node's outputs to use
+            """
+            if isinstance(item, types.StringTypes):
+                return self.graph.output_for_node(item).variable
+            elif isinstance(item, tuple):
+                return self.graph.output_for_node(*item).variable
+            else:
+                return item
+
+        transformed_inputs = map(transform, inputs)
+        transformed_outputs = map(transform, outputs)
+
+        fn = theano.function(inputs=transformed_inputs,
+                             outputs=transformed_outputs,
+                             **kwargs)
+        return fn
 
     def find_parameters(self, ):
         # TODO fill in arguments (filters based on tag?)
@@ -337,9 +528,24 @@ class SequentialNode(Fields.name.nodes, Node):
         )
 
 
-class InputNode(Fields.name, Node):
-    # FIXME
-    pass
+class InputNode(Fields.name.shape.dtype[floatX].broadcastable[None], Node):
+
+    """
+    an entry point into the network
+    """
+
+    def compute(self):
+        self.create_variable(
+            name="input_var",
+            shape=self.shape,
+            dtype=self.dtype,
+            broadcastable=self.broadcastable,
+            is_shared=False,
+            tags=["input"],
+        )
+        return dict(
+            default=self.input_var,
+        )
 
 
 class ContainerNode(Fields.name.nodes, Node):
@@ -388,3 +594,10 @@ class foo(Fields.a.b.c, Node):
 
 f = foo(3, 4, 5)
 assert f == f.architecture_copy()
+
+# def identity_network():
+input_node = InputNode("foo", (3, 4, 5))
+network = input_node.build()
+fn = network.function(["foo"], ["foo"])
+x = np.random.rand(3, 4, 5).astype(floatX)
+assert np.allclose(fn(x), x)
