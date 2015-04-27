@@ -259,13 +259,6 @@
     - SharedInitialization.fromNode(other_network, backup_initialization=NoInitialization())
       - set default to having no init
 * TODOs
-- initial wrap of lasagne
-  - [X] FC layer
-  - [X] 1 activation function
-  - [X] 1 initialization
-  - [X] 1 cost
-    - combine container w/ reference node
-  - [ ] 1 updates
 - question: should nodes update themselves or should a higher level node do it?
   - pros if nodes updates themselves:
     - nodes can make sure each update only occurs once
@@ -277,6 +270,10 @@
     - override __getattribute__ for hyperparameters
     - override __setattribute__ to not work on hyperparameters
     - some sugar to specify defaults as well?
+- add auto-chunking of variables
+  - maybe
+- try dropout network w/ train / test
+  - hyperparameter: have default of enable_dropout be deterministic
 - function to wrap lasagne layer boilerplate
   - input:
     - lazy wrapped variable
