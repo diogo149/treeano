@@ -265,6 +265,12 @@
   - 1 updates
   - 1 initialization
   - FC layer
+- easy way of accessing nodes in network
+  - eg. network.get_node("node_name")
+- real initialization nodes
+  - using a stateful class and a hyperparameternode is very wrong
+    - just a hack
+  - want to represent the parameters of the initialization as hyperparameters and have them be clone-able/inspect-able
 - PreallocatedInitializationNode
   - sets hyperparameters:
     - shared_initializations

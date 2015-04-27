@@ -10,6 +10,7 @@ import theano.tensor as T
 from fields import Fields
 import toolz
 import networkx as nx
+import lasagne
 
 floatX = theano.config.floatX
 ENABLE_TEST_VALUE = theano.config.compute_test_value != "off"
@@ -943,7 +944,46 @@ class IdentityNode(Fields.name, Node):
         )
 
 
+class FullyConnectedNode(Fields.name.num_units[None], Node):
+
+    def compute_output(self):
+        in_var = self.get_input()
+        num_units = self.find_hyperparameter("num_units")
+        num_inputs = int(np.prod(in_var.shape[1:]))
+        self.create_variable(
+            "W",
+            shape=(num_inputs, num_units),
+            is_shared=True,
+        )
+        self.create_variable(
+            "b",
+            shape=(num_units,),
+            is_shared=True,
+        )
+        self.input_layer = lasagne.layers.InputLayer(
+            in_var.shape
+        )
+        self.dense_layer = lasagne.layers.DenseLayer(
+            incoming=self.input_layer,
+            num_units=num_units,
+            W=self.W.variable,
+            b=self.b.variable,
+            nonlinearity=lasagne.nonlinearities.identity,
+        )
+        out_variable = self.dense_layer.get_output_for(in_var.variable)
+        out_shape = self.dense_layer.get_output_shape_for(in_var.shape)
+        self.create_variable(
+            "result",
+            variable=out_variable,
+            shape=out_shape,
+        )
+        return dict(
+            default=self.result,
+        )
+
 # def test node_constructor_arguments():
+
+
 class foo(Fields.a.b.c, Node):
     pass
 
@@ -1102,3 +1142,19 @@ class DummyNode(Node):
 network = DummyNode().build()
 fn = network.function([], ["dummy"])
 assert np.allclose(fn(), np.ones((1, 2, 3)).astype(floatX))
+
+# def test_fully_connected_node():
+nodes = [
+    InputNode("a", (3, 4, 5)),
+    FullyConnectedNode("b"),
+]
+sequential = SequentialNode("c", nodes)
+hp_node = HyperparameterNode("d",
+                             sequential,
+                             num_units=14,
+                             shared_initializations=[OnesInitialization()])
+network = hp_node.build()
+fn = network.function(["a"], ["d"])
+x = np.random.randn(3, 4, 5).astype(floatX)
+assert np.allclose(fn(x),
+                   np.dot(x.reshape(3, 20), np.ones((20, 14))) + np.ones(14))
