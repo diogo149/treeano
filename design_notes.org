@@ -182,13 +182,13 @@
 - use https://github.com/ionelmc/python-fields for constructing nodes
   - helps follow good constructor practices, and provides a nice string representation
 * assumptions
-- parameter tensors will have a fixed size
+- shared variables (eg. parameter tensors) will have a fixed size
 - nodes are in a directed acyclic graph
   - thus can be traversed in a topological sort
 - initialization schemes can work in a topologically sorted order
   - eg. not from output to input
   - not necessarily true, but a simplifying assumption
-- parameter tensors are owned by a single node in the computation graph, and that node is responsible for their updates
+- shared variables (eg. parameter tensors) are owned by a single node in the computation graph, and that node is responsible for their updates
 - node names are strings
 - a None value of a hyperparameter signifies that it is missing
 * random notes
@@ -249,9 +249,9 @@
     - SharedInitialization.fromNode(other_network, backup_initialization=NoInitialization())
       - set default to having no init
 * TODOs
-- create parameter searching
 - create initialization
 - test:
+  - find_variables
   - container node
   - theano.tag.test_value
     - http://deeplearning.net/software/theano/tutorial/debug_faq.html

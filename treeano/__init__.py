@@ -113,7 +113,8 @@ class LazyWrappedVariable(object):
         self.variable_ = variable
 
     def verify_tags(self):
-        tags = set(self.tags)
+        # shorten for less line noise
+        tags = self.tags
         for tag in tags:
             assert tag in VALID_TAGS
         if self.is_shared:
@@ -140,6 +141,8 @@ class LazyWrappedVariable(object):
     def tags(self):
         if self.tags_ is None:
             self.tags_ = []
+        if not isinstance(self.tags_, set):
+            self.tags_ = set(self.tags_)
         self.verify_tags()
         return self.tags_
 
@@ -393,6 +396,26 @@ class TreeanoGraph(object):
         for ancestor_name in self.architecture_ancestor_names(node_name):
             yield self.name_to_node[ancestor_name]
 
+    def architecture_subtree_names(self, node_name):
+        """
+        returns an unordered set of descendant names of the current node in the
+        architectural tree
+        """
+        # NOTE: this is actually the descendants, despite the name, because
+        # of the way we set up the tree
+        descendant_names = nx.ancestors(self.architectural_tree, node_name)
+        subtree_names = descendant_names | {node_name}
+        return subtree_names
+
+    def architecture_subtree(self, node_name):
+        """
+        returns an unordered set of descendants of the current node in the
+        architectural tree
+        """
+        return {self.name_to_node[name]
+                for name in self.architecture_subtree_names(node_name)}
+
+
 # TODO move to node module
 
 
@@ -458,6 +481,9 @@ class Node(object):
         root_node = self.architecture_copy()
         # build computation graph
         graph = TreeanoGraph(root_node)
+        # add attribute for variables
+        for node in reversed(graph.nodes(order="architecture")):
+            node.variables = []
         # initialize state
         # ---
         # this is reversed so that outer nodes have their state initialized
@@ -490,8 +516,6 @@ class Node(object):
         # set variable as attribute for easy access
         setattr(self, name, variable)
         # register variable for future searching of parameters
-        if not hasattr(self, "variables"):
-            self.variables = []
         self.variables.append(variable)
 
     def function(self,
@@ -543,9 +567,16 @@ class Node(object):
                              **kwargs)
         return fn
 
-    def find_parameters(self, ):
-        # FIXME fill in arguments (filters based on tag?)
-        return []
+    def find_variables(self, tag_filters):
+        """
+        return variables matching all of the given tags
+        """
+        tag_filters = set(tag_filters)
+        return [variable
+                for node in self.graph.architecture_subtree(self.name)
+                for variable in node.variables
+                # only keep variables where all filters match
+                if len(tag_filters - variable.tags) == 0]
 
     def find_hyperparameter(self, hyperparameter_name, default=None):
         """
