@@ -80,6 +80,104 @@ fn()
 assert x.get_value() == 4
 
 
+# TODO move to initialization module
+
+# ############################### base classes ###############################
+
+
+class SharedInitialization(object):
+
+    """
+    interface for initialization schemes of shared variables
+    """
+
+    def predicate(self, var):
+        """
+        whether or not the current initialization applies to the current
+        variable
+        """
+        return True
+
+    def create_shared(self, var):
+        """
+        creates the shared variable with an appropriately initialized value
+        """
+        kwargs = {}
+        if len(var.broadcastable) > 0:
+            kwargs["broadcastable"] = var.broadcastable
+        value = self.initialize_value(var)
+        kwargs["name"] = var.name
+        kwargs["value"] = np.array(value).astype(var.dtype)
+        variable = theano.shared(**kwargs)
+        return variable
+
+    def initialize_value(self, var):
+        """
+        creates appropriately initialized value for the given
+        LazyWrappedVariable
+        """
+        raise NotImplementedError
+
+
+class WeightInitialization(SharedInitialization):
+
+    """
+    base class for initializations that only work on weights
+    """
+
+    def predicate(self, var):
+        return "weight" in var.tags
+
+# ############################# implementations #############################
+
+
+class ExceptionInitialization(SharedInitialization):
+
+    """
+    initialization scheme that always throws an exception - so that
+    initialization doesn't fall back to other schemes
+    """
+
+    def initialize_value(self, var):
+        assert False, "Initialization failed"
+
+
+class ZeroInitialization(SharedInitialization):
+
+    """
+    initializes shared variable to zeros
+    """
+
+    def initialize_value(self, var):
+        if len(var.broadcastable) > 0:
+            value = np.zeros(var.shape)
+        else:
+            value = 0
+        return value
+
+
+class PreallocatedInitialization(SharedInitialization):
+
+    """
+    uses already defined shared variables and does NOT overwrite their
+    values
+    """
+
+    def __init__(self, name_to_shared):
+        self.name_to_shared = name_to_shared
+
+    def predicate(self, var):
+        return var.name in self.name_to_shared
+
+    def create_shared(self, var):
+        shared = self.name_to_shared[var.name]
+        assert shared.dtype == var.dtype
+        assert shared.get_value().shape == var.shape
+        assert shared.name == var.name
+        assert shared.broadcastable == var.broadcastable
+        return shared
+
+
 # TODO move to variable module
 
 VALID_TAGS = set("""
@@ -96,14 +194,17 @@ class LazyWrappedVariable(object):
 
     def __init__(self,
                  name,
+                 variable_map=None,
                  shape=None,
                  dtype=None,
                  broadcastable=None,
                  is_shared=None,
                  tags=None,
                  ndim=None,
-                 variable=None,):
+                 variable=None,
+                 shared_initializations=None):
         self.name = name
+        self.variable_map = variable_map
         self.shape_ = shape
         self.dtype_ = dtype
         self.broadcastable_ = broadcastable
@@ -111,6 +212,7 @@ class LazyWrappedVariable(object):
         self.tags_ = tags
         self.ndim_ = ndim
         self.variable_ = variable
+        self.shared_initializations = shared_initializations
         self.validate()
 
     def validate(self):
@@ -154,7 +256,7 @@ class LazyWrappedVariable(object):
     def is_shared(self):
         if self.is_shared_ is None:
             # if is_shared is not supplied, a variable must be supplied
-            assert self.variable is not None
+            assert self.variable_ is not None
             self.is_shared_ = isinstance(self.variable,
                                          theano.compile.SharedVariable)
         return self.is_shared_
@@ -191,29 +293,39 @@ class LazyWrappedVariable(object):
     def variable(self):
         if self.variable_ is None:
             if self.is_shared:
-                kwargs = {}
-                if len(self.broadcastable) > 0:
-                    kwargs["broadcastable"] = self.broadcastable
-                    value = np.zeros(self.shape)
+                # find appropriate initialization scheme
+                shared_initializations = self.shared_initializations
+                if shared_initializations is None:
+                    shared_initializations = []
+                for initialization in shared_initializations:
+                    if initialization.predicate(self):
+                        break
                 else:
-                    value = 0
-                kwargs["name"] = self.name
-                kwargs["value"] = np.array(value).astype(self.dtype)
-                variable = theano.shared(**kwargs)
+                    # default to zero initialization if none work
+                    initialization = ZeroInitialization()
+
+                # create the shared variable
+                variable = initialization.create_shared(self)
             else:
                 variable = T.TensorType(self.dtype,
                                         self.broadcastable)(self.name)
-            # add current variable
-            variable.tag.lazy_wrapped_variable = self
             self.variable_ = variable
 
             # for ease of debugging, add test values
             # ---
             # this must be done after self.variable_ is set to avoid a
             # recursive loop when calling self.shape
-            if ENABLE_TEST_VALUE:
+            if (not self.is_shared) and ENABLE_TEST_VALUE:
                 test_value = np.random.rand(*self.shape).astype(self.dtype)
                 variable.tag.test_value = test_value
+
+        # add current variable to variable map
+        if self.variable_map is not None:
+            if self.variable_ in self.variable_map:
+                assert self.variable_map[self.variable_] is self
+            else:
+                self.variable_map[self.variable_] = self
+
         return self.variable_
 
     @property
@@ -506,6 +618,13 @@ class Node(object):
         # add attribute for variables
         for node in reversed(graph.nodes(order="architecture")):
             node.variables = []
+        # create a shared mapping from theano variable to lazy wrapped variable
+        # ---
+        # this stores the state of all the lazy wrapped variables in the
+        # network
+        variable_map = {}
+        for node in reversed(graph.nodes(order="architecture")):
+            node.variable_map = variable_map
         # initialize state
         # ---
         # this is reversed so that outer nodes have their state initialized
@@ -533,8 +652,14 @@ class Node(object):
         # we don't want to overwrite an existing attribute
         assert not hasattr(self, name)
         new_name = "%s.%s" % (self.name, name)
+        # prepare initialization strategies
+        inits = self.find_hyperparameter("shared_initializations", [])
+        kwargs["shared_initializations"] = inits
         # create the variable
-        variable = LazyWrappedVariable(new_name, *args, **kwargs)
+        variable = LazyWrappedVariable(new_name,
+                                       self.variable_map,
+                                       *args,
+                                       **kwargs)
         # set variable as attribute for easy access
         setattr(self, name, variable)
         # register variable for future searching of parameters
@@ -945,3 +1070,35 @@ assert network.get_hyperparameter("foo") == 3
 a_node = network.graph.name_to_node["a"]
 assert a_node.get_hyperparameter("foo") is None
 assert a_node.find_hyperparameter("foo") == 3
+
+
+# def test_ones_initialization():
+
+class OnesInitialization(SharedInitialization):
+
+    def initialize_value(self, var):
+        return np.ones(var.shape).astype(var.dtype)
+
+
+class DummyNode(Node):
+
+    def __init__(self):
+        self.name = "dummy"
+
+    def get_hyperparameter(self, hyperparameter_name):
+        if hyperparameter_name == "shared_initializations":
+            return [OnesInitialization()]
+
+    def compute_output(self):
+        self.create_variable(
+            "foo",
+            is_shared=True,
+            shape=(1, 2, 3),
+        )
+        return dict(
+            default=self.foo,
+        )
+
+network = DummyNode().build()
+fn = network.function([], ["dummy"])
+assert np.allclose(fn(), np.ones((1, 2, 3)).astype(floatX))

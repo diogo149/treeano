@@ -68,9 +68,12 @@
   - cons of different:
     - this is a purely theano-level concern, thus a conceptual network shouldn't require it
     - when using shared variables from a different network, you probably don't want to re-initialize
-  - conclusion: should be different - and a weight initialization node should look up the tree for a hyperparameter on shared initialization
-    - and the weight initialization should have a default shared initialization
+  - conclusion:
+    - should be different
+      - and a weight initialization node should look up the tree for a hyperparameter on shared initialization
+    - weight initialization should have a default shared initialization
       - thus no global shared initialization should be needed
+    - weight initialization and shared variable creation should happen at the same time, so that weight initialization knows now to overwrite the values in a shared variable
 - should lifecycle methods (init_state, init_shared, init_values, and compute) be separate?
   - pros of separation
     - easier to do special schemes like loading existing network
@@ -173,6 +176,9 @@
   - solution:
     - include a reference to the wrapped variable in the theano variable
       - so that the computation graph can still be walked for dependencies
+- why not using tagging on theano variables?
+  - because theano variables can be shared between networks
+    - the state of one network shouldn't be messed with the state of another
 * best practices
 - store all constructor arguments as is
   - don't mutate them
@@ -249,9 +255,9 @@
     - SharedInitialization.fromNode(other_network, backup_initialization=NoInitialization())
       - set default to having no init
 * TODOs
-- create initialization
 - test:
   - find_variables
+  - preallocatedinitialization
   - container node
   - theano.tag.test_value
     - http://deeplearning.net/software/theano/tutorial/debug_faq.html
@@ -259,6 +265,14 @@
   - 1 updates
   - 1 initialization
   - FC layer
+- PreallocatedInitializationNode
+  - sets hyperparameters:
+    - shared_initializations
+    - preallocated_initialization
+  - rationale for setting both:
+    - if no initialization scheme is given, then it uses the former
+    - if another initialization scheme is given within the network, that scheme still has the choice of finding a preallocated_initialization hyperparameter and prioritizing that
+    - this allows no hard-coded preference to preallocation in the core code
 - fix architecture to data / from data / copy
   - problem: what if node has children in its state
     - some sort of walk needs to occur converting everything into data and back
@@ -299,14 +313,6 @@
   - if everything is kept as a function from parameters -> theano var, it should compose well with recurrent nets
   - recurrent layers would probably behave something like a multiple input layer
   - if a net is recurrent, this seems like it would just take an orthogonal compilation step to convert the resulting net to use scan
-- list of possible variable tags:
-  - input
-  - weight
-  - bias
-  - parameter
-  - monitor
-  - state
-    - eg. batch normalization state
 - look into drawing:
   - https://github.com/Lasagne/Lasagne/issues/174
     - https://github.com/ebenolson/Lasagne/blob/master/examples/draw_net.py
