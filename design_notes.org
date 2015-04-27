@@ -255,16 +255,18 @@
     - SharedInitialization.fromNode(other_network, backup_initialization=NoInitialization())
       - set default to having no init
 * TODOs
+- initial wrap of lasagne
+  - [X] FC layer
+  - [X] 1 activation function
+  - [X] 1 initialization
+  - [ ] 1 cost
+  - [ ] 1 updates
 - test:
   - find_variables
   - preallocatedinitialization
   - container node
   - theano.tag.test_value
     - http://deeplearning.net/software/theano/tutorial/debug_faq.html
-- initial wrap of lasagne
-  - 1 updates
-  - 1 initialization
-  - FC layer
 - easy way of accessing nodes in network
   - eg. network.get_node("node_name")
 - real initialization nodes

@@ -179,6 +179,14 @@ class PreallocatedInitialization(SharedInitialization):
         return shared
 
 
+class GlorotUniform(WeightInitialization):
+
+    # FIXME add parameters to constructor (eg. initialization_gain)
+
+    def initialize_value(self, var):
+        return lasagne.init.GlorotUniform().sample(var.shape).astype(var.dtype)
+
+
 # TODO move to variable module
 
 VALID_TAGS = set("""
@@ -946,6 +954,10 @@ class IdentityNode(Fields.name, Node):
 
 class FullyConnectedNode(Fields.name.num_units[None], Node):
 
+    """
+    node wrapping lasagne's DenseLayer
+    """
+
     def compute_output(self):
         in_var = self.get_input()
         num_units = self.find_hyperparameter("num_units")
@@ -954,11 +966,13 @@ class FullyConnectedNode(Fields.name.num_units[None], Node):
             "W",
             shape=(num_inputs, num_units),
             is_shared=True,
+            tags=["parameter", "weight"]
         )
         self.create_variable(
             "b",
             shape=(num_units,),
             is_shared=True,
+            tags=["parameter", "bias"]
         )
         self.input_layer = lasagne.layers.InputLayer(
             in_var.shape
@@ -980,6 +994,27 @@ class FullyConnectedNode(Fields.name.num_units[None], Node):
         return dict(
             default=self.result,
         )
+
+
+class ReLUNode(Fields.name, Node):
+
+    """
+    rectified linear unit
+    """
+
+    def compute_output(self):
+        input = self.get_input()
+        in_variable = input.variable
+        out_variable = lasagne.nonlinearities.rectify(in_variable)
+        self.create_variable(
+            "result",
+            variable=out_variable,
+            shape=input.shape,
+        )
+        return dict(
+            default=self.result,
+        )
+
 
 # def test node_constructor_arguments():
 
@@ -1156,5 +1191,39 @@ hp_node = HyperparameterNode("d",
 network = hp_node.build()
 fn = network.function(["a"], ["d"])
 x = np.random.randn(3, 4, 5).astype(floatX)
-assert np.allclose(fn(x),
-                   np.dot(x.reshape(3, 20), np.ones((20, 14))) + np.ones(14))
+res = np.dot(x.reshape(3, 20), np.ones((20, 14))) + np.ones(14)
+assert np.allclose(fn(x), res)
+
+# def test_fully_connected_and_relu_node():
+nodes = [
+    InputNode("a", (3, 4, 5)),
+    FullyConnectedNode("b"),
+    ReLUNode("e"),
+]
+sequential = SequentialNode("c", nodes)
+hp_node = HyperparameterNode("d",
+                             sequential,
+                             num_units=14,
+                             shared_initializations=[OnesInitialization()])
+network = hp_node.build()
+fn = network.function(["a"], ["d"])
+x = np.random.randn(3, 4, 5).astype(floatX)
+res = np.dot(x.reshape(3, 20), np.ones((20, 14))) + np.ones(14)
+assert np.allclose(fn(x), np.clip(res, 0, np.inf))
+
+# def test_glorot_uniform_initialization():
+nodes = [
+    InputNode("a", (3, 4, 5)),
+    FullyConnectedNode("b"),
+    ReLUNode("e"),
+]
+sequential = SequentialNode("c", nodes)
+hp_node = HyperparameterNode("d",
+                             sequential,
+                             num_units=14,
+                             shared_initializations=[GlorotUniform()])
+network = hp_node.build()
+fn = network.function(["a"], ["d"])
+x = np.random.randn(3, 4, 5).astype(floatX)
+res = np.dot(x.reshape(3, 20), np.ones((20, 14))) + np.ones(14)
+assert np.allclose(fn(x), np.clip(res, 0, np.inf))
