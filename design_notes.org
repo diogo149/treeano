@@ -197,6 +197,7 @@
 - shared variables (eg. parameter tensors) are owned by a single node in the computation graph, and that node is responsible for their updates
 - node names are strings
 - a None value of a hyperparameter signifies that it is missing
+- all nodes will have a default output
 * random notes
 - model everything as a "layer"
   - including loss/objective
@@ -259,12 +260,23 @@
   - [X] FC layer
   - [X] 1 activation function
   - [X] 1 initialization
-  - [ ] 1 cost
+  - [X] 1 cost
+    - combine container w/ reference node
   - [ ] 1 updates
+- NOTE: hyperparameters are never accessed directly, because of propagation - should always use find_hyperparameter
+  - perhaps we can use some syntactic sugar to do an auto-search
+    - override __getattribute__ for hyperparameters
+    - override __setattribute__ to not work on hyperparameters
+    - some sugar to specify defaults as well?
+- function to wrap lasagne layer boilerplate
+  - input:
+    - lazy wrapped variable
+    - layer constructor
+    - kwargs for constructor
+  - output: lazy wrapped variable
 - test:
   - find_variables
   - preallocatedinitialization
-  - container node
   - theano.tag.test_value
     - http://deeplearning.net/software/theano/tutorial/debug_faq.html
 - easy way of accessing nodes in network

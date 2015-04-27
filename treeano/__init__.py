@@ -487,7 +487,7 @@ class TreeanoGraph(object):
     def input_edge_for_node(self, node_name, to_key="default"):
         """
         searches for the input node and from_key of a given node with a given
-        to_key
+        to_key, and returns None if not found
         """
         edges = self.computation_graph.edges(data=True)
         for edge_from, edge_to, datamap in edges:
@@ -503,6 +503,19 @@ class TreeanoGraph(object):
         edge_from, from_key = self.input_edge_for_node(node_name, to_key)
         node = self.name_to_node[edge_from]
         return node.output[from_key]
+
+    def output_edge_for_node(self, node_name, from_key="default"):
+        """
+        searches for the node and from_key, and returns None if not found
+
+        this is a trivial operation, made to parallel input_edge_for_node
+        """
+        node = self.name_to_node[node_name]
+
+        if from_key in node.output:
+            return (node_name, from_key)
+        else:
+            return None
 
     def output_for_node(self, node_name, from_key="default"):
         """
@@ -824,7 +837,8 @@ class WrapperNode(Node):
         input_edge = self.graph.input_edge_for_node(self.name)
         # there may not be an input
         # (eg. if the wrapper node is holding the input node)
-        if input_edge is not None:
+        self.wrapper_has_input = input_edge is not None
+        if self.wrapper_has_input:
             name_from, from_key = input_edge
             self.graph.add_dependency(name_from,
                                       child_name,
@@ -886,17 +900,19 @@ class ContainerNode(Fields.name.nodes, WrapperNode):
     """
     holds several nodes together without explicitly creating dependencies
     between them
-
-    returns the same value as input-ed into the node
     """
 
     def architecture_children(self):
         return self.nodes
 
-    def compute_output(self):
-        return dict(
-            default=self.get_input()
-        )
+    def init_state(self):
+        # by default, returns the output of its first child
+        # ---
+        # this was done because it's a sensible default, and other nodes
+        # assume that every node has an output
+        # additionally, returning the input of this node didn't work, because
+        # sometimes the node has no input (eg. if it contains the input node)
+        self.take_input_from(self.nodes[0].name)
 
 
 class HyperparameterNode(Fields.name.node.hyperparameters, WrapperNode):
@@ -1010,6 +1026,58 @@ class ReLUNode(Fields.name, Node):
             "result",
             variable=out_variable,
             shape=input.shape,
+        )
+        return dict(
+            default=self.result,
+        )
+
+
+LOSS_AGGREGATORS = {
+    'mean': T.mean,
+    'sum': T.sum,
+}
+
+
+class CostNode(Fields.name.target_reference.loss_function.loss_aggregator,
+               Node):
+
+    """
+    takes in a loss function and a reference to a target node, and computes
+    the aggregate loss between the nodes input and the target
+    """
+
+    def __init__(self,
+                 name,
+                 target_reference,
+                 loss_function=None,
+                 loss_aggregator=None):
+        super(CostNode, self).__init__(name,
+                                       target_reference,
+                                       loss_function,
+                                       loss_aggregator)
+
+    def init_state(self):
+        self.graph.add_dependency(self.target_reference,
+                                  self.name,
+                                  to_key="target")
+
+    def compute_output(self):
+        preds = self.get_input().variable
+        target = self.get_input(to_key="target").variable
+
+        loss_function = self.find_hyperparameter("loss_function")
+        self.cost = loss_function(preds, target)
+
+        loss_aggregator = self.find_hyperparameter("loss_aggregator", "mean")
+        loss_aggregator = LOSS_AGGREGATORS.get(loss_aggregator,
+                                               # allow user defined function
+                                               loss_aggregator)
+        self.aggregate_cost = loss_aggregator(self.cost)
+
+        self.create_variable(
+            "result",
+            variable=self.aggregate_cost,
+            shape=(),
         )
         return dict(
             default=self.result,
@@ -1220,10 +1288,36 @@ nodes = [
 sequential = SequentialNode("c", nodes)
 hp_node = HyperparameterNode("d",
                              sequential,
-                             num_units=14,
+                             num_units=1000,
                              shared_initializations=[GlorotUniform()])
 network = hp_node.build()
-fn = network.function(["a"], ["d"])
+fc_node = network.node.nodes[1]
+W_value = fc_node.W.value
+assert np.allclose(0, W_value.mean(), atol=1e-2)
+assert np.allclose(np.sqrt(2.0 / (20 + 1000)), W_value.std(), atol=1e-2)
+assert np.allclose(np.zeros(1000), fc_node.b.value)
+
+
+# def test_cost_node():
+network = HyperparameterNode(
+    "g",
+    ContainerNode("f", [
+        SequentialNode("e", [
+            InputNode("input", (3, 4, 5)),
+            FullyConnectedNode("b"),
+            ReLUNode("c"),
+            CostNode("cost", "target"),
+        ]),
+        InputNode("target", (3, 14)),
+    ]),
+    num_units=14,
+    loss_function=lasagne.objectives.mse,
+    shared_initializations=[OnesInitialization()]
+).build()
+fn = network.function(["input", "target"], ["cost"])
 x = np.random.randn(3, 4, 5).astype(floatX)
 res = np.dot(x.reshape(3, 20), np.ones((20, 14))) + np.ones(14)
-assert np.allclose(fn(x), np.clip(res, 0, np.inf))
+res = np.clip(res, 0, np.inf)
+y = np.random.randn(3, 14).astype(floatX)
+res = np.mean((y - res) ** 2)
+assert np.allclose(fn(x, y), res)
