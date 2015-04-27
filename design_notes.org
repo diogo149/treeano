@@ -189,6 +189,7 @@
   - eg. not from output to input
   - not necessarily true, but a simplifying assumption
 - parameter tensors are owned by a single node in the computation graph, and that node is responsible for their updates
+- node names are strings
 * random notes
 - model everything as a "layer"
   - including loss/objective

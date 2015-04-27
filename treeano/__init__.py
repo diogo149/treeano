@@ -256,7 +256,7 @@ class TreeanoGraph(object):
         assert to_name in self.name_to_node
         # make sure that to_key is unique for to-node
         for _, edge_to, datamap in self.computation_graph.edges(data=True):
-            if edge_to == to_name and datamap["to_key"] == to_key:
+            if edge_to == to_name and datamap.get("to_key") == to_key:
                 raise ValueError("Non-unique to_key(%s) found for node %s"
                                  % (to_key, to_name))
         # add the dependency
@@ -279,11 +279,10 @@ class TreeanoGraph(object):
         """
         edges = self.computation_graph.edges(data=True)
         for edge_from, edge_to, datamap in edges:
-            if edge_to == node_name and datamap["to_key"] == to_key:
+            if edge_to == node_name and datamap.get("to_key") == to_key:
                 from_key = datamap["from_key"]
                 return (edge_from, from_key)
-        raise ValueError("Input with to_key %s not found for node %s"
-                         % (to_key, node_name))
+        return None
 
     def input_for_node(self, node_name, to_key="default"):
         """
@@ -306,7 +305,7 @@ class TreeanoGraph(object):
 class Node(object):
 
     """
-    all nodes require a unique name attribute
+    all nodes require a unique name attribute as a string
     """
 
     @classmethod
@@ -365,18 +364,19 @@ class Node(object):
         root_node = self.architecture_copy()
         # build computation graph
         graph = TreeanoGraph(root_node)
-        for node in graph.nodes(order="architecture"):
-            # share graph between all nodes
-            node.graph = graph
-            # recursively init nodes
-            node.init_state()
-        # compute and cache outputs
+        # initialize state
         # ---
         # this is reversed so that outer nodes have their state initialized
         # before inner nodes - this is important for sequential nodes, since
         # the first child will depend on the input of the sequential node, and
         # we would like to make that dependency explicit
-        for node in reversed(graph.nodes(order="computation")):
+        for node in reversed(graph.nodes(order="architecture")):
+            # share graph between all nodes
+            node.graph = graph
+            # recursively init nodes
+            node.init_state()
+        # compute and cache outputs
+        for node in graph.nodes(order="computation"):
             output = node.compute()
             node.output = output
         return root_node
@@ -510,10 +510,14 @@ class SequentialNode(Fields.name.nodes, Node):
                                       children_names[1:]):
             self.graph.add_dependency(from_name, to_name)
         # set input of first child as default input of this node
-        name_from, from_key = self.graph.input_edge_for_node(self.name)
-        self.graph.add_dependency(name_from,
-                                  children_names[0],
-                                  from_key=from_key)
+        input_edge = self.graph.input_edge_for_node(self.name)
+        # there may not be an input (eg. if the sequential node is holding
+        # the input node)
+        if input_edge is not None:
+            name_from, from_key = input_edge
+            self.graph.add_dependency(name_from,
+                                      children_names[0],
+                                      from_key=from_key)
         # set input of this node as output of final child
         self.graph.add_dependency(children_names[-1],
                                   self.name,
@@ -545,6 +549,18 @@ class InputNode(Fields.name.shape.dtype[floatX].broadcastable[None], Node):
         )
         return dict(
             default=self.input_var,
+        )
+
+
+class IdentityNode(Fields.name, Node):
+
+    """
+    returns input
+    """
+
+    def compute(self):
+        return dict(
+            default=self.get_input()
         )
 
 
@@ -588,16 +604,41 @@ assert f == f.__class__.from_architecture_data(f.to_architecture_data())
 assert f == f.from_architecture_data(f.to_architecture_data())
 
 
-# def architecture_test_node_copy():
+# def test_architecture_test_node_copy():
 class foo(Fields.a.b.c, Node):
     pass
 
 f = foo(3, 4, 5)
 assert f == f.architecture_copy()
 
-# def identity_network():
+# def test_identity_network():
 input_node = InputNode("foo", (3, 4, 5))
 network = input_node.build()
 fn = network.function(["foo"], ["foo"])
+x = np.random.rand(3, 4, 5).astype(floatX)
+assert np.allclose(fn(x), x)
+
+# def test_sequential_identity_network():
+nodes = [
+    InputNode("foo", (3, 4, 5)),
+    IdentityNode("bar"),
+]
+sequential = SequentialNode("choo", nodes)
+network = sequential.build()
+fn1 = network.function(["foo"], ["foo"])
+fn2 = network.function(["foo"], ["bar"])
+fn3 = network.function(["foo"], ["choo"])
+x = np.random.rand(3, 4, 5).astype(floatX)
+assert np.allclose(fn1(x), x)
+assert np.allclose(fn2(x), x)
+assert np.allclose(fn3(x), x)
+
+# def test_nested_sequential_network():
+current_node = InputNode("foo", (3, 4, 5))
+for name in map(str, range(10)):
+    current_node = SequentialNode(name, [current_node,
+                                         IdentityNode(name + "i")])
+network = current_node.build()
+fn = network.function(["foo"], ["9"])
 x = np.random.rand(3, 4, 5).astype(floatX)
 assert np.allclose(fn(x), x)
