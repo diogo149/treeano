@@ -14,8 +14,6 @@ import networkx as nx
 floatX = theano.config.floatX
 ENABLE_TEST_VALUE = theano.config.compute_test_value != "off"
 
-# TODO move everything under treeano.core
-
 # TODO move to update_delta module
 
 
@@ -367,6 +365,34 @@ class TreeanoGraph(object):
         node = self.name_to_node[node_name]
         return node.output[from_key]
 
+    def architecture_ancestor_names(self, node_name):
+        """
+        returns a generator of ancestor names of the current node in the
+        architectural tree, in the order of being closer to the node
+        towards the root
+        """
+        current_name = node_name
+        while True:
+            current_parents = self.architectural_tree.successors(current_name)
+            if len(current_parents) == 0:
+                break
+            elif len(current_parents) > 1:
+                # in a tree, each node should have a single parent, except
+                # the root
+                assert False
+            else:
+                current_name, = current_parents
+                yield current_name
+
+    def architecture_ancestors(self, node_name):
+        """
+        returns a generator of ancestors of the current node in the
+        architectural tree, in the order of being closer to the node
+        towards the root
+        """
+        for ancestor_name in self.architecture_ancestor_names(node_name):
+            yield self.name_to_node[ancestor_name]
+
 # TODO move to node module
 
 
@@ -518,29 +544,45 @@ class Node(object):
         return fn
 
     def find_parameters(self, ):
-        # TODO fill in arguments (filters based on tag?)
+        # FIXME fill in arguments (filters based on tag?)
         return []
+
+    def find_hyperparameter(self, hyperparameter_name, default=None):
+        """
+        recursively search up the architectural tree for a node with the
+        given hyperparameter_name specified (returns the default if not
+        provided)
+        """
+        nodes = [self] + list(self.graph.architecture_ancestors(self.name))
+        for node in nodes:
+            value = node.get_hyperparameter(hyperparameter_name)
+            if value is not None:
+                return value
+        if default is not None:
+            return default
+        raise ValueError("Hyperparameter value of %s not specified in the "
+                         "current architecture"
+                         % hyperparameter_name)
 
     def get_hyperparameter(self, hyperparameter_name):
-        # FIXME recursively walk up graph
-        # for each node: self.graph = computation_graph
-        pass
-
-    def get_parameters(self):
         """
-        returns all parameters of a node
+        returns the value of the given hyperparameter, if it is defined for
+        the current node, otherwise returns None
 
-        optional to define (eg. if node has no parameters)
+        optional to define (no need to define if node has no hyperparameters)
         """
-        return []
+        if hyperparameter_name in self.constructor_arguments():
+            return getattr(self, hyperparameter_name)
+        else:
+            return None
 
     def architecture_children(self):
         """
         returns all child nodes of the given node
+
+        optional to define (no need to define if node has no children)
         """
         # TODO maybe allow for a filter here by node type
-        # TODO maybe have a composite node base class which throws an
-        # exception here
         return []
 
     def children_names(self):
@@ -578,6 +620,44 @@ class Node(object):
         return UpdateDeltas({})
 
 
+class WrapperNode(Node):
+
+    """
+    mixin to provide useful methods for nodes that wrap other nodes
+    """
+
+    def architecture_children(self):
+        raise NotImplementedError
+
+    def forward_input_to(self, child_name, to_key="default"):
+        """
+        forwards input of current node, if any, to the child node with the
+        given name and to_key
+        """
+        input_edge = self.graph.input_edge_for_node(self.name)
+        # there may not be an input
+        # (eg. if the wrapper node is holding the input node)
+        if input_edge is not None:
+            name_from, from_key = input_edge
+            self.graph.add_dependency(name_from,
+                                      child_name,
+                                      from_key=from_key,
+                                      to_key=to_key)
+
+    def take_input_from(self, child_name, from_key="default"):
+        self.graph.add_dependency(child_name,
+                                  self.name,
+                                  to_key="wrapper_output")
+
+    def compute_output(self):
+        """
+        by default, returns the value created when calling take_input_from
+        """
+        return dict(
+            default=self.get_input(to_key="wrapper_output")
+        )
+
+
 class ReferenceNode(Fields.name.reference, Node):
 
     """
@@ -594,7 +674,7 @@ class ReferenceNode(Fields.name.reference, Node):
         )
 
 
-class SequentialNode(Fields.name.nodes, Node):
+class SequentialNode(Fields.name.nodes, WrapperNode):
 
     """
     applies several nodes sequentially
@@ -609,26 +689,48 @@ class SequentialNode(Fields.name.nodes, Node):
                                       children_names[1:]):
             self.graph.add_dependency(from_name, to_name)
         # set input of first child as default input of this node
-        input_edge = self.graph.input_edge_for_node(self.name)
-        # there may not be an input (eg. if the sequential node is holding
-        # the input node)
-        if input_edge is not None:
-            name_from, from_key = input_edge
-            self.graph.add_dependency(name_from,
-                                      children_names[0],
-                                      from_key=from_key)
+        self.forward_input_to(children_names[0])
         # set input of this node as output of final child
-        self.graph.add_dependency(children_names[-1],
-                                  self.name,
-                                  to_key="last_child")
+        self.take_input_from(children_names[-1])
+
+
+class ContainerNode(Fields.name.nodes, WrapperNode):
+
+    """
+    holds several nodes together without explicitly creating dependencies
+    between them
+
+    returns the same value as input-ed into the node
+    """
+
+    def architecture_children(self):
+        return self.nodes
 
     def compute_output(self):
-        """
-        returns output of final child
-        """
         return dict(
-            default=self.get_input(to_key="last_child")
+            default=self.get_input()
         )
+
+
+class HyperparameterNode(Fields.name.node.hyperparameters, WrapperNode):
+
+    """
+    for providing hyperparameters to a subtree
+    """
+
+    def __init__(self, name, node, **hyperparameters):
+        # override init to allow for using keyword arguments
+        super(HyperparameterNode, self).__init__(name, node, hyperparameters)
+
+    def architecture_children(self):
+        return [self.node]
+
+    def get_hyperparameter(self, hyperparameter_name):
+        return self.hyperparameters.get(hyperparameter_name, None)
+
+    def init_state(self):
+        self.forward_input_to(self.node.name)
+        self.take_input_from(self.node.name)
 
 
 class InputNode(Fields.name.shape.dtype[floatX].broadcastable[None], Node):
@@ -661,29 +763,6 @@ class IdentityNode(Fields.name, Node):
         return dict(
             default=self.get_input()
         )
-
-
-class ContainerNode(Fields.name.nodes, Node):
-
-    """
-    holds several nodes together without explicitly creating dependencies
-    between them
-    """
-
-    def architecture_children(self):
-        return self.nodes
-
-    def compute_output(self):
-        pass
-
-
-class HyperparameterNode(Fields.name.node.hyperparameters, Node):
-
-    """
-    for providing hyperparameters to a subtree
-    """
-
-    # TODO
 
 
 # def test node_constructor_arguments():
@@ -803,3 +882,13 @@ assert np.allclose(init_value, fn2())
 assert np.allclose(init_value[0] + 42, fn2())
 assert np.allclose(init_value[0] + 84, fn1())
 assert np.allclose(init_value[0] + 84, fn1())
+
+
+# def test_hyperparameter_node():
+input_node = InputNode("a", (3, 4, 5))
+hp_node = HyperparameterNode("b", input_node, foo=3, bar=2)
+network = hp_node.build()
+assert network.get_hyperparameter("foo") == 3
+a_node = network.graph.name_to_node["a"]
+assert a_node.get_hyperparameter("foo") is None
+assert a_node.find_hyperparameter("foo") == 3

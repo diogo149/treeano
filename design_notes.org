@@ -190,6 +190,7 @@
   - not necessarily true, but a simplifying assumption
 - parameter tensors are owned by a single node in the computation graph, and that node is responsible for their updates
 - node names are strings
+- a None value of a hyperparameter signifies that it is missing
 * random notes
 - model everything as a "layer"
   - including loss/objective
@@ -248,22 +249,23 @@
     - SharedInitialization.fromNode(other_network, backup_initialization=NoInitialization())
       - set default to having no init
 * TODOs
-- create hyperparameter propagation
-  - test w/ multiply by constant nodes
 - create parameter searching
-- create updating
-  - handle generate_updates in function
-  - represent updates as deltas, not new values
-    - rationale: can do interesting things like add them together, or multiply by -1 to train adversarially
 - create initialization
 - test:
   - container node
   - theano.tag.test_value
     - http://deeplearning.net/software/theano/tutorial/debug_faq.html
+- initial wrap of lasagne
+  - 1 updates
+  - 1 initialization
+  - FC layer
 - fix architecture to data / from data / copy
   - problem: what if node has children in its state
     - some sort of walk needs to occur converting everything into data and back
 - wrap lasagne
+  - update code
+  - initialization
+  - layers
 - custom wrapper around variables
   - if shape is not given, print warning and calculate
     - theano.function([x, y], [x], on_unused_input="ignore")(2, 3)
