@@ -258,6 +258,18 @@
   - question: conceptually, how does one perform initialization with existing shareds
     - SharedInitialization.fromNode(other_network, backup_initialization=NoInitialization())
       - set default to having no init
+* features
+- hierarichical specification of hyperparameters
+  - customize each subnetwork
+- nodes can update themselves
+* planned features
+- serialization
+- easy variable sharing between networks
+- easy weight sharing between networks
+- auto-"chunk"-ing theano variables
+- automatically computing shape of node outputs
+- graph transformations
+  - eg. give me a new network with all ReLUs substituted for leaky ReLUs
 * TODOs
 - question: should nodes update themselves or should a higher level node do it?
   - pros if nodes updates themselves:
