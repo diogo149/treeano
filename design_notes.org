@@ -271,6 +271,20 @@
 - graph transformations
   - eg. give me a new network with all ReLUs substituted for leaky ReLUs
 * TODOs
+- architecture nodes ONLY have 2 things: hyperparameters and children
+  - in various formats
+  - how to effectively define these things in an easy to use way?
+    - to minimize overall work + maximize simplicity
+      - specifically in:
+        - __init__
+        - getting hyperparameters
+        - getting children
+        - serialization
+- how to define hyperparameters and children?
+- remove fields
+  - rationale:
+    - want to have logic in constructor?
+    - only benefit is __repr__, which can be provided by Node
 - question: should nodes update themselves or should a higher level node do it?
   - pros if nodes updates themselves:
     - nodes can make sure each update only occurs once
@@ -351,6 +365,20 @@
   - if everything is kept as a function from parameters -> theano var, it should compose well with recurrent nets
   - recurrent layers would probably behave something like a multiple input layer
   - if a net is recurrent, this seems like it would just take an orthogonal compilation step to convert the resulting net to use scan
+  - problem: we work with variables, not functions
+    - solution given input variables and an output variable, we should be able to construct a version of an output variable by doing a walk on the transitive closure of the output variable and replace the inputs
+      - thus we can get functions from variables
+  - make a symbolic_function
+    - input:
+      - inputs: variables [x, ...] (maybe computed variables)
+      - outputs: variables [y, ...]
+    - output:
+      - function that takes in replacements for inputs, and returns new outputs for those inputs
+    - how?
+      - take in new inputs
+      - perform a deepcopy on the outputs
+      - walk both the old and new outputs at the same time
+      - when a variable is in the old outputs from the old inputs, replace it with one of the new inputs
 - look into drawing:
   - https://github.com/Lasagne/Lasagne/issues/174
     - https://github.com/ebenolson/Lasagne/blob/master/examples/draw_net.py
