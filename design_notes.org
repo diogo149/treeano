@@ -262,6 +262,8 @@
 - hierarichical specification of hyperparameters
   - customize each subnetwork
 - nodes can update themselves
+- storing updates as changes in the values instead of new values
+  - allow arithmetic on the amount changes
 * planned features
 - serialization
 - easy variable sharing between networks
@@ -270,7 +272,30 @@
 - automatically computing shape of node outputs
 - graph transformations
   - eg. give me a new network with all ReLUs substituted for leaky ReLUs
+- recurrent networks
 * TODOs
+- update deltas
+  - how to compute?
+    - compute top-down in network
+      - so children can overwrite / add
+      - pros:
+        - more complex logic can happen in a single mode
+    - add it all together
+      - must be equivalent to an implicit top-down
+        - eg. in order for a node to zero out updates to its children, some sort of top-down process must occur
+      - pros
+        - simpler interface
+      - cons
+        - complexity must be implemented anyway - why not expose it
+  - implement __getitem__ for easier updates
+  - updatescalenode
+    - multiplies update by a constant
+      - eg. 0 (to freeze) or 10 (to update more)
+- scatchpad
+  - gradient caching node
+  - learning rate decay node
+    - represents learning rate parameter as theano var w/ updates
+  - javascript interface to expand nodes
 - architecture nodes ONLY have 2 things: hyperparameters and children
   - in various formats
   - how to effectively define these things in an easy to use way?
@@ -281,6 +306,8 @@
         - getting children
         - serialization
 - how to define hyperparameters and children?
+  - might want custom ways of inputting children
+    - eg. networkx DAG
 - remove fields
   - rationale:
     - want to have logic in constructor?
@@ -382,3 +409,5 @@
 - look into drawing:
   - https://github.com/Lasagne/Lasagne/issues/174
     - https://github.com/ebenolson/Lasagne/blob/master/examples/draw_net.py
+- live plotting/monitoring
+  - other tools (blocks / opendeep) use bokeh
