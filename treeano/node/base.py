@@ -101,7 +101,16 @@ class Node(object):
         for node in graph.nodes(order="computation"):
             output = node.compute_output()
             node.output = output
+        # sets that updates have not yet been computed
+        for node in graph.nodes(order="architecture"):
+            node.updates_computed = False
         return root_node
+
+    def __getitem__(self, node_name):
+        """
+        sugar for accessing nodes in a graph
+        """
+        return self.graph.name_to_node[node_name]
 
     def get_input(self, to_key="default"):
         """
@@ -126,6 +135,32 @@ class Node(object):
         # register variable for future searching of parameters
         self.variables.append(variable)
 
+    def compute_all_update_deltas(self):
+        """
+        computes and caches the update deltas of each node
+
+        this is not done in Node.build because the computation done may
+        be unnecessary
+        """
+        # if updates are already computed for this node, we are done
+        if not self.updates_computed:
+            update_deltas = UpdateDeltas()
+            # perform this tree walk top-down (from root to leaves), so that
+            # lower (more-specific) nodes can manipulate the updates of higher
+            # (more-general) nodes
+            for node in reversed(self.graph.nodes(order="architecture")):
+                # no node should have updates computed already if any node
+                # hasn't had it's updates computed
+                assert not node.updates_computed
+                node.updates_computed = True
+                node.update_deltas = update_deltas
+                res = node.compute_update_deltas(update_deltas)
+                # we want to make sure there is no confusion that the API
+                # should return a new value instead of mutating the passed in
+                # value
+                assert res is None
+        return self.update_deltas
+
     def function(self,
                  inputs,
                  outputs=None,
@@ -139,17 +174,12 @@ class Node(object):
 
         if generate_updates:
             # compute and cache updates
-            all_deltas = UpdateDeltas({})
-            for node in self.graph.nodes(order="computation"):
-                if not hasattr(node, "update_deltas"):
-                    update_deltas = node.compute_update_deltas()
-                    node.update_deltas = update_deltas
-                all_deltas += node.update_deltas
+            all_deltas = self.compute_all_update_deltas()
 
             # combine with manually specified updates
             if updates is not None:
                 update_deltas = UpdateDeltas.from_updates(updates)
-                all_deltas += update_deltas
+                all_deltas = all_deltas + update_deltas
 
             # convert into format expected by theano.function
             updates = all_deltas.to_updates()
@@ -250,13 +280,13 @@ class Node(object):
         """
         raise NotImplementedError
 
-    def compute_update_deltas(self):
+    def compute_update_deltas(self, update_deltas):
         """
-        computes updates of a node as UpdateDeltas
+        computes updates of a node and modifies the update_deltas that
+        the network passed in
 
         optional to define - if the node doesn't update itself
         """
-        return UpdateDeltas({})
 
 
 class WrapperNode(Node):

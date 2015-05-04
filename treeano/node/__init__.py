@@ -5,7 +5,8 @@ from simple import (ReferenceNode,
                     HyperparameterNode,
                     InputNode,
                     IdentityNode,
-                    CostNode)
+                    CostNode,
+                    UpdateScaleNode)
 from lasagne_nodes import (FullyConnectedNode,
                            ReLUNode,
                            SGDNode)

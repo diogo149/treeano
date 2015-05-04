@@ -6,9 +6,15 @@ import operator
 import toolz
 
 
+def _product(iterable):
+    return reduce(operator.mul, iterable, 1)
+
+
 class UpdateDeltas(object):
 
-    def __init__(self, deltas):
+    def __init__(self, deltas=None):
+        if deltas is None:
+            deltas = {}
         assert isinstance(deltas, dict)
         self.deltas = deltas
 
@@ -33,9 +39,23 @@ class UpdateDeltas(object):
         return cls(delta_dict)
 
     def apply(self, fn):
+        """
+        applies a function to all contained deltas and returns a new
+        UpdateDeltas instance
+        """
         return UpdateDeltas({k: fn(v) for k, v in self.deltas.items()})
 
+    def iapply(self, fn):
+        """
+        applies a function to all contained deltas in place
+        """
+        self.deltas = {k: fn(v) for k, v in self.deltas.items()}
+        return self
+
     def __add__(self, other):
+        """
+        adds a value, and returns a new instance of UpdateDeltas
+        """
         if isinstance(other, UpdateDeltas):
             return UpdateDeltas(toolz.merge_with(sum,
                                                  self.deltas,
@@ -43,20 +63,46 @@ class UpdateDeltas(object):
         else:
             return self.apply(lambda x: x + other)
 
-    def __mul__(self, other):
+    def __iadd__(self, other):
+        """
+        mutates the UpdateDeltas by adding a value
+        """
         if isinstance(other, UpdateDeltas):
-            def product(iterable):
-                return reduce(operator.mul, iterable, 1)
+            self.deltas = toolz.merge_with(sum,
+                                           self.deltas,
+                                           other.deltas)
+        else:
+            self.iapply(lambda x: x + other)
+        return self
+
+    def __mul__(self, other):
+        """
+        multiplies a value, and returns a new instance of UpdateDeltas
+        """
+        if isinstance(other, UpdateDeltas):
             # TODO this will currently make it such that if one instance
             # has updates and another doesn't, it will return the same value
             # (another approach would be returning 0 if the value isn't in
             # both)
             # TODO is multiply by another set of deltas ever desired?
-            return UpdateDeltas(toolz.merge_with(product,
+            return UpdateDeltas(toolz.merge_with(_product,
                                                  self.deltas,
                                                  other.deltas))
         else:
             return self.apply(lambda x: x * other)
+
+    def __imul__(self, other):
+        """
+        mutates the UpdateDeltas by multiplying a value
+        adds a value, and returns a new instance of UpdateDeltas
+        """
+        if isinstance(other, UpdateDeltas):
+            self.deltas = toolz.merge_with(_product,
+                                           self.deltas,
+                                           other.deltas)
+        else:
+            self.iapply(lambda x: x * other)
+        return self
 
     def __getitem__(self, key):
         return self.deltas.get(key, 0)

@@ -88,7 +88,7 @@ class SGDNode(WrapperNode,
         self.forward_input_to(self.node.name)
         self.take_input_from(self.node.name)
 
-    def compute_update_deltas(self):
+    def compute_update_deltas(self, update_deltas):
         cost = self.get_input(to_key="cost").variable
         parameters = self.find_variables_in_subtree(["parameter"])
         learning_rate = self.find_hyperparameter("learning_rate")
@@ -96,4 +96,4 @@ class SGDNode(WrapperNode,
                                       [parameter.variable
                                        for parameter in parameters],
                                       learning_rate)
-        return UpdateDeltas.from_updates(updates)
+        update_deltas += UpdateDeltas.from_updates(updates)

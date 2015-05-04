@@ -8,13 +8,14 @@ import lasagne
 
 
 import treeano
-from treeano import Node, UpdateDeltas
+from treeano import Node, WrapperNode, UpdateDeltas
 from treeano.initialization import GlorotUniform
 from treeano.node import (InputNode,
                           SequentialNode,
                           IdentityNode,
                           HyperparameterNode,
                           CostNode,
+                          UpdateScaleNode,
                           ContainerNode,
                           FullyConnectedNode,
                           ReLUNode,
@@ -132,8 +133,8 @@ def test_toy_updater_node():
                 default=self.state
             )
 
-        def compute_update_deltas(self):
-            return UpdateDeltas({
+        def compute_update_deltas(self, update_deltas):
+            update_deltas += UpdateDeltas({
                 self.state.variable: 42
             })
 
@@ -327,3 +328,46 @@ def test_sgd_node():
         current_cost = fn2(x, y)
         assert prev_cost > current_cost
         prev_cost = current_cost
+
+
+def test_update_scale_node():
+
+    class ConstantUpdaterNode(WrapperNode, fields.Fields.name.node.value):
+
+        def architecture_children(self):
+            return [self.node]
+
+        def init_state(self):
+            self.forward_input_to(self.node.name)
+            self.take_input_from(self.node.name)
+
+        def compute_update_deltas(self, update_deltas):
+            parameters = self.find_variables_in_subtree(["parameter"])
+            for parameter in parameters:
+                update_deltas[parameter.variable] = self.value
+
+    # testing constant updater
+    network = ConstantUpdaterNode(
+        "cun",
+        value=5,
+        node=SequentialNode("seq", [
+            InputNode("i", (1, 2, 3)),
+            FullyConnectedNode("fc", num_units=5)
+        ]),
+    ).build()
+    ud = network.compute_all_update_deltas()
+    assert ud[network.node.nodes[1].W.variable] == 5
+
+    network = ConstantUpdaterNode(
+        "cun",
+        value=5,
+        node=SequentialNode("seq", [
+            InputNode("i", (1, 2, 3)),
+            UpdateScaleNode("usn",
+                            FullyConnectedNode("fc", num_units=5),
+                            scale_factor=-2)
+        ]),
+    ).build()
+    ud = network.compute_all_update_deltas()
+    print(ud[network["fc"].W.variable])
+    assert ud[network["fc"].W.variable] == -10

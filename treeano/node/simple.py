@@ -1,3 +1,8 @@
+"""
+a bunch of simple, composable nodes - not necessarily simple in their
+implementation, but simple in that they do a single thing
+"""
+
 from __future__ import division, absolute_import
 from __future__ import print_function, unicode_literals
 
@@ -167,3 +172,21 @@ class CostNode(Node,
         return dict(
             default=self.result,
         )
+
+
+class UpdateScaleNode(WrapperNode, Fields.name.node.scale_factor):
+
+    def architecture_children(self):
+        return [self.node]
+
+    def init_state(self):
+        self.forward_input_to(self.node.name)
+        self.take_input_from(self.node.name)
+
+    def compute_update_deltas(self, update_deltas):
+        # FIXME parameterize which nodes to search for (eg. maybe we want
+        # to scale state updates)
+        parameters = self.find_variables_in_subtree(["parameter"])
+        for parameter in parameters:
+            print(parameter.variable, update_deltas[parameter.variable])
+            update_deltas[parameter.variable] *= self.scale_factor
