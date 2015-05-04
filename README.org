@@ -14,6 +14,10 @@ This is currently a work in progress!
 - networkx
 - [[https://github.com/ionelmc/python-fields][fields]]
 - toolz
+* Dev dependencies
+- nose
+- sniffer
+  - optional, to auto-run nosetests
 * What's with the name?
 - DAGano doesn't have the same ring to it
 - architectures are constructed as immutable trees, and this allows you to customize the behavior of subtrees instead of manipulating a single global network
