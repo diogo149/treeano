@@ -339,11 +339,161 @@
   - eg. give me a new network with all ReLUs substituted for leaky ReLUs
 - recurrent networks
 * TODOs
-- update deltas
-  - updatescalenode
-    - multiplies update by a constant
-      - eg. 0 (to freeze) or 10 (to update more)
-- ------ UPDATE DELTAS ------
+- use an exception for not having a hyperparameter set instead of None
+- use assertions for outputs that should not be used
+- redo node impl
+  - node impl: provides sane default functionality - that can easily be overwritten
+    - hash, str, repr
+    - assert there is a name
+    - return update deltas that are added in to previous update deltas
+    - build shortcut
+  - have base node class have a minimal API with no defaults
+    - get_hyperparameter
+    - compute_update_deltas
+    - to_architecture_data
+    - from_architecture_data
+    - architecture_children
+    - TODO
+      - init_state
+      - compute_output
+  - add as functions
+    - architecture_copy
+    - children_names
+  - transfer functionality to network : maybe merge with "graph"
+    - build
+    - __getitem__
+    - function
+    - compute_all_update_deltas
+    - create_variable
+  - create partially applied network that is passed into nodes that allows for easy creation of state
+- theano.scan(strict=True)
+  - problem: issue with passing in random variables
+  - options
+    - ignore and use strict=False
+    - have a flag to ensure strict=True
+      - somehow verify that the graph has no random variables
+- how to handle updates for RandomStates?
+  - options:
+    - ignore it and have default_updates handle it
+      - it would have to be explicitly ignored by scan
+    - add it to the updates
+      - problem: what if there are multiple scans - adding the updates don't make sense in this case
+      - pros:
+        - easier
+- when adding updates together, it might cause overflows / auto-promotion
+  - TODO make sure to recast into original dtype when combining updates
+- workflows / hooks
+  - distillation
+    - input: network1, outputkey1, network2, outputkey2, data generator
+  - resuming an in-training model
+  - optionally resuming an in-training model, or restarting
+  - printing progressbar after each epoch
+  - checkpoint model every x batches / chunks
+  - test on validation set every x chunks
+  - visualization
+    - print filters
+    - find most similar inputs to input
+      - given:
+        - query input
+        - possible inputs
+        - layer for representation to use
+    - given a certain unit, find which inputs fire hardest
+    - find inputs that are the most wrong
+    - find input that maximally activates for class
+      - with constant norm or L1/L2 loss
+    - histogram of values of a tensor
+      - eg. output of a layer
+      - eg. gradient of a weight
+    - image visualizations
+      - show filter activations for given images
+      - show grad(image_class, input)
+        - behaves like importance map
+      - show input patch that maximally activates a conv neuron
+      - deconvolutional networks
+  - monitoring
+    - printing out certain values
+      - eg. loss
+      - eg. average magnitude of gradient
+    - alerting on certain conditions
+      - eg. nan's or inf's
+      - eg. magnitude of gradient/weight matrix too high
+- blocks callback hooks
+    before_training : bool
+        If ``True``, :meth:`do` is invoked before training.
+    before_first_epoch : bool
+        If ``True``, :meth:`do` is invoked before the first epoch.
+    before_epoch : bool
+        If ``True``, :meth:`do` is invoked before every epoch.
+    on_resumption : bool, optional
+        If ``True``, :meth:`do` is invoked when training is resumed.
+    on_interrupt : bool, optional
+        If ``True``, :meth:`do` is invoked when training is interrupted.
+    after_epoch : bool
+        If ``True``, :meth:`do` is invoked after every epoch.
+    after_batch: bool
+        If ``True``, :meth:`do` is invoked after every batch.
+    after_training : bool
+        If ``True``, :meth:`do` is invoked after training.
+    after_n_epochs : int, optional
+        If not ``None``, :meth:`do` is invoked when `after_n_epochs`
+        epochs are done.
+    every_n_epochs : int, optional
+        If not ``None``, :meth:`do` is invoked after every n-th epoch.
+    after_n_batches : int, optional
+        If not ``None``, :meth:`do` is invoked when `after_n_batches`
+        batches are processed.
+    every_n_batches : int, optional
+        If not ``None``, :meth:`do` is invoked after every n-th batch.
+- adding to updates vs adding to cost
+  - adding to updates is definitely necessary
+    - because some state is just updated
+      - eg. rolling mean/variance
+  - adding to cost
+    - pros
+      - if you want to use the same learning algorithm (eg. Adam), it is more convenient
+    - cons
+      - might be confusing to have 2 ways to do this
+    - how?
+      - options
+        - add to a global cost
+        - don't automatically add to costs
+          - thus need to manually add to costs
+        - have the ability to query for cost of a subtree
+- canopy
+  - layer on top of treeano
+  - handles non-theano modularity
+  - nice reference
+    - the only layer above this is the emergent layer (your code)
+  - naming
+    - should this be mixed with treeano? if so, should the core stuff be treeano.core or treeano.understory?
+- have nodes take in a network state instead of changing node state
+- a bunch of the things that seem like lasagne annoyances are actually for good reason
+  - ie. get_output_for to allow calculating output w.r.t. anything
+    - it behaves more like a function
+- how to save state part-way through training
+- seems like a very reasonable assumption that training might involve arbitrary python code execution
+  - eg. with deep q learning, might have to simulate a game
+- consider hooks
+  - implement like clojure handler wrappers?
+    - ability to edit givens, updates, etc.
+  - would allow alternative workflows
+    - eg.
+      - curriculum learning
+      - adding preprocessing to a model
+      - saving plots
+      - saving model
+  - which hooks?
+    - creation of a function
+    - training each batch
+    - training each chunk
+  - question: are hooks local or global
+- treeano should not have hooks
+  - there should be a clean separation of mapping from parameterization to theano variable and all the extra (modular) logic
+- consider linking independent functions together in class
+  class Foo:
+    something1 = some_fn
+    something2 = other_fn
+- PYTHONPATH=~/repos/treeano:$PYTHONPATH sniffer
 - grep for FIXME's
   - separate out lasagne initializations from initializations
 - sugar:
@@ -371,6 +521,8 @@
   - not a staticmethod, because some transformations require object state
     - eg. SPPnet layer requires shapes
 - scratchpad
+  - temperaturesoftmaxnode
+  - temperature softmax + categorical cross entropy + rescaling due to temperature (* T^2)
   - gradient caching node
     - allows calculating derivatives of parameters with respect to loss high up in the tree (optimization)
   - learning rate decay node
@@ -439,6 +591,7 @@
       - to substitute in only a subtree
     - adding different initialization
 - break up into different modules
+- make insides of update algorithms (eg. intermediates in nesterov momentum inspectable)
 - create pretty printing of nodes
   - like how theano prints it's computation graph
 - demos
@@ -446,6 +599,9 @@
   - fully connected layer mnist with num_hidden, activation specified once
   - separate conv layers from FC layers
     - different dropout and L2 for conv
+- how to do things guide: (thinking in treeano guide)
+  - freezing a section
+    - use UpdateScaleNode, scale to 0
 - use class decorator for registering classes for serialization
   - look into using a metaclass in the future
 - consider as a name: treehano
@@ -476,3 +632,11 @@
     - https://github.com/ebenolson/Lasagne/blob/master/examples/draw_net.py
 - live plotting/monitoring
   - other tools (blocks / opendeep) use bokeh
+- look into attentional interfaces
+  - https://github.com/bartvm/blocks/blob/master/blocks/bricks/attention.py
+- datasets
+  - RNN
+    - Blogger Dataset: http://www.cs.biu.ac.il/~koppel/blogs/blogs.zip (Age and gender data)
+      - from https://github.com/IndicoDataSolutions/Passage
+    - use MNIST, scan one vector at a time
+      - https://github.com/IndicoDataSolutions/Passage/blob/master/examples/mnist.py
