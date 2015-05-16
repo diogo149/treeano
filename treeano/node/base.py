@@ -263,7 +263,7 @@ class Node(object):
     def init_state(self):
         """
         defines all additional state (eg. parameters), possibly in a lazy
-        manner
+        manner, as well as additional dependencies
 
         also for defining other stateful values (eg. initialization schemes,
         update schemes)
