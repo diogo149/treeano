@@ -12,6 +12,7 @@ This is currently a work in progress!
 - theano
 - lasagne
 - networkx
+- six
 - [[https://github.com/ionelmc/python-fields][fields]]
 - toolz
 * Dev dependencies

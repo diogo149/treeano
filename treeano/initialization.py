@@ -37,7 +37,7 @@ class SharedInitialization(object):
     def initialize_value(self, var):
         """
         creates appropriately initialized value for the given
-        LazyWrappedVariable
+        VariableWrapper
         """
         raise NotImplementedError
 

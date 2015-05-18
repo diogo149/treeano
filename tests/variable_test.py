@@ -10,7 +10,7 @@ import treeano
 
 def test_variable1():
     i = T.iscalar()
-    o = treeano.variable.LazyWrappedVariable("foo", variable=i).variable
+    o = treeano.variable.VariableWrapper("foo", variable=i).variable
     fn = theano.function([i], o)
     for _ in range(10):
         x = np.random.randint(1e6)
@@ -18,9 +18,9 @@ def test_variable1():
 
 
 def test_variable2():
-    s = treeano.variable.LazyWrappedVariable("foo",
-                                             shape=(3, 4, 5),
-                                             is_shared=True)
+    s = treeano.variable.VariableWrapper("foo",
+                                         shape=(3, 4, 5),
+                                         is_shared=True)
     assert s.value.sum() == 0
     x = np.random.randn(3, 4, 5)
     s.value = x

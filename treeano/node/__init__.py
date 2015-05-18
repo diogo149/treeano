@@ -10,3 +10,6 @@ from simple import (ReferenceNode,
 from lasagne_nodes import (FullyConnectedNode,
                            ReLUNode,
                            SGDNode)
+
+
+import base

@@ -11,6 +11,7 @@ ENABLE_TEST_VALUE = theano.config.compute_test_value != "off"
 
 VALID_TAGS = set("""
 input
+output
 weight
 bias
 parameter
@@ -19,11 +20,10 @@ state
 """.split())
 
 
-class LazyWrappedVariable(object):
+class VariableWrapper(object):
 
     def __init__(self,
                  name,
-                 variable_map=None,
                  shape=None,
                  dtype=None,
                  broadcastable=None,
@@ -31,9 +31,9 @@ class LazyWrappedVariable(object):
                  tags=None,
                  ndim=None,
                  variable=None,
-                 shared_initializations=None):
+                 shared_initializations=None,
+                 relative_network=None):
         self.name = name
-        self.variable_map = variable_map
         self.shape_ = shape
         self.dtype_ = dtype
         self.broadcastable_ = broadcastable
@@ -42,7 +42,20 @@ class LazyWrappedVariable(object):
         self.ndim_ = ndim
         self.variable_ = variable
         self.shared_initializations = shared_initializations
+        # relative_network is provided so that variables can auto-compute
+        # their shape
+        self.relative_network = relative_network
         self.validate()
+
+    def to_state(self, name):
+        return dict(
+            shape=self.shape_,
+            dtype=self.dtype_,
+            broadcastable=self.broadcastable_,
+            is_shared=self.is_shared_,
+
+        )
+        pass
 
     def validate(self):
         shape = self.shape_
@@ -101,21 +114,31 @@ class LazyWrappedVariable(object):
 
     @property
     def ndim(self):
-        if self.shape_ is not None:
-            self.ndim_ = len(self.shape_)
-        assert self.ndim_ is not None
+        if self.ndim_ is None:
+            if self.variable_ is not None:
+                self.ndim_ = self.variable_.ndim
+            elif self.shape_ is not None:
+                self.ndim_ = len(self.shape_)
+            else:
+                raise ValueError("ndim not defined")
         return self.ndim_
 
     @property
     def dtype(self):
         if self.dtype_ is None:
-            self.dtype_ = theano.config.floatX
+            if self.variable_ is not None:
+                self.dtype_ = self.variable_.dtype
+            else:
+                self.dtype_ = theano.config.floatX
         return self.dtype_
 
     @property
     def broadcastable(self):
         if self.broadcastable_ is None:
-            self.broadcastable_ = (False, ) * self.ndim
+            if self.variable_ is not None:
+                self.broadcastable_ = self.variable_.broadcastable
+            else:
+                self.broadcastable_ = (False, ) * self.ndim
         return self.broadcastable_
 
     @property
@@ -147,13 +170,6 @@ class LazyWrappedVariable(object):
             if (not self.is_shared) and ENABLE_TEST_VALUE:
                 test_value = np.random.rand(*self.shape).astype(self.dtype)
                 variable.tag.test_value = test_value
-
-        # add current variable to variable map
-        if self.variable_map is not None:
-            if self.variable_ in self.variable_map:
-                assert self.variable_map[self.variable_] is self
-            else:
-                self.variable_map[self.variable_] = self
 
         return self.variable_
 

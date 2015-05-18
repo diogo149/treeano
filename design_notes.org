@@ -241,17 +241,124 @@
       - note: should assert that compute_update_deltas returns None to make the interface clearly be one for mutation
     - because update deltas will be shared and mutable, their api should be made such that it isn't ease to accidentally mess than up
       - eg. use __iadd__ instead of __add__
-* best practices
-- store all constructor arguments as is
-  - don't mutate them
-  - don't overwrite them
-  - don't forget to store them as an attribute
-  - rationale: this allows serialization of the original layer
-- use https://github.com/ionelmc/python-fields for constructing nodes
-  - helps follow good constructor practices, and provides a nice string representation
-  - make sure that the fields super class is defined after the node super class
-    - this is so that node methods take precedence
-      - this was a issue particularly for __hash__
+- should computing output and update deltas happen at the same time?
+  - no, because some node's updates will require outputs computed later in the DAG
+    - eg. recurrent state would naturally have a loop
+- the input arguments for computing the output of a node should be a function of the network
+  - for nodes that dynamically get new input keys
+    - eg. a node that is sent input
+      - eg. a cost node that all costs are sent to
+- node API
+  - architecture nodes ONLY have 2 things: hyperparameters and children
+    - in various desired formats
+      - might want custom ways of inputting children
+        - eg. networkx DAG
+      - might want custom ways of inputting hyperparameters
+        - eg. hyperparameter node
+          - takes in kwargs
+        - eg. something that provides stateful hyperparameters
+    - how to effectively define these things in an easy to use way?
+      - to minimize overall work + maximize simplicity
+        - specifically in:
+          - __init__
+          - getting hyperparameters
+          - getting children
+          - serialization
+    - how to define hyperparameters and children?
+  - what is a node composed of?
+    - state
+      - name
+      - hyperparameters
+      - children
+    - functionality
+      - setting dependencies
+      - initializing network state
+  - which methods should be instance methods, which should be class methods?
+    - architectural logic should be instance methods
+      - stateless
+      - could be shared between multiple networks
+    - network logic should be class methods
+      - by updating a shared network state
+  - why should the node computations methods be class methods?
+    - because it should not depend on the parameters of the node at all
+      - hyperaparameters should be read from the network
+      - inputs should be specified externally (input_keys)
+  - should they be required to be classmethod's / staticmethod's?
+    - pros
+      - intention is clearer
+    - cons
+      - more complex interface for extension
+    - conclusion
+      - no - keep it simple and trust the user not to do something crazy
+- where should state be stored?
+  - all network state should be stored in a network specific object, not in the nodes
+- why not just wrap blocks?
+  - pros
+    - it seems like there are a lot of parts of it
+      - eg. recurrence, attentional, monitoring
+  - cons
+    - additional complexity
+    - it comes with features that are tied togther that we wouldn't want tied together
+    - it's recurrence appears to be rather limited
+      - the recurrence needs to occur in the apply() method
+      - can't use other blocks inside recurrence (?)
+- serializing network state
+  - do we want to serialize network state, and if so, how do we do it?
+    - specifically, not the values of shared variables (which will be serializable for sure), but the values of everything else
+    - we probably don't want to serialize theano variables
+    - most, if not all, of the state should be recomputable through the architectural tree
+    - because treeano is a function from hyperparameters to theano variables, we know that the only state to store is that of shared variables
+      - thus
+    - there will be other intermediates states (eg. the state of an initialization algorithm (eg. Andrew Saxe initialization)) but those are simply means to an end (where the end is theano variables), which should be already "done" by the time network.build() is done
+  - conclusion:
+    - serialization of the architecture and shared variable state should be sufficient
+- there needs to be separate concepts for function outputs and actual outputs
+  - function outputs
+    - the output of compute_output
+    - function from input variables to output variables representing the computation
+    - variables in subsections of the computation graph
+  - actual outputs
+    - the value of the node with respect to real input in the network
+    - variables in the computation graph
+  - most of the time they can be the same, but they will be different in the case of output transformations
+    - eg. scan / recurrent networks
+      - function outputs will be functions for a single time step
+      - actual outputs will be sequences over time
+  - how to implement it?
+    - keep an original_variables map
+      - mapping from node_name -> output_name -> variable
+      - for all the original outputs of a node
+    - keep a current_variables map
+      - mapping from node_name -> output_name -> variable
+      - for mutated final outputs of a node
+      - a scan/recurrent node can edit this map to contain the "actual outputs"
+    - network has methods (something like below, not necessarily the exact same name):
+      - add_variable
+        - adds variable to both original_variables and current_variables
+      - replace_variable
+        - adds variable to only the final outputs
+    - NOTE: names can change in the future
+  - rationale for keeping the original variables:
+    - these variables can be seen as a function from input to output of a unit
+- adding to updates vs adding to cost
+  - adding to updates is definitely necessary
+    - because some state is just updated
+      - eg. rolling mean/variance
+  - adding to cost
+    - pros
+      - if you want to use the same learning algorithm (eg. Adam), it is more convenient
+    - cons
+      - might be confusing to have 2 ways to do this
+    - how?
+      - options
+        - add to a global cost
+        - don't automatically add to costs
+          - thus need to manually add to costs
+        - have the ability to query for cost of a subtree
+        - send the cost into a node that accumulates it, with a default node name
+          - eg.
+            - Sequential([L2RegularizationNode(), SendTo(node_name="cost")])
+            - SumNode(name="cost") # sums all inputs
 * assumptions
 - shared variables (eg. parameter tensors) will have a fixed size
 - nodes are in a directed acyclic graph
@@ -261,8 +368,8 @@
   - not necessarily true, but a simplifying assumption
 - shared variables (eg. parameter tensors) are owned by a single node in the computation graph, and that node is responsible for their updates
 - node names are strings
-- a None value of a hyperparameter signifies that it is missing
 - all nodes will have a default output
+- shape dimensions of None mean that the shape is unspecified
 * random notes
 - model everything as a "layer"
   - including loss/objective
@@ -339,39 +446,63 @@
   - eg. give me a new network with all ReLUs substituted for leaky ReLUs
 - recurrent networks
 * TODOs
-- use an exception for not having a hyperparameter set instead of None
-- use assertions for outputs that should not be used
-- redo node impl
-  - node impl: provides sane default functionality - that can easily be overwritten
-    - hash, str, repr
-    - assert there is a name
-    - return update deltas that are added in to previous update deltas
-    - build shortcut
-  - have base node class have a minimal API with no defaults
-    - get_hyperparameter
-    - compute_update_deltas
-    - to_architecture_data
-    - from_architecture_data
-    - architecture_children
-    - TODO
-      - init_state
-      - compute_output
-  - add as functions
-    - architecture_copy
-    - children_names
-  - transfer functionality to network : maybe merge with "graph"
-    - build
-    - __getitem__
-    - function
-    - compute_all_update_deltas
-    - create_variable
-  - create partially applied network that is passed into nodes that allows for easy creation of state
-- theano.scan(strict=True)
-  - problem: issue with passing in random variables
+** v2
+- order of things:
+  - setup directory structure
+  - commit as backward compatible
+  - start ripping out the insides of everything
+- directory structure
+  - treeano/base.py for base node
+  - treeano/sugar.py for node impls
+  - treeano/nodes/ for all extensions
+- FIXME graph uses node.output
+  - ag 'node\.'
+  - graph uses the old node api
+  - replace graph.output_for_node with accessing node state
+    - so that one can also access weights and such in Network.function
+- test
+  - unit test that before and after building a network, the state of a node is the same
+  - test find_hyperparameter
+- remove python-fields
+  - rationale:
+    - want to have logic in constructor?
+    - only benefit is __repr__, which can be provided by Node
+- rename fully connected node to AffineMappingNode
+- how should "cost" be treated?
   - options
-    - ignore and use strict=False
-    - have a flag to ensure strict=True
-      - somehow verify that the graph has no random variables
+    - as a specific node
+      - pros
+        - explitict
+        - seems very flexible
+      - cons
+        - makes it difficult to combine costs together
+          - eg. L2 loss
+          - would have to each have each "extra" cost specify the main cost, or have the main cost specify each "extra cost"
+            - neither option is all that great
+    - as a network property / state
+      - eg. there is a network state with a key (default="global_loss" or "loss" or "cost") that update nodes by default add to
+      - pros
+        - makes it easy to add losses together
+      - cons
+        - new question: when are values added to the cost?
+          - during compute_output?
+        - uses addition as an implicit function for composition - is this always desired?
+    - as the output of a node, then using a SendToNode to send the values as input of a different node (ie. a SummedCostNode)
+      - pros
+        - allows performing post-processing of values
+          - eg.
+            - multiplying by a value
+            - taking a square
+            - making it a margin loss instead
+            - composing multiple losses with a max instead of addition
+      - cons
+        - more verbose
+  - conclusion
+    - use output of a node, and a SendToNode
+- work on RNNs
+** misc
+- make sure shapes can handle None's for polymorphism
+- use assertions for outputs that should not be used
 - how to handle updates for RandomStates?
   - options:
     - ignore it and have default_updates handle it
@@ -380,8 +511,138 @@
       - problem: what if there are multiple scans - adding the updates don't make sense in this case
       - pros:
         - easier
-- when adding updates together, it might cause overflows / auto-promotion
-  - TODO make sure to recast into original dtype when combining updates
+- potential issue: sharing variables between networks when test_value's are enabled
+  - if one network uses the same variables, but with different shapes, the test_value's might break
+- treeano should not have hooks
+  - there should be a clean separation of mapping from parameterization to theano variable and all the extra (modular) logic
+- grep for FIXME's
+  - separate out lasagne initializations from initializations
+- try dropout network w/ train / test
+  - hyperparameter: have default of enable_dropout be deterministic
+- function to wrap lasagne layer boilerplate
+  - input:
+    - lazy wrapped variable
+    - layer constructor
+    - kwargs for constructor
+  - output: lazy wrapped variable
+- test:
+  - find_variables
+  - preallocatedinitialization
+  - theano.tag.test_value
+    - http://deeplearning.net/software/theano/tutorial/debug_faq.html
+- real initialization nodes
+  - using a stateful class and a hyperparameternode is very wrong
+    - just a hack
+  - want to represent the parameters of the initialization as hyperparameters and have them be clone-able/inspect-able
+- PreallocatedInitializationNode
+  - sets hyperparameters:
+    - shared_initializations
+    - preallocated_initialization
+  - rationale for setting both:
+    - if no initialization scheme is given, then it uses the former
+    - if another initialization scheme is given within the network, that scheme still has the choice of finding a preallocated_initialization hyperparameter and prioritizing that
+    - this allows no hard-coded preference to preallocation in the core code
+- fix architecture to data / from data / copy
+  - problem: what if node has children in its state
+    - some sort of walk needs to occur converting everything into data and back
+- wrap lasagne
+  - update code
+  - initialization
+  - layers
+- custom wrapper around variables
+  - if shape is not given, print warning and calculate
+    - theano.function([x, y], [x], on_unused_input="ignore")(2, 3)
+- add node metadata
+  - eg. "update" "cost" "output" "hyperparameter"
+  - this will allow for easier filtering when doing architecture transformations
+    - eg. remove update nodes in this subtree
+    - can use jQuery like syntax
+      - something("node_name", {"type": "update"}).replace(lambda x: ...)
+- create graph transformations
+  - eg.
+    - substitution
+      - eg. replace ReLU -> PReLU / leaky ReLU
+        - use an update-in operation on the architecture as data that does a tree walk
+      - to substitute in only a subtree
+    - adding different initialization
+- make insides of update algorithms inspectable (eg. intermediates in nesterov momentum)
+** code quality
+- PYTHONPATH=~/repos/treeano:$PYTHONPATH sniffer
+- testing
+** guides / demos / concrete things to build
+- temperaturesoftmaxnode
+- temperature softmax + categorical cross entropy + rescaling due to temperature (* T^2)
+- gradient caching node
+  - allows calculating derivatives of parameters with respect to loss high up in the tree (optimization)
+- learning rate decay node
+  - represents learning rate parameter as theano var w/ updates
+- demos
+  - vanilla mnist
+  - fully connected layer mnist with num_hidden, activation specified once
+  - separate conv layers from FC layers
+    - different dropout and L2 for conv
+- how to do things guide: (thinking in treeano guide)
+  - freezing a section
+    - use UpdateScaleNode, scale to 0
+** future
+- use metaclass for registering classes for serialization
+- look into drawing:
+  - https://github.com/Lasagne/Lasagne/issues/174
+    - https://github.com/ebenolson/Lasagne/blob/master/examples/draw_net.py
+- javascript interface to expand nodes
+  - more expanded = more low-level
+- think about:
+  - recursive NN
+  - RNN
+    - beam search
+    - bidirectional
+    - nested recurrence
+      - eg. scan in scan (like a non-fixed size ReNet)
+    - attentional models
+      - look into attentional interfaces
+        - https://github.com/bartvm/blocks/blob/master/blocks/bricks/attention.py
+- recurrent nets
+  - nodes
+    - RecurrentNode
+      - for controlling theano.scan
+      - how?
+        - find all outputs for node
+          - outputs from graph
+          - eg. the result of every node is an output
+        - find all input sequences for node
+          - inputs into graph
+        - find all initial states for node
+          - eg. RecurrentStateNode
+        - find all non_sequences
+        - performs scan for all intermediate output values
+        - set the variables in the graph to have the appropriate output values (sequences)
+    - RecurrentStateNode
+      - contains inital state, that may or may not be a learned parameter
+      - sets value at time t to be its input at time t
+  - computing shape of a scan node
+    - for each output variable: set shape to (None, ) + (shape of output variable)
+  - theano.scan(strict=True)
+    - problem: issue with passing in random variables
+      - options
+        - ignore and use strict=False
+        - have a flag to ensure strict=True
+          - somehow verify that the graph has no random variables
+    - how to find non_sequences
+      - if a node accesses state from somewhere else in the tree (not under the current scan node), treat that output as a non-sequence
+      - treat RNG as a non-sequence
+      - all shared parameters in the current subtree should be non_sequences (?)
+      - maybe have a tag "non_sequences" for variables in the current subtree to be treated as such
+        - everything else is treated as an output?
+    - how to deal with non_sequences
+      - remember which variables are non-sequences and use theano.replace to do a variable replace with the new variables representing the non-sequences
+** canopy
+- canopy
+  - layer on top of treeano
+  - handles non-theano modularity
+  - nice reference
+    - the only layer above this is the emergent layer (your code)
+- add auto-chunking of variables
+  - maybe
 - workflows / hooks
   - distillation
     - input: network1, outputkey1, network2, outputkey2, data generator
@@ -389,6 +650,8 @@
   - optionally resuming an in-training model, or restarting
   - printing progressbar after each epoch
   - checkpoint model every x batches / chunks
+  - dynamically changing network during training to things that should be easy in canopy
+    - eg. adding additional losses
   - test on validation set every x chunks
   - visualization
     - print filters
@@ -418,58 +681,24 @@
       - eg. nan's or inf's
       - eg. magnitude of gradient/weight matrix too high
 - blocks callback hooks
-    before_training : bool
-        If ``True``, :meth:`do` is invoked before training.
-    before_first_epoch : bool
-        If ``True``, :meth:`do` is invoked before the first epoch.
-    before_epoch : bool
-        If ``True``, :meth:`do` is invoked before every epoch.
-    on_resumption : bool, optional
-        If ``True``, :meth:`do` is invoked when training is resumed.
-    on_interrupt : bool, optional
-        If ``True``, :meth:`do` is invoked when training is interrupted.
-    after_epoch : bool
-        If ``True``, :meth:`do` is invoked after every epoch.
-    after_batch: bool
-        If ``True``, :meth:`do` is invoked after every batch.
-    after_training : bool
-        If ``True``, :meth:`do` is invoked after training.
-    after_n_epochs : int, optional
-        If not ``None``, :meth:`do` is invoked when `after_n_epochs`
-        epochs are done.
-    every_n_epochs : int, optional
-        If not ``None``, :meth:`do` is invoked after every n-th epoch.
-    after_n_batches : int, optional
-        If not ``None``, :meth:`do` is invoked when `after_n_batches`
-        batches are processed.
-    every_n_batches : int, optional
-        If not ``None``, :meth:`do` is invoked after every n-th batch.
-- adding to updates vs adding to cost
-  - adding to updates is definitely necessary
-    - because some state is just updated
-      - eg. rolling mean/variance
-  - adding to cost
-    - pros
-      - if you want to use the same learning algorithm (eg. Adam), it is more convenient
-    - cons
-      - might be confusing to have 2 ways to do this
-    - how?
-      - options
-        - add to a global cost
-        - don't automatically add to costs
-          - thus need to manually add to costs
-        - have the ability to query for cost of a subtree
-- canopy
-  - layer on top of treeano
-  - handles non-theano modularity
-  - nice reference
-    - the only layer above this is the emergent layer (your code)
-  - naming
-    - should this be mixed with treeano? if so, should the core stuff be treeano.core or treeano.understory?
-- have nodes take in a network state instead of changing node state
-- a bunch of the things that seem like lasagne annoyances are actually for good reason
-  - ie. get_output_for to allow calculating output w.r.t. anything
-    - it behaves more like a function
+  - before_training : bool - is invoked before training.
+  - before_first_epoch : bool - is invoked before the first epoch.
+  - before_epoch : bool - is invoked before every epoch.
+  - on_resumption : bool, optional - is invoked when training is resumed.
+  - on_interrupt : bool, optional - is invoked when training is interrupted.
+  - after_epoch : bool - is invoked after every epoch.
+  - after_batch: bool - is invoked after every batch.
+  - after_training : bool - is invoked after training.
+  - after_n_epochs : int, optional - if not None, invoked when `after_n_epochs` epochs are done
+  - every_n_epochs : int, optional - if not None, invoked after every n-th epoch.
+  - after_n_batches : int, optional - if not None, invoked when `after_n_batches` batches are processed.
+  - every_n_batches : int, optional - if not None, invoked after every n-th batch.
+- datasets
+  - RNN
+    - Blogger Dataset: http://www.cs.biu.ac.il/~koppel/blogs/blogs.zip (Age and gender data)
+      - from https://github.com/IndicoDataSolutions/Passage
+    - use MNIST, scan one vector at a time
+      - https://github.com/IndicoDataSolutions/Passage/blob/master/examples/mnist.py
 - how to save state part-way through training
 - seems like a very reasonable assumption that training might involve arbitrary python code execution
   - eg. with deep q learning, might have to simulate a game
@@ -487,156 +716,5 @@
     - training each batch
     - training each chunk
   - question: are hooks local or global
-- treeano should not have hooks
-  - there should be a clean separation of mapping from parameterization to theano variable and all the extra (modular) logic
-- consider linking independent functions together in class
-  class Foo:
-    something1 = some_fn
-    something2 = other_fn
-- PYTHONPATH=~/repos/treeano:$PYTHONPATH sniffer
-- grep for FIXME's
-  - separate out lasagne initializations from initializations
-- sugar:
-  - some node mixin for defining hyperparameters
-  - some single node wrapper mixin
-  - have build return a Network object that has network specific features
-    - eg. __getitem__, function
-- architecture nodes ONLY have 2 things: hyperparameters and children
-  - in various desired formats
-    - might want custom ways of inputting children
-      - eg. networkx DAG
-    - might want custom ways of inputting hyperparameters
-      - eg. hyperparameter node
-        - takes in kwargs
-      - eg. something that provides stateful hyperparameters
-  - how to effectively define these things in an easy to use way?
-    - to minimize overall work + maximize simplicity
-      - specifically in:
-        - __init__
-        - getting hyperparameters
-        - getting children
-        - serialization
-  - how to define hyperparameters and children?
-- define output computation as function from inputs to dict of outputs
-  - not a staticmethod, because some transformations require object state
-    - eg. SPPnet layer requires shapes
-- scratchpad
-  - temperaturesoftmaxnode
-  - temperature softmax + categorical cross entropy + rescaling due to temperature (* T^2)
-  - gradient caching node
-    - allows calculating derivatives of parameters with respect to loss high up in the tree (optimization)
-  - learning rate decay node
-    - represents learning rate parameter as theano var w/ updates
-  - javascript interface to expand nodes
-    - more expanded = more low-level
-  - allow input nodes to have default values (theano.param)
-- remove python-fields
-  - rationale:
-    - want to have logic in constructor?
-    - only benefit is __repr__, which can be provided by Node
-- NOTE: hyperparameters are never accessed directly, because of propagation - should always use find_hyperparameter
-  - perhaps we can use some syntactic sugar to do an auto-search
-    - override __getattribute__ for hyperparameters
-    - override __setattribute__ to not work on hyperparameters
-    - some sugar to specify defaults as well?
-- add auto-chunking of variables
-  - maybe
-- try dropout network w/ train / test
-  - hyperparameter: have default of enable_dropout be deterministic
-- function to wrap lasagne layer boilerplate
-  - input:
-    - lazy wrapped variable
-    - layer constructor
-    - kwargs for constructor
-  - output: lazy wrapped variable
-- test:
-  - find_variables
-  - preallocatedinitialization
-  - theano.tag.test_value
-    - http://deeplearning.net/software/theano/tutorial/debug_faq.html
-- easy way of accessing nodes in network
-  - eg. network.get_node("node_name")
-  - useful after building a network and wanting to inspect state
-- real initialization nodes
-  - using a stateful class and a hyperparameternode is very wrong
-    - just a hack
-  - want to represent the parameters of the initialization as hyperparameters and have them be clone-able/inspect-able
-- PreallocatedInitializationNode
-  - sets hyperparameters:
-    - shared_initializations
-    - preallocated_initialization
-  - rationale for setting both:
-    - if no initialization scheme is given, then it uses the former
-    - if another initialization scheme is given within the network, that scheme still has the choice of finding a preallocated_initialization hyperparameter and prioritizing that
-    - this allows no hard-coded preference to preallocation in the core code
-- fix architecture to data / from data / copy
-  - problem: what if node has children in its state
-    - some sort of walk needs to occur converting everything into data and back
-- wrap lasagne
-  - update code
-  - initialization
-  - layers
-- custom wrapper around variables
-  - if shape is not given, print warning and calculate
-    - theano.function([x, y], [x], on_unused_input="ignore")(2, 3)
-  - walk the theano graph:
-    - var.owner.inputs
-      - var.owner is None when var is not derived
-    - http://deeplearning.net/software/theano/tutorial/symbolic_graphs.html
-- create graph transformations
-  - eg.
-    - substitution
-      - eg. replace ReLU -> PReLU / leaky ReLU
-        - use an update-in operation on the architecture as data that does a tree walk
-      - to substitute in only a subtree
-    - adding different initialization
-- break up into different modules
-- make insides of update algorithms (eg. intermediates in nesterov momentum inspectable)
-- create pretty printing of nodes
-  - like how theano prints it's computation graph
-- demos
-  - vanilla mnist
-  - fully connected layer mnist with num_hidden, activation specified once
-  - separate conv layers from FC layers
-    - different dropout and L2 for conv
-- how to do things guide: (thinking in treeano guide)
-  - freezing a section
-    - use UpdateScaleNode, scale to 0
-- use class decorator for registering classes for serialization
-  - look into using a metaclass in the future
-- consider as a name: treehano
-  - pros
-    - sounds cooler
-  - cons
-    - sounds less like theano
-- issue: recurrent nets
-  - if everything is kept as a function from parameters -> theano var, it should compose well with recurrent nets
-  - recurrent layers would probably behave something like a multiple input layer
-  - if a net is recurrent, this seems like it would just take an orthogonal compilation step to convert the resulting net to use scan
-  - problem: we work with variables, not functions
-    - solution given input variables and an output variable, we should be able to construct a version of an output variable by doing a walk on the transitive closure of the output variable and replace the inputs
-      - thus we can get functions from variables
-  - make a symbolic_function
-    - input:
-      - inputs: variables [x, ...] (maybe computed variables)
-      - outputs: variables [y, ...]
-    - output:
-      - function that takes in replacements for inputs, and returns new outputs for those inputs
-    - how?
-      - take in new inputs
-      - perform a deepcopy on the outputs
-      - walk both the old and new outputs at the same time
-      - when a variable is in the old outputs from the old inputs, replace it with one of the new inputs
-- look into drawing:
-  - https://github.com/Lasagne/Lasagne/issues/174
-    - https://github.com/ebenolson/Lasagne/blob/master/examples/draw_net.py
 - live plotting/monitoring
   - other tools (blocks / opendeep) use bokeh
-- look into attentional interfaces
-  - https://github.com/bartvm/blocks/blob/master/blocks/bricks/attention.py
-- datasets
-  - RNN
-    - Blogger Dataset: http://www.cs.biu.ac.il/~koppel/blogs/blogs.zip (Age and gender data)
-      - from https://github.com/IndicoDataSolutions/Passage
-    - use MNIST, scan one vector at a time
-      - https://github.com/IndicoDataSolutions/Passage/blob/master/examples/mnist.py

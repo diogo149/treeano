@@ -55,8 +55,9 @@ class TreeanoGraph(object):
         # we can initialize the computation grpah as a copy of the
         # architectural tree
         self.computation_graph = self.architectural_tree.copy()
+        self.is_mutable = True
 
-    def nodes(self, order=None):
+    def _nodes(self, order=None):
         """
         returns all nodes in the graph
         """
@@ -72,6 +73,18 @@ class TreeanoGraph(object):
         assert set(self.name_to_node.keys()) == set(node_names)
         return [self.name_to_node[name] for name in node_names]
 
+    def architectural_tree_nodes_leaves_to_root(self):
+        return self._nodes("architecture")
+
+    def architectural_tree_nodes_root_to_leaves(self):
+        return reversed(self._nodes("architecture"))
+
+    def computation_graph_nodes_topological(self):
+        return self._nodes("computation")
+
+    def nodes(self):
+        return self._nodes(None)
+
     def add_dependency(self,
                        from_name,
                        to_name,
@@ -86,6 +99,8 @@ class TreeanoGraph(object):
         to_key: key to-node will use to query the dependency - each input to
         a node must have a unique to_key
         """
+        # make sure network is mutable
+        assert self.is_mutable
         # make sure that these nodes are part of this graph
         assert from_name in self.name_to_node
         assert to_name in self.name_to_node
