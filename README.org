@@ -10,11 +10,10 @@ This is currently a work in progress!
 * Dependencies
 - numpy
 - theano
-- lasagne
 - networkx
 - six
-- [[https://github.com/ionelmc/python-fields][fields]]
 - toolz
+- (optional) lasagne
 * Dev dependencies
 - nose
 - sniffer
