@@ -317,6 +317,19 @@ class RelativeNetwork(object):
                                   from_key=from_key,
                                   to_key=to_key)
 
+    def add_dependency(self,
+                       from_name,
+                       to_name,
+                       from_key="default",
+                       to_key="default"):
+        """
+        wrapper around self.graph.add_dependency
+        """
+        self.graph.add_dependency(from_name=from_name,
+                                  to_name=to_name,
+                                  from_key=from_key,
+                                  to_key=to_key)
+
 
 def build_network(root_node):
     network = Network(root_node)

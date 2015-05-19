@@ -14,6 +14,11 @@ class NodeAPI(six.with_metaclass(abc.ABCMeta, object)):
     def __hash__(self):
         return hash((self.__class__, self.name))
 
+    def __eq__(self, other):
+        return (self.__class__ == other.__class__
+                and (self._to_architecture_data()
+                     == other._to_architecture_data()))
+
     @abc.abstractproperty
     def name(self):
         """

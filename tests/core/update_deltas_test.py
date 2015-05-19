@@ -4,7 +4,7 @@ import treeano
 
 def test_update_deltas():
     x = theano.shared(0, name="x")
-    ud = treeano.UpdateDeltas({x: 0})
+    ud = treeano.core.UpdateDeltas({x: 0})
     ud += 1
     ud *= 2
     fn = theano.function([], updates=ud.to_updates())
@@ -16,9 +16,9 @@ def test_update_deltas():
 
 def test_update_deltas_getitem():
     x = theano.shared(0, name="x")
-    ud = treeano.UpdateDeltas({})
+    ud = treeano.core.UpdateDeltas({})
     assert ud[x] == 0
-    ud = treeano.UpdateDeltas({x: 5})
+    ud = treeano.core.UpdateDeltas({x: 5})
     fn = theano.function([], updates=ud.to_updates())
     fn()
     assert x.get_value() == 5
@@ -28,7 +28,7 @@ def test_update_deltas_getitem():
 
 def test_update_deltas_setitem():
     x = theano.shared(0, name="x")
-    ud = treeano.UpdateDeltas({})
+    ud = treeano.core.UpdateDeltas({})
     ud[x] += 3
     assert ud[x] == 3
     ud[x] = 7
@@ -40,9 +40,9 @@ def test_update_deltas_setitem():
 
 def test_update_deltas_add1():
     x = theano.shared(0, name="x")
-    ud1 = treeano.UpdateDeltas({x: 3})
+    ud1 = treeano.core.UpdateDeltas({x: 3})
     ud1b = ud1
-    ud2 = treeano.UpdateDeltas({x: 4})
+    ud2 = treeano.core.UpdateDeltas({x: 4})
     ud3 = ud1 + ud2
     assert ud1[x] == 3
     assert ud1b[x] == 3
@@ -52,9 +52,9 @@ def test_update_deltas_add1():
 
 def test_update_deltas_iadd1():
     x = theano.shared(0, name="x")
-    ud1 = treeano.UpdateDeltas({x: 3})
+    ud1 = treeano.core.UpdateDeltas({x: 3})
     ud1b = ud1
-    ud2 = treeano.UpdateDeltas({x: 4})
+    ud2 = treeano.core.UpdateDeltas({x: 4})
     ud1 += ud2
     assert ud1[x] == 7
     assert ud1b[x] == 7
@@ -63,7 +63,7 @@ def test_update_deltas_iadd1():
 
 def test_update_deltas_mul1():
     x = theano.shared(0, name="x")
-    ud1 = treeano.UpdateDeltas({x: 3})
+    ud1 = treeano.core.UpdateDeltas({x: 3})
     ud2 = ud1
     ud1 = ud1 * 2
     assert ud1[x] == 6
@@ -72,7 +72,7 @@ def test_update_deltas_mul1():
 
 def test_update_deltas_imul1():
     x = theano.shared(0, name="x")
-    ud1 = treeano.UpdateDeltas({x: 3})
+    ud1 = treeano.core.UpdateDeltas({x: 3})
     ud2 = ud1
     ud1 *= 2
     assert ud1[x] == 6

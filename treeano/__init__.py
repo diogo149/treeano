@@ -3,6 +3,7 @@ lasagne
 """.split()
 
 import core
+import nodes
 
 # ############################# FIXME DEPRECATED #############################
 

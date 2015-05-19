@@ -451,14 +451,16 @@
   - move everything over to cleaner API
   - have recurrent net working as fast as if done in pure theano w/ strict=True
 - order of things:
-  - commit as backward compatible
-  - start ripping out the insides of everything
   - work on RNNs
+- test functions for new nodes?
+- simple.py
+- lasagne/nodes.py
+- have old tests work
+- remove python-fields
+- rename fully connected node to AffineMappingNode
 - test
   - unit test that before and after building a network, the state of a node is the same
   - test find_hyperparameter
-- remove python-fields
-- rename fully connected node to AffineMappingNode
 - how should "cost" be treated?
   - options
     - as a specific node
@@ -527,6 +529,7 @@
     - how to deal with non_sequences
       - remember which variables are non-sequences and use theano.replace to do a variable replace with the new variables representing the non-sequences
 ** misc
+- sequentialhyperparameternode
 - make sure shapes can handle None's for polymorphism
 - use assertions for outputs that should not be used
 - how to handle updates for RandomStates?
@@ -578,6 +581,16 @@
 - to_sequentials
   - take in nested lists like hiccup and convert into sequential nodes
     ["a", ["b", node1, node2, ["c", node3]], ["d", ["e", node5]]]
+  - maybe have it be very hiccup like:
+    ["a", {"num_units": 32},
+     ["b",
+      ("conv1", "conv", {"num_filters": 42}),
+      ("pool1", "pool", {"strides": (3, 3)})],
+     ["c",
+      ("fc1", "fc"),
+      ("fc2", "fc")],
+     ("final_fc", "fc", {"num_units": 10}),
+     ("output", "softmax")]
 - add node metadata
   - eg. "update" "cost" "output" "hyperparameter"
   - this will allow for easier filtering when doing architecture transformations

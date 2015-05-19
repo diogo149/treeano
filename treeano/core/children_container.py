@@ -10,6 +10,13 @@ class ChildrenContainer(six.with_metaclass(abc.ABCMeta, object)):
     API for dealing with the children of nodes (which are also nodes)
     """
 
+    @abc.abstractproperty
+    def children(self):
+        """
+        returns children in the format as expected as the input to the
+        container
+        """
+
     @abc.abstractmethod
     def __iter__(self):
         pass
@@ -39,7 +46,11 @@ class ListChildrenContainer(ChildrenContainer):
 
     def __init__(self, children):
         assert isinstance(children, (list, tuple))
-        self.children = children
+        self._children = children
+
+    @property
+    def children(self):
+        return self._children
 
     def __iter__(self):
         return (x for x in self.children)
@@ -62,6 +73,10 @@ class NoneChildrenContainer(ChildrenContainer):
     def __init__(self, children):
         assert children is None
 
+    @property
+    def children(self):
+        return None
+
     def __iter__(self):
         return iter([])
 
@@ -82,6 +97,10 @@ class ChildContainer(ChildrenContainer):
 
     def __init__(self, children):
         self.child = children
+
+    @property
+    def children(self):
+        return self.child
 
     def __iter__(self):
         return iter([self.child])

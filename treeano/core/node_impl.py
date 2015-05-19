@@ -104,7 +104,7 @@ class NodeImpl(NodeAPI):
     def _from_architecture_data(cls, data):
         return cls(
             name=data['name'],
-            children=children_container_from_data(data["children"]),
+            children=children_container_from_data(data["children"]).children,
             **data['hyperparameters']
         )
 
@@ -182,16 +182,6 @@ class WrapperNodeImpl(NodeImpl):
         network.forward_input_to(children[0].name)
         network.take_output_from(children[-1].name,
                                  to_key="final_child_output")
-
-    def compute_output(self, network, child_output):
-        """
-        by default, returns the value from the final_child
-        """
-        network.copy_variable(
-            name="default",
-            previous_variable=child_output,
-            tags={"output"},
-        )
 
 
 class Wrapper1NodeImpl(WrapperNodeImpl):
