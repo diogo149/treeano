@@ -447,26 +447,17 @@
 - recurrent networks
 * TODOs
 ** v2
+- goals:
+  - move everything over to cleaner API
+  - have recurrent net working as fast as if done in pure theano w/ strict=True
 - order of things:
-  - setup directory structure
   - commit as backward compatible
   - start ripping out the insides of everything
-- directory structure
-  - treeano/base.py for base node
-  - treeano/sugar.py for node impls
-  - treeano/nodes/ for all extensions
-- FIXME graph uses node.output
-  - ag 'node\.'
-  - graph uses the old node api
-  - replace graph.output_for_node with accessing node state
-    - so that one can also access weights and such in Network.function
+  - work on RNNs
 - test
   - unit test that before and after building a network, the state of a node is the same
   - test find_hyperparameter
 - remove python-fields
-  - rationale:
-    - want to have logic in constructor?
-    - only benefit is __repr__, which can be provided by Node
 - rename fully connected node to AffineMappingNode
 - how should "cost" be treated?
   - options
@@ -499,109 +490,9 @@
         - more verbose
   - conclusion
     - use output of a node, and a SendToNode
-- work on RNNs
-** misc
-- make sure shapes can handle None's for polymorphism
-- use assertions for outputs that should not be used
-- how to handle updates for RandomStates?
-  - options:
-    - ignore it and have default_updates handle it
-      - it would have to be explicitly ignored by scan
-    - add it to the updates
-      - problem: what if there are multiple scans - adding the updates don't make sense in this case
-      - pros:
-        - easier
-- potential issue: sharing variables between networks when test_value's are enabled
-  - if one network uses the same variables, but with different shapes, the test_value's might break
-- treeano should not have hooks
-  - there should be a clean separation of mapping from parameterization to theano variable and all the extra (modular) logic
-- grep for FIXME's
-  - separate out lasagne initializations from initializations
-- try dropout network w/ train / test
-  - hyperparameter: have default of enable_dropout be deterministic
-- function to wrap lasagne layer boilerplate
-  - input:
-    - lazy wrapped variable
-    - layer constructor
-    - kwargs for constructor
-  - output: lazy wrapped variable
-- test:
-  - find_variables
-  - preallocatedinitialization
-  - theano.tag.test_value
-    - http://deeplearning.net/software/theano/tutorial/debug_faq.html
-- real initialization nodes
-  - using a stateful class and a hyperparameternode is very wrong
-    - just a hack
-  - want to represent the parameters of the initialization as hyperparameters and have them be clone-able/inspect-able
-- PreallocatedInitializationNode
-  - sets hyperparameters:
-    - shared_initializations
-    - preallocated_initialization
-  - rationale for setting both:
-    - if no initialization scheme is given, then it uses the former
-    - if another initialization scheme is given within the network, that scheme still has the choice of finding a preallocated_initialization hyperparameter and prioritizing that
-    - this allows no hard-coded preference to preallocation in the core code
-- fix architecture to data / from data / copy
-  - problem: what if node has children in its state
-    - some sort of walk needs to occur converting everything into data and back
-- wrap lasagne
-  - update code
-  - initialization
-  - layers
-- custom wrapper around variables
-  - if shape is not given, print warning and calculate
-    - theano.function([x, y], [x], on_unused_input="ignore")(2, 3)
-- add node metadata
-  - eg. "update" "cost" "output" "hyperparameter"
-  - this will allow for easier filtering when doing architecture transformations
-    - eg. remove update nodes in this subtree
-    - can use jQuery like syntax
-      - something("node_name", {"type": "update"}).replace(lambda x: ...)
-- create graph transformations
-  - eg.
-    - substitution
-      - eg. replace ReLU -> PReLU / leaky ReLU
-        - use an update-in operation on the architecture as data that does a tree walk
-      - to substitute in only a subtree
-    - adding different initialization
-- make insides of update algorithms inspectable (eg. intermediates in nesterov momentum)
-** code quality
-- PYTHONPATH=~/repos/treeano:$PYTHONPATH sniffer
-- testing
-** guides / demos / concrete things to build
-- temperaturesoftmaxnode
-- temperature softmax + categorical cross entropy + rescaling due to temperature (* T^2)
-- gradient caching node
-  - allows calculating derivatives of parameters with respect to loss high up in the tree (optimization)
-- learning rate decay node
-  - represents learning rate parameter as theano var w/ updates
-- demos
-  - vanilla mnist
-  - fully connected layer mnist with num_hidden, activation specified once
-  - separate conv layers from FC layers
-    - different dropout and L2 for conv
-- how to do things guide: (thinking in treeano guide)
-  - freezing a section
-    - use UpdateScaleNode, scale to 0
-** future
-- use metaclass for registering classes for serialization
-- look into drawing:
-  - https://github.com/Lasagne/Lasagne/issues/174
-    - https://github.com/ebenolson/Lasagne/blob/master/examples/draw_net.py
-- javascript interface to expand nodes
-  - more expanded = more low-level
-- think about:
-  - recursive NN
-  - RNN
-    - beam search
-    - bidirectional
-    - nested recurrence
-      - eg. scan in scan (like a non-fixed size ReNet)
-    - attentional models
-      - look into attentional interfaces
-        - https://github.com/bartvm/blocks/blob/master/blocks/bricks/attention.py
 - recurrent nets
+  - create pseudo-nodes to preprocess output of RNN
+    - ie. use sequence variable shape/dtype to create single element input variable of the correct shape
   - nodes
     - RecurrentNode
       - for controlling theano.scan
@@ -635,7 +526,111 @@
         - everything else is treated as an output?
     - how to deal with non_sequences
       - remember which variables are non-sequences and use theano.replace to do a variable replace with the new variables representing the non-sequences
+** misc
+- make sure shapes can handle None's for polymorphism
+- use assertions for outputs that should not be used
+- how to handle updates for RandomStates?
+  - options:
+    - ignore it and have default_updates handle it
+      - it would have to be explicitly ignored by scan
+    - add it to the updates
+      - problem: what if there are multiple scans - adding the updates don't make sense in this case
+      - pros:
+        - easier
+- grep for FIXME's
+  - separate out lasagne initializations from initializations
+- try dropout network w/ train / test
+  - hyperparameter: have default of enable_dropout be deterministic
+- function to wrap lasagne layer boilerplate
+  - input:
+    - lazy wrapped variable
+    - layer constructor
+    - kwargs for constructor
+  - output: lazy wrapped variable
+- test:
+  - find_variables
+  - preallocatedinitialization
+  - theano.tag.test_value
+    - http://deeplearning.net/software/theano/tutorial/debug_faq.html
+- real initialization nodes
+  - using a stateful class and a hyperparameternode is very wrong
+    - just a hack
+  - want to represent the parameters of the initialization as hyperparameters and have them be clone-able/inspect-able
+- PreallocatedInitializationNode
+  - sets hyperparameters:
+    - shared_initializations
+    - preallocated_initialization
+  - rationale for setting both:
+    - if no initialization scheme is given, then it uses the former
+    - if another initialization scheme is given within the network, that scheme still has the choice of finding a preallocated_initialization hyperparameter and prioritizing that
+    - this allows no hard-coded preference to preallocation in the core code
+- wrap lasagne
+  - update code
+  - initialization
+  - layers
+- custom wrapper around variables
+  - if shape is not given, print warning and calculate
+    - theano.function([x, y], [x], on_unused_input="ignore")(2, 3)
+- make insides of update algorithms inspectable (eg. intermediates in nesterov momentum)
+** network as data
+- create DSL on top of nodes to apply transformations
+  - insert_above(), insert_between()
+- to_sequentials
+  - take in nested lists like hiccup and convert into sequential nodes
+    ["a", ["b", node1, node2, ["c", node3]], ["d", ["e", node5]]]
+- add node metadata
+  - eg. "update" "cost" "output" "hyperparameter"
+  - this will allow for easier filtering when doing architecture transformations
+    - eg. remove update nodes in this subtree
+    - can use jQuery like syntax
+      - something("node_name", {"type": "update"}).replace(lambda x: ...)
+- create graph transformations
+  - eg.
+    - substitution
+      - eg. replace ReLU -> PReLU / leaky ReLU
+        - use an update-in operation on the architecture as data that does a tree walk
+      - to substitute in only a subtree
+    - adding different initialization
+** code quality
+- PYTHONPATH=~/repos/treeano:$PYTHONPATH sniffer
+- potential issue: sharing variables between networks when test_value's are enabled
+  - if one network uses the same variables, but with different shapes, the test_value's might break
+- testing
+** guides / demos / concrete things to build
+- temperaturesoftmaxnode
+- temperature softmax + categorical cross entropy + rescaling due to temperature (* T^2)
+- gradient caching node
+  - allows calculating derivatives of parameters with respect to loss high up in the tree (optimization)
+- learning rate decay node
+  - represents learning rate parameter as theano var w/ updates
+- demos
+  - vanilla mnist
+  - fully connected layer mnist with num_hidden, activation specified once
+  - separate conv layers from FC layers
+    - different dropout and L2 for conv
+- how to do things guide: (thinking in treeano guide)
+  - freezing a section
+    - use UpdateScaleNode, scale to 0
+** future
+- use metaclass for registering classes for serialization
+- look into drawing:
+  - https://github.com/Lasagne/Lasagne/issues/174
+    - https://github.com/ebenolson/Lasagne/blob/master/examples/draw_net.py
+- javascript interface to expand nodes
+  - more expanded = more low-level
+- think about:
+  - recursive NN
+  - RNN
+    - beam search
+    - bidirectional
+    - nested recurrence
+      - eg. scan in scan (like a non-fixed size ReNet)
+    - attentional models
+      - look into attentional interfaces
+        - https://github.com/bartvm/blocks/blob/master/blocks/bricks/attention.py
 ** canopy
+- treeano should not have hooks
+  - there should be a clean separation of mapping from parameterization to theano variable and all the extra (modular) logic
 - canopy
   - layer on top of treeano
   - handles non-theano modularity
