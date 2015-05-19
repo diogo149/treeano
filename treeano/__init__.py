@@ -16,14 +16,14 @@ from core import (UpdateDeltas,
 
 # ############################# FIXME DEPRECATED #############################
 
-from initialization import (SharedInitialization,
-                            WeightInitialization)
-from node import Node, WrapperNode
-from update_deltas import UpdateDeltas
+# from initialization import (SharedInitialization,
+#                             WeightInitialization)
+# from node import Node, WrapperNode
+# from update_deltas import UpdateDeltas
 
 
-import graph
-import initialization
-import node
-import update_deltas
-import variable
+# import graph
+# import initialization
+# import node
+# import update_deltas
+# import variable

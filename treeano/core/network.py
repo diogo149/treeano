@@ -30,7 +30,7 @@ class Network(object):
         # set node state for each node to be empty
         # ---
         # order doesn't matter
-        for node in reversed(self.graph.nodes(order="architecture")):
+        for node in self.graph.architectural_tree_nodes_root_to_leaves():
             node_state = {}
             # initialize some parts of node_state
             node_state["current_variables"] = {}
@@ -170,13 +170,16 @@ class RelativeNetwork(object):
         self._network = network
         self._node = node
         self._name = node.name
-        self._state = self.network.node_state[self._name]
+        self._state = self._network.node_state[self._name]
 
     def __getattr__(self, name):
         """
         by default, behave like the non-relative network
         """
         return getattr(self._network, name)
+
+    def __getitem__(self, name):
+        return self._network[name]
 
     def store_inputs(self, inputs):
         self._state["inputs"] = inputs
@@ -201,7 +204,7 @@ class RelativeNetwork(object):
         for hyperparameter_key in hyperparameter_keys:
             for node in [self._node] + ancestors:
                 try:
-                    value = node.get_hyperparameter(hyperparameter_key)
+                    value = node.get_hyperparameter(self, hyperparameter_key)
                 except MissingHyperparameter:
                     pass
                 else:
@@ -219,8 +222,8 @@ class RelativeNetwork(object):
         """
         tag_filters = set(tag_filters)
         return [variable
-                for node in self.graph.architecture_subtree(self._name)
-                for variable in node.variables
+                for name in self.graph.architecture_subtree_names(self._name)
+                for variable in self[name]._state["current_variables"].values()
                 # only keep variables where all filters match
                 if len(tag_filters - variable.tags) == 0]
 

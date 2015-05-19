@@ -2,55 +2,29 @@ from __future__ import division, absolute_import
 from __future__ import print_function, unicode_literals
 
 import numpy as np
-import fields
 import theano
 import lasagne
 
-
 import treeano
-from treeano import Node, WrapperNode, UpdateDeltas
-from treeano.initialization import GlorotUniform
-from treeano.node import (InputNode,
-                          SequentialNode,
-                          IdentityNode,
-                          HyperparameterNode,
-                          CostNode,
-                          UpdateScaleNode,
-                          ContainerNode,
-                          FullyConnectedNode,
-                          ReLUNode,
-                          SGDNode)
+import treeano.lasagne
+from treeano import UpdateDeltas
+from treeano.lasagne.initialization import GlorotUniform
+from treeano.nodes import (InputNode,
+                           SequentialNode,
+                           IdentityNode,
+                           HyperparameterNode,
+                           CostNode,
+                           UpdateScaleNode,
+                           ContainerNode,)
+from treeano.lasagne.nodes import (DenseNode,
+                                   ReLUNode,
+                                   SGDNode)
 
 floatX = theano.config.floatX
 
 
-def test_node_constructor_arguments():
-
-    class foo(Node, fields.Fields.a.b.c):
-        pass
-
-    assert foo.constructor_arguments() == ["a", "b", "c"]
-
-
-def test_node_to_from_architecture_data():
-    class foo(Node, fields.Fields.a.b.c):
-        pass
-
-    f = foo(3, 4, 5)
-    assert f == f.__class__.from_architecture_data(f.to_architecture_data())
-    assert f == f.from_architecture_data(f.to_architecture_data())
-
-
-def test_architecture_test_node_copy():
-    class foo(Node, fields.Fields.a.b.c):
-        pass
-
-    f = foo(3, 4, 5)
-    assert f == f.architecture_copy()
-
-
 def test_identity_network():
-    input_node = InputNode("foo", (3, 4, 5))
+    input_node = InputNode("foo", shape=(3, 4, 5))
     network = input_node.build()
     fn = network.function(["foo"], ["foo"])
     x = np.random.rand(3, 4, 5).astype(floatX)
@@ -59,7 +33,7 @@ def test_identity_network():
 
 def test_sequential_identity_network():
     nodes = [
-        InputNode("foo", (3, 4, 5)),
+        InputNode("foo", shape=(3, 4, 5)),
         IdentityNode("bar"),
     ]
     sequential = SequentialNode("choo", nodes)
@@ -74,7 +48,7 @@ def test_sequential_identity_network():
 
 
 def test_nested_sequential_network():
-    current_node = InputNode("foo", (3, 4, 5))
+    current_node = InputNode("foo", shape=(3, 4, 5))
     for name in map(str, range(10)):
         current_node = SequentialNode("sequential" + name,
                                       [current_node,
@@ -112,50 +86,50 @@ def test_nested_sequential_network():
 
 def test_toy_updater_node():
 
-    class ToyUpdaterNode(Node, fields.Fields.name):
+    class ToyUpdaterNode(treeano.NodeImpl):
 
         """
         example node to test compute_update_deltas
         """
 
-        def compute_output(self):
+        input_keys = ()
+
+        def compute_output(self, network):
             shape = (2, 3, 4)
-            self.create_variable(
-                name="state",
+            state = network.create_variable(
+                name="default",
                 shape=shape,
                 is_shared=True,
                 tags=["state"],
             )
-            init_value = np.arange(np.prod(shape)).reshape(
-                *shape).astype(floatX)
-            self.state.value = init_value
-            return dict(
-                default=self.state
-            )
+            init_value = np.arange(
+                np.prod(shape)
+            ).reshape(*shape).astype(floatX)
+            state.value = init_value
 
-        def compute_update_deltas(self, update_deltas):
-            update_deltas += UpdateDeltas({
-                self.state.variable: 42
+        def new_update_deltas(self, network):
+            return UpdateDeltas({
+                network.get_variable("default").variable: 42
             })
 
     network = ToyUpdaterNode("a").build()
     fn1 = network.function([], ["a"])
     init_value = fn1()
-    fn2 = network.function([], ["a"], generate_updates=True)
-    assert np.allclose(init_value, fn2())
-    assert np.allclose(init_value[0] + 42, fn2())
-    assert np.allclose(init_value[0] + 84, fn1())
-    assert np.allclose(init_value[0] + 84, fn1())
+    fn2 = network.function([], ["a"], include_updates=True)
+    np.testing.assert_allclose(init_value[0], fn2()[0])
+    np.testing.assert_allclose(init_value[0] + 42, fn2()[0])
+    np.testing.assert_allclose(init_value[0] + 84, fn1()[0])
+    np.testing.assert_allclose(init_value[0] + 84, fn1()[0])
 
 
 def test_hyperparameter_node():
-    input_node = InputNode("a", (3, 4, 5))
+    input_node = InputNode("a", shape=(3, 4, 5))
     hp_node = HyperparameterNode("b", input_node, foo=3, bar=2)
     network = hp_node.build()
-    assert network.get_hyperparameter("foo") == 3
-    a_node = network.graph.name_to_node["a"]
-    assert a_node.get_hyperparameter("foo") is None
-    assert a_node.find_hyperparameter("foo") == 3
+    assert network["b"].find_hyperparameter(["foo"]) == 3
+    assert network["a"].find_hyperparameter(["foo"]) == 3
+    assert network["a"].find_hyperparameter(["choo", "foo"]) == 3
+    assert network["a"].find_hyperparameter(["choo"], 32) == 32
 
 
 class OnesInitialization(treeano.SharedInitialization):
@@ -165,37 +139,35 @@ class OnesInitialization(treeano.SharedInitialization):
 
 
 def test_ones_initialization():
-    np.random.seed(42)
+    class DummyNode(treeano.NodeImpl):
 
-    class DummyNode(Node):
+        input_keys = ()
 
-        def __init__(self):
-            self.name = "dummy"
-
-        def get_hyperparameter(self, hyperparameter_name):
+        def get_hyperparameter(self, network, hyperparameter_name):
             if hyperparameter_name == "shared_initializations":
                 return [OnesInitialization()]
+            else:
+                return super(DummyNode, self).get_hyperparameter(
+                    network,
+                    hyperparameter_name)
 
-        def compute_output(self):
-            self.create_variable(
-                "foo",
+        def compute_output(self, network):
+            network.create_variable(
+                "default",
                 is_shared=True,
                 shape=(1, 2, 3),
             )
-            return dict(
-                default=self.foo,
-            )
 
-    network = DummyNode().build()
+    network = DummyNode("dummy").build()
     fn = network.function([], ["dummy"])
-    assert np.allclose(fn(), np.ones((1, 2, 3)).astype(floatX))
+    np.testing.assert_allclose(fn()[0], np.ones((1, 2, 3)).astype(floatX))
 
 
-def test_fully_connected_node():
+def test_dense_node():
     np.random.seed(42)
     nodes = [
-        InputNode("a", (3, 4, 5)),
-        FullyConnectedNode("b"),
+        InputNode("a", shape=(3, 4, 5)),
+        DenseNode("b"),
     ]
     sequential = SequentialNode("c", nodes)
     hp_node = HyperparameterNode("d",
@@ -206,14 +178,14 @@ def test_fully_connected_node():
     fn = network.function(["a"], ["d"])
     x = np.random.randn(3, 4, 5).astype(floatX)
     res = np.dot(x.reshape(3, 20), np.ones((20, 14))) + np.ones(14)
-    assert np.allclose(fn(x), res)
+    np.testing.assert_allclose(fn(x)[0], res)
 
 
 def test_fully_connected_and_relu_node():
     np.random.seed(42)
     nodes = [
-        InputNode("a", (3, 4, 5)),
-        FullyConnectedNode("b"),
+        InputNode("a", shape=(3, 4, 5)),
+        DenseNode("b"),
         ReLUNode("e"),
     ]
     sequential = SequentialNode("c", nodes)
@@ -225,14 +197,14 @@ def test_fully_connected_and_relu_node():
     fn = network.function(["a"], ["d"])
     x = np.random.randn(3, 4, 5).astype(floatX)
     res = np.dot(x.reshape(3, 20), np.ones((20, 14))) + np.ones(14)
-    assert np.allclose(fn(x), np.clip(res, 0, np.inf))
+    np.testing.assert_allclose(fn(x)[0], np.clip(res, 0, np.inf))
 
 
 def test_glorot_uniform_initialization():
     np.random.seed(42)
     nodes = [
-        InputNode("a", (3, 4, 5)),
-        FullyConnectedNode("b"),
+        InputNode("a", shape=(3, 4, 5)),
+        DenseNode("b"),
         ReLUNode("e"),
     ]
     sequential = SequentialNode("c", nodes)
@@ -241,11 +213,14 @@ def test_glorot_uniform_initialization():
                                  num_units=1000,
                                  shared_initializations=[GlorotUniform()])
     network = hp_node.build()
-    fc_node = network.node.nodes[1]
-    W_value = fc_node.W.value
-    assert np.allclose(0, W_value.mean(), atol=1e-2)
-    assert np.allclose(np.sqrt(2.0 / (20 + 1000)), W_value.std(), atol=1e-2)
-    assert np.allclose(np.zeros(1000), fc_node.b.value)
+    fc_node = network["b"]
+    W_value = fc_node.get_variable("W").value
+    b_value = fc_node.get_variable("b").value
+    np.testing.assert_allclose(0, W_value.mean(), atol=1e-2)
+    np.testing.assert_allclose(np.sqrt(2.0 / (20 + 1000)),
+                               W_value.std(),
+                               atol=1e-2)
+    np.testing.assert_allclose(np.zeros(1000), b_value)
 
 
 def test_cost_node():
@@ -254,12 +229,12 @@ def test_cost_node():
         "g",
         ContainerNode("f", [
             SequentialNode("e", [
-                InputNode("input", (3, 4, 5)),
-                FullyConnectedNode("b"),
+                InputNode("input", shape=(3, 4, 5)),
+                DenseNode("b"),
                 ReLUNode("c"),
-                CostNode("cost", "target"),
+                CostNode("cost", reference="target"),
             ]),
-            InputNode("target", (3, 14)),
+            InputNode("target", shape=(3, 14)),
         ]),
         num_units=14,
         loss_function=lasagne.objectives.mse,
@@ -271,14 +246,14 @@ def test_cost_node():
     res = np.clip(res, 0, np.inf)
     y = np.random.randn(3, 14).astype(floatX)
     res = np.mean((y - res) ** 2)
-    assert np.allclose(fn(x, y), res)
+    np.testing.assert_allclose(fn(x, y)[0], res)
 
 
 def test_update_node():
     np.random.seed(42)
     nodes = [
-        InputNode("a", (3, 4, 5)),
-        FullyConnectedNode("b"),
+        InputNode("a", shape=(3, 4, 5)),
+        DenseNode("b"),
         ReLUNode("e"),
     ]
     sequential = SequentialNode("c", nodes)
@@ -287,11 +262,14 @@ def test_update_node():
                                  num_units=1000,
                                  shared_initializations=[GlorotUniform()])
     network = hp_node.build()
-    fc_node = network.node.nodes[1]
-    W_value = fc_node.W.value
-    assert np.allclose(0, W_value.mean(), atol=1e-2)
-    assert np.allclose(np.sqrt(2.0 / (20 + 1000)), W_value.std(), atol=1e-2)
-    assert np.allclose(np.zeros(1000), fc_node.b.value)
+    fc_node = network["b"]
+    W_value = fc_node.get_variable("W").value
+    b_value = fc_node.get_variable("b").value
+    np.testing.assert_allclose(0, W_value.mean(), atol=1e-2)
+    np.testing.assert_allclose(np.sqrt(2.0 / (20 + 1000)),
+                               W_value.std(),
+                               atol=1e-2)
+    np.testing.assert_allclose(np.zeros(1000), b_value)
 
 
 def test_sgd_node():
@@ -301,12 +279,12 @@ def test_sgd_node():
         SGDNode("sgd",
                 ContainerNode("f", [
                     SequentialNode("e", [
-                        InputNode("input", (3, 4, 5)),
-                        FullyConnectedNode("b"),
+                        InputNode("input", shape=(3, 4, 5)),
+                        DenseNode("b"),
                         ReLUNode("c"),
-                        CostNode("cost", "target"),
+                        CostNode("cost", reference="target"),
                     ]),
-                    InputNode("target", (3, 14)),
+                    InputNode("target", shape=(3, 14)),
                 ])),
         num_units=14,
         loss_function=lasagne.objectives.mse,
@@ -317,12 +295,12 @@ def test_sgd_node():
     fn = network.function(["input", "target"], ["cost"])
     fn2 = network.function(["input", "target"],
                            ["cost"],
-                           generate_updates=True)
+                           include_updates=True)
     x = np.random.randn(3, 4, 5).astype(floatX)
     y = np.random.randn(3, 14).astype(floatX)
     initial_cost = fn(x, y)
     next_cost = fn(x, y)
-    assert np.allclose(initial_cost, next_cost)
+    np.testing.assert_allclose(initial_cost, next_cost)
     prev_cost = fn2(x, y)
     for _ in range(10):
         current_cost = fn2(x, y)
@@ -332,42 +310,37 @@ def test_sgd_node():
 
 def test_update_scale_node():
 
-    class ConstantUpdaterNode(WrapperNode, fields.Fields.name.node.value):
+    class ConstantUpdaterNode(treeano.Wrapper1NodeImpl):
 
-        def architecture_children(self):
-            return [self.node]
+        hyperparameter_names = ("value",)
 
-        def init_state(self):
-            self.forward_input_to(self.node.name)
-            self.take_input_from(self.node.name)
-
-        def compute_update_deltas(self, update_deltas):
-            parameters = self.find_variables_in_subtree(["parameter"])
+        def mutate_update_deltas(self, network, update_deltas):
+            value = network.find_hyperparameter(["value"])
+            parameters = network.find_variables_in_subtree(["parameter"])
             for parameter in parameters:
-                update_deltas[parameter.variable] = self.value
+                update_deltas[parameter.variable] = value
 
     # testing constant updater
     network = ConstantUpdaterNode(
         "cun",
-        value=5,
-        node=SequentialNode("seq", [
-            InputNode("i", (1, 2, 3)),
-            FullyConnectedNode("fc", num_units=5)
+        SequentialNode("seq", [
+            InputNode("i", shape=(1, 2, 3)),
+            DenseNode("fc", num_units=5)
         ]),
+        value=5,
     ).build()
-    ud = network.compute_all_update_deltas()
-    assert ud[network.node.nodes[1].W.variable] == 5
+    ud = network.update_deltas
+    assert ud[network["fc"].get_variable("W").variable] == 5
 
     network = ConstantUpdaterNode(
         "cun",
-        value=5,
-        node=SequentialNode("seq", [
-            InputNode("i", (1, 2, 3)),
+        SequentialNode("seq", [
+            InputNode("i", shape=(1, 2, 3)),
             UpdateScaleNode("usn",
-                            FullyConnectedNode("fc", num_units=5),
+                            DenseNode("fc", num_units=5),
                             scale_factor=-2)
         ]),
+        value=5,
     ).build()
-    ud = network.compute_all_update_deltas()
-    print(ud[network["fc"].W.variable])
-    assert ud[network["fc"].W.variable] == -10
+    ud = network.update_deltas
+    assert ud[network["fc"].get_variable("W").variable] == -10
