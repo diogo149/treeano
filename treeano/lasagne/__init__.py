@@ -1,6 +1,6 @@
 import initialization
 import nodes
 
-# from nodes import (FullyConnectedNode,
-#                    ReLUNode,
-#                    SGDNode)
+from nodes import (FullyConnectedNode,
+                   ReLUNode,
+                   SGDNode)

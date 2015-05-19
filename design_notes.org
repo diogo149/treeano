@@ -452,12 +452,7 @@
   - have recurrent net working as fast as if done in pure theano w/ strict=True
 - order of things:
   - work on RNNs
-- test functions for new nodes?
-- simple.py
-- lasagne/nodes.py
 - have old tests work
-- remove python-fields
-- rename fully connected node to AffineMappingNode
 - test
   - unit test that before and after building a network, the state of a node is the same
   - test find_hyperparameter
@@ -529,6 +524,7 @@
     - how to deal with non_sequences
       - remember which variables are non-sequences and use theano.replace to do a variable replace with the new variables representing the non-sequences
 ** misc
+- cache gradient computation
 - sequentialhyperparameternode
 - make sure shapes can handle None's for polymorphism
 - use assertions for outputs that should not be used
