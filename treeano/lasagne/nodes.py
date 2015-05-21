@@ -14,8 +14,8 @@ class DenseNode(core.NodeImpl):
     hyperparameter_names = ("dense_num_units", "num_units")
 
     def compute_output(self, network, in_var):
-        num_units = network.find_hyperparameter(
-            ["dense_num_units", "num_units"])
+        num_units = network.find_hyperparameter(["dense_num_units",
+                                                 "num_units"])
         num_inputs = int(np.prod(in_var.shape[1:]))
         W = network.create_variable(
             "W",

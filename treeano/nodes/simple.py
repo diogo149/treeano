@@ -19,6 +19,9 @@ class ReferenceNode(core.NodeImpl):
     """
     provides dependencies into separate parts of the tree, allowing
     separate branches to have computational graph dependencies between them
+
+    reference:
+    node name to take output from as input to the reference node
     """
 
     hyperparameter_names = ("reference",)
@@ -148,7 +151,6 @@ class CostNode(core.NodeImpl):
 
     def compute_output(self, network, preds, target):
         loss_function = network.find_hyperparameter(["loss_function"])
-
         loss_aggregator = network.find_hyperparameter(["loss_aggregator"],
                                                       "mean")
         loss_aggregator = LOSS_AGGREGATORS.get(loss_aggregator,

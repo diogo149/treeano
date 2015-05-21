@@ -13,7 +13,10 @@ This is currently a work in progress!
 - networkx
 - six
 - toolz
-- (optional) lasagne
+- optional
+  - lasagne
+  - pydot
+  - pygraphviz
 * Dev dependencies
 - nose
 - sniffer

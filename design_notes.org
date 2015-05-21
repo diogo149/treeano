@@ -359,6 +359,118 @@
           - eg.
             - Sequential([L2RegularizationNode(), SendTo(node_name="cost")])
             - SumNode(name="cost") # sums all inputs
+- how should "cost" be treated?
+  - options
+    - as a specific node
+      - pros
+        - explitict
+        - seems very flexible
+      - cons
+        - makes it difficult to combine costs together
+          - eg. L2 loss
+          - would have to each have each "extra" cost specify the main cost, or have the main cost specify each "extra cost"
+            - neither option is all that great
+    - as a network property / state
+      - eg. there is a network state with a key (default="global_loss" or "loss" or "cost") that update nodes by default add to
+      - pros
+        - makes it easy to add losses together
+      - cons
+        - new question: when are values added to the cost?
+          - during compute_output?
+        - uses addition as an implicit function for composition - is this always desired?
+    - as the output of a node, then using a SendToNode to send the values as input of a different node (ie. a SummedCostNode)
+      - pros
+        - allows performing post-processing of values
+          - eg.
+            - multiplying by a value
+            - taking a square
+            - making it a margin loss instead
+            - composing multiple losses with a max instead of addition
+      - cons
+        - more verbose
+  - conclusion
+    - use output of a node, and a SendToNode
+- question: how to create nodes from other nodes?
+  - why this is a problem?
+    - it exposes implementation details
+    - creates complexity at deserialization time
+      - when constructed, generated nodes are not present
+      - when deserialized, they are
+  - options
+    - psuedo-nodes
+      - nodes that are in the DAG, but not serialized
+      - pros
+        - very composable, works exactly the same as a normal node
+      - cons
+        - adds noise to visualizing the DAG
+          - this might not be that big of a deal
+        - seems a little inelegant
+      - how to implement?
+        - have a serialization_children() function
+          - pros
+            - makes it known that it is a special case
+          - cons
+            - need to add to children, then later remove from them instead of handling logic of pseudo children in one place
+            - works only 1 level deep
+              - ie. can't make a child of a child a pseudo-node
+        - overwrite architectural_children() to add the nodes
+          - and have NodeImpl use ._children instead of .children
+          - pros
+            - more elegant that serialization_children() function
+          - cons
+            - still only works 1 level deep
+        - create PseudoNode wrapper around node which gets ignored by serialization
+          - pros
+            - explicit, since it provides additional metadata
+            - most composable
+              - solves the "1 level deep" problem
+          - how?
+            - create BaseNode class that NodeAPI inherits from
+            - make PseudoNode inherit from BaseNode
+            - overwrite getattr to just behave like the wrapped node
+            - implement ignoring in graph
+            - to instantiate, intercept __init__ call
+    - save the original children, transform the children lazily
+      - ie. have the new children added only on architecture_children()
+      - you want the original input, thus the original input MUST be stored somewhere
+        - is it a hyperparameter, children, or is the API insufficient?
+          - it behaves nothing like other hyperparameters
+            - because it's effect occurs before the graph is constructed
+          - it behaves very similarly to children
+      - question: should transformed input be cached?
+        - pros
+          - can be faster
+          - should be fine, because the architecture_children should be a pure function of the node's parameters
+        - cons
+          - mutates the node
+- ScanNode
+  - for controlling theano.scan
+  - how?
+    - find all input sequences for node
+      - inputs into graph
+      - needs to go to ScanInputNode
+    - find all outputs for node
+      - outputs from graph
+        - find_variables_in_subtree(["output"])
+      - eg. the result of every node is an output
+    - find all initial states for node
+      - eg. ScanStateNode
+    - find all non_sequences
+    - performs scan for all intermediate output values
+    - set the variables in the graph to have the appropriate output values (sequences)
+- ScanStateNode
+  - contains inital state, that may or may not be a learned parameter
+  - sets value at time t to be its input at time t
+  - 3 conceptual kinds
+    - constant initial state
+    - shared initial state
+      - potentially learned
+    - initial state from the network
+      - NOTE: could consider the 2 other cases as special cases of this one, where the constant state or shared state is a special node
+  - hyperparameters
+    - where in the network to initialize state from
+      - this is a hyperparameter because taking the initial state as the input to the node is almost certainly wrong in the context of a scan node (you want to initialize with a value that is not dependent on time)
+    - how many time steps back to look
 * assumptions
 - shared variables (eg. parameter tensors) will have a fixed size
 - nodes are in a directed acyclic graph
@@ -448,92 +560,224 @@
 * TODOs
 ** v2
 - goals:
-  - move everything over to cleaner API
   - have recurrent net working as fast as if done in pure theano w/ strict=True
-- order of things:
-  - work on RNNs
+- for cost:
+  - SendToNode
+  - SumNode
+- multidensenode
+- have container node return variable that throws exception AssertOp
+- allow theano var for inputnode to be a parameter to be passed in
+- have hyperparameter precedence favor closer to the node over more specific hyperparameter name
+  - eg. if conv layer defines strides, but hyperparamnode defines conv_strides, use conv's hyperparameter
 - test
-  - unit test that before and after building a network, the state of a node is the same
-- how should "cost" be treated?
-  - options
-    - as a specific node
-      - pros
-        - explitict
-        - seems very flexible
-      - cons
-        - makes it difficult to combine costs together
-          - eg. L2 loss
-          - would have to each have each "extra" cost specify the main cost, or have the main cost specify each "extra cost"
-            - neither option is all that great
-    - as a network property / state
-      - eg. there is a network state with a key (default="global_loss" or "loss" or "cost") that update nodes by default add to
-      - pros
-        - makes it easy to add losses together
-      - cons
-        - new question: when are values added to the cost?
-          - during compute_output?
-        - uses addition as an implicit function for composition - is this always desired?
-    - as the output of a node, then using a SendToNode to send the values as input of a different node (ie. a SummedCostNode)
-      - pros
-        - allows performing post-processing of values
-          - eg.
-            - multiplying by a value
-            - taking a square
-            - making it a margin loss instead
-            - composing multiple losses with a max instead of addition
-      - cons
-        - more verbose
-  - conclusion
-    - use output of a node, and a SendToNode
-- recurrent nets
-  - create pseudo-nodes to preprocess output of RNN
-    - ie. use sequence variable shape/dtype to create single element input variable of the correct shape
-  - nodes
-    - RecurrentNode
-      - for controlling theano.scan
-      - how?
-        - find all outputs for node
-          - outputs from graph
-          - eg. the result of every node is an output
-        - find all input sequences for node
-          - inputs into graph
-        - find all initial states for node
-          - eg. RecurrentStateNode
-        - find all non_sequences
-        - performs scan for all intermediate output values
-        - set the variables in the graph to have the appropriate output values (sequences)
-    - RecurrentStateNode
-      - contains inital state, that may or may not be a learned parameter
-      - sets value at time t to be its input at time t
-  - computing shape of a scan node
-    - for each output variable: set shape to (None, ) + (shape of output variable)
-  - theano.scan(strict=True)
-    - problem: issue with passing in random variables
-      - options
-        - ignore and use strict=False
-        - have a flag to ensure strict=True
-          - somehow verify that the graph has no random variables
-    - how to find non_sequences
-      - if a node accesses state from somewhere else in the tree (not under the current scan node), treat that output as a non-sequence
-      - treat RNG as a non-sequence
-      - all shared parameters in the current subtree should be non_sequences (?)
-      - maybe have a tag "non_sequences" for variables in the current subtree to be treated as such
-        - everything else is treated as an output?
-    - how to deal with non_sequences
-      - remember which variables are non-sequences and use theano.replace to do a variable replace with the new variables representing the non-sequences
+  - add test for node w/ generated children: create, serialize, deserialize, make sure same
+  - unit test that before and after building a network, the __dict__ of a node is the same
+  - add serialization tests for all nodes
+- more sophisticated way of finding nodes in subtree
+  - eg. finding scan state nodes whose scan is the current scan
+*** recurrent test
+#+BEGIN_SRC python
+  import numpy as np
+  import theano
+  import theano.tensor as T
+
+
+  def binary_toy_data(lag=1, length=20):
+      inputs = np.random.randint(0, 2, length)
+      outputs = np.array(lag * [0] + list(inputs))[:length]
+      return inputs, outputs
+
+
+  floatX = theano.config.floatX
+  hidden_state_size = 10
+
+  W_x = theano.shared(
+      (0.1 * np.random.randn(1, hidden_state_size)).astype(floatX))
+  W_h = theano.shared(
+      (0.1 * np.random.randn(hidden_state_size,
+                             hidden_state_size)).astype(floatX))
+  W_y = theano.shared(
+      (0.1 * np.random.randn(hidden_state_size, 1)).astype(floatX))
+
+
+  X = T.tensor3("X")
+  Y = T.tensor3("Y")
+
+
+  def step(x, h):
+      new_h = T.tanh(T.dot(x, W_x) + T.dot(h, W_h))
+      new_y = T.nnet.sigmoid(T.dot(new_h, W_y))
+      return new_h, new_y
+
+
+  results, updates = theano.scan(
+      fn=step,
+      sequences=[X],
+      outputs_info=[T.patternbroadcast(T.zeros((1, 10)), (False, False)), None],
+  )
+  ys = results[1]
+
+  loss = T.mean(T.nnet.categorical_crossentropy(ys, Y))
+  loss = T.mean((ys - Y) ** 2)
+  import lasagne
+  updates = lasagne.updates.sgd(loss, [W_x, W_h, W_y], 0.1)
+
+  train_fn = theano.function([X, Y], loss, updates=updates)
+  valid_fn = theano.function([X], ys)
+
+  LAG = 20
+  LENGTH = 50
+
+  for _ in range(5000):
+      inputs, outputs = binary_toy_data(lag=LAG, length=LENGTH)
+      loss = train_fn(inputs.reshape(-1, 1, 1), outputs.reshape(-1, 1, 1))
+      print(loss)
+
+  inputs, outputs = binary_toy_data(lag=LAG, length=LENGTH)
+  preds = valid_fn(inputs.reshape(-1, 1, 1)).flatten()
+#+END_SRC
+*** WIP scan recurrent
+#+BEGIN_SRC python
+  import time
+  import numpy as np
+  import theano
+  import theano.tensor as T
+  import lasagne
+  import pylab
+  import seaborn
+  import dslib
+  from d.sandbox.nn_utils import adam_v4
+
+  import treeano
+  from treeano.lasagne.nodes import DenseNode, ReLUNode, SGDNode
+
+
+  def fX(arr):
+      return arr.astype(theano.config.floatX)
+
+
+  def binary_toy_data(lag=1, length=20):
+      inputs = np.random.randint(0, 2, length)
+      outputs = np.array(lag * [0] + list(inputs))[:length]
+      return fX(inputs), fX(outputs)
+
+
+  LAG = 10
+  LENGTH = 50
+  hidden_state_size = 40
+
+
+  treeano.lasagne.nodes.SGDNode(
+      "sgd",
+      learning_rate=0.01,
+      children=treeano.nodes.ContainerNode(
+          "c1",
+          [
+              treeano.nodes.InputNode(
+                  "y",
+                  shape=(LENGTH, 1, 1)),
+              treeano.nodes.SequentialNode(
+                  "s1",
+                  [treeano.nodes.InputNode(
+                      "x",
+                      shape=(LENGTH, 1, 1)),
+                   treeano.nodes.scan.ScanNode(
+                       "scan",
+                       treeano.nodes.SequentialNode(
+                           "s2",
+                           [treeano.nodes.IdentityNode(
+                               "x-elem"),
+                            treeano.nodes.scan.ScanStateNode(
+                                "h",
+                                initial_state=TODO,
+                                next_state=TODO),
+                            treeano.nodes.lasagne.DenseNode(
+                                "y_pre",
+                                num_units=1),
+                            treeano.nodes.SigmoidNode(
+                                "pred")]),
+                       scan_axis=0),
+                   treeano.nodes.CostNode(
+                       "cost",
+                       reference="target")
+                  ]),
+          ]))
+
+  W_x = theano.shared(
+      fX(0.1 * np.random.randn(1, hidden_state_size)))
+  W_h = theano.shared(
+      fX(0.1 * np.random.randn(hidden_state_size, hidden_state_size)))
+  W_y = theano.shared(
+      fX(0.1 * np.random.randn(hidden_state_size, 1)))
+
+
+  X = T.tensor3("X")
+  Y = T.tensor3("Y")
+
+
+  def step(x, h):
+      new_h = nonlin(T.dot(x, W_x) + T.dot(h, W_h))
+      new_y = T.nnet.sigmoid(T.dot(new_h, W_y))
+      return new_h, new_y
+
+
+  results, updates = theano.scan(
+      fn=step,
+      sequences=[X],
+      outputs_info=[T.patternbroadcast(T.zeros((1, hidden_state_size)),
+                                       (False, False)),
+                    None],
+  )
+  ys = results[1]
+
+  LAG = 10
+  LENGTH = 50
+
+
+  loss = T.mean(T.nnet.categorical_crossentropy(ys, Y))
+  loss = T.mean((ys[LAG:] - Y[LAG:]) ** 2)
+  loss = T.mean((ys - Y) ** 2)
+  # updates = lasagne.updates.sgd(loss, [W_x, W_h, W_y], 0.1)
+  updates = adam_v4(loss, [W_x, W_h, W_y])
+
+  train_fn = theano.function([X, Y], loss, updates=updates)
+  valid_fn = theano.function([X], ys)
+
+  start_time = time.time()
+  losses = []
+  for _ in range(5000):
+      inputs, outputs = binary_toy_data(lag=LAG, length=LENGTH)
+      loss = train_fn(inputs.reshape(-1, 1, 1), outputs.reshape(-1, 1, 1))
+      losses.append(loss)
+
+  pylab.plot(losses, 'o')
+  pylab.show()
+  total_time = time.time() - start_time
+  inputs, outputs = binary_toy_data(lag=LAG, length=LENGTH)
+  preds = valid_fn(inputs.reshape(-1, 1, 1)).flatten()
+
+  print((total_time, np.mean(losses[-100:])))
+#+END_SRC
 ** misc
+- think about how to specify if a node owns a weight
+  - perhaps if nodes that used parameters had ParameterNode's, it would be easy to have a drop in replacement as a reference to a parameter elsewhere in the network
+- composite nodes
+  - sequentialhyperparameternode
+  - DenseNode = As2DNode + LinearMappingNode + BiasNode
+  - LinearMappingNode = ParameterNode + DotNode
+- relativenetwork
+  - add __repr__
+  - add .W .b syntax shortcut for accessing state
+  - add get_state set_state which does not overlap with current_variables
+- make sure all intermediate variables are named
+  - for ease of debugging
+- implement
+  - LSTM / GRU
+    - https://github.com/fchollet/keras/blob/master/keras/layers/recurrent.py
+    - https://github.com/mila-udem/blocks/blob/master/blocks/bricks/recurrent.py
 - cache gradient computation
-- sequentialhyperparameternode
 - make sure shapes can handle None's for polymorphism
 - use assertions for outputs that should not be used
-- how to handle updates for RandomStates?
-  - options:
-    - ignore it and have default_updates handle it
-      - it would have to be explicitly ignored by scan
-    - add it to the updates
-      - problem: what if there are multiple scans - adding the updates don't make sense in this case
-      - pros:
-        - easier
 - grep for FIXME's
   - separate out lasagne initializations from initializations
 - try dropout network w/ train / test
@@ -569,6 +813,32 @@
   - if shape is not given, print warning and calculate
     - theano.function([x, y], [x], on_unused_input="ignore")(2, 3)
 - make insides of update algorithms inspectable (eg. intermediates in nesterov momentum)
+- tree of hyperparameter precedence
+  - instead of having each node define the fallbacks of each hyperparameter, have it reference a tree so that shared hyperparameters have the same fallbacks
+  - pros
+    - consistency for users
+  - cons
+    - might be complex to understand
+    - defining hyperparameters in more than one place
+** guides / demos / concrete things to build
+- try building:
+  - triplet network
+  - network with parameter sharing
+    - eg. autoencoder with transpose as weight
+- temperaturesoftmaxnode
+- temperature softmax + categorical cross entropy + rescaling due to temperature (* T^2)
+- gradient caching node
+  - allows calculating derivatives of parameters with respect to loss high up in the tree (optimization)
+- learning rate decay node
+  - represents learning rate parameter as theano var w/ updates
+- demos
+  - vanilla mnist
+  - fully connected layer mnist with num_hidden, activation specified once
+  - separate conv layers from FC layers
+    - different dropout and L2 for conv
+- how to do things guide: (thinking in treeano guide)
+  - freezing a section
+    - use UpdateScaleNode, scale to 0
 ** network as data
 - create DSL on top of nodes to apply transformations
   - insert_above(), insert_between()
@@ -591,6 +861,16 @@
     - eg. remove update nodes in this subtree
     - can use jQuery like syntax
       - something("node_name", {"type": "update"}).replace(lambda x: ...)
+- create TransformationNode
+  - applies transformations lazily
+    - ie. not immediately but only when the network asks for its children
+  - pros
+    - lazy
+      - work is done as late as possible
+    - declarative
+      - you show how to get the complex result, not the complex result on its own
+      - readable
+  - ie. AddDropoutBeforeDenseNode
 - create graph transformations
   - eg.
     - substitution
@@ -603,28 +883,72 @@
 - potential issue: sharing variables between networks when test_value's are enabled
   - if one network uses the same variables, but with different shapes, the test_value's might break
 - testing
-** guides / demos / concrete things to build
-- temperaturesoftmaxnode
-- temperature softmax + categorical cross entropy + rescaling due to temperature (* T^2)
-- gradient caching node
-  - allows calculating derivatives of parameters with respect to loss high up in the tree (optimization)
-- learning rate decay node
-  - represents learning rate parameter as theano var w/ updates
-- demos
-  - vanilla mnist
-  - fully connected layer mnist with num_hidden, activation specified once
-  - separate conv layers from FC layers
-    - different dropout and L2 for conv
-- how to do things guide: (thinking in treeano guide)
-  - freezing a section
-    - use UpdateScaleNode, scale to 0
+** RNNs
+- taps for recurrent nets
+- how to handle updates for RandomStates?
+  - options:
+    - ignore it and have default_updates handle it
+      - it would have to be explicitly ignored by scan
+    - add it to the updates
+      - problem: what if there are multiple scans - adding the updates don't make sense in this case
+      - pros:
+        - easier
+- theano.scan(strict=True)
+  - problem: issue with passing in random variables
+    - options
+      - ignore and use strict=False
+      - have a flag to ensure strict=True
+        - somehow verify that the graph has no random variables
+  - how to find non_sequences
+    - if a node accesses state from somewhere else in the tree (not under the current scan node), treat that output as a non-sequence
+    - treat RNG as a non-sequence
+    - all shared parameters in the current subtree should be non_sequences (?)
+    - maybe have a tag "non_sequences" for variables in the current subtree to be treated as such
+      - everything else is treated as an output?
+  - how to deal with non_sequences
+    - remember which variables are non-sequences and use theano.replace to do a variable replace with the new variables representing the non-sequences
+- how to deal with multiple sequences to recur over?
+  - eg. sensor setting
+    - sequences: some visual signal, some numeric signal
+  - alternatives
+    - have scaninputnode take in all inputs of scannode and forward them along
+      - then need reference node to read in the proper output variable from the scan input node
+      - pros
+        - semantically correct
+      - cons
+        - need the scaninputnode's name
+          - solution: name can be looked up like a hyperparameter
+    - have RecurrentInputNode's be manually specified, along with the key to be passed in
+      - looks at the input of the scan node with the key, and creates an input variable of the proper shape
+      - pros
+        - simpler than previous
+      - cons
+        - the "normal" case of a single input is harder
+        - creates more "noise" in the graph
+    - have a ScanAwareReferenceNode
+      - the node is aware of scan's semantics and performs the appropriate transformation of the variable
+      - this reference node can reference variables outside the scan, and the input gets automatically converted to an element from a sequence
+      - pros
+        - simplest of all
+        - most similar to non-scan functionality (referencenode)
+        - can add afterwards, thus allowing implementing the default case first
+      - cons
+        - doesn't work for nested scans (how do you know how much un-sequencing look like)
+          - solution: make it explicit about how many scan levels up/down to convert a variable
+    - make sequences / forwarding be a parameter of ScanNode (takes in a map of nodes and which outputs to forward to)
+  - conclusion:
+    - for now, use the ScanAwareReferenceNode seems like the best solution
+    - because it is compatible with the single output design, we can do this later
 ** future
+- make python3 compatible
 - use metaclass for registering classes for serialization
 - look into drawing:
   - https://github.com/Lasagne/Lasagne/issues/174
     - https://github.com/ebenolson/Lasagne/blob/master/examples/draw_net.py
 - javascript interface to expand nodes
   - more expanded = more low-level
+- parallelism for running gpu networks on a different process
+  - https://gist.github.com/albertz/4177e40d41cb7f9f7c68
 - think about:
   - recursive NN
   - RNN
@@ -645,6 +969,8 @@
     - the only layer above this is the emergent layer (your code)
 - add auto-chunking of variables
   - maybe
+- function wrappers
+  - assert shape of numpy array is same as that of the input variable
 - workflows / hooks
   - distillation
     - input: network1, outputkey1, network2, outputkey2, data generator
@@ -720,3 +1046,6 @@
   - question: are hooks local or global
 - live plotting/monitoring
   - other tools (blocks / opendeep) use bokeh
+- visualization
+  - http://deeplearning.net/tutorial/utilities.html
+    - code to plot images/filters

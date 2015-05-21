@@ -178,6 +178,12 @@ class VariableWrapper(object):
         if self.shape_ is None:
             # cannot derive shape for shared variable
             assert not self.is_shared
+            # TODO
+            # can we call variable.get_value().shape
+            # we don't know if one of the intended dimensions is None,
+            # but it seems like a fair assumption that a shared variable
+            # won't change shape (maybe we can add a flag of whether or not
+            # shape doesn't change that defaults to True)
 
             # FIXME calculate shape
             assert False

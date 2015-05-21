@@ -51,10 +51,10 @@ class NodeImpl(NodeAPI):
 
     def __init__(self, name, children=None, **kwargs):
         self._name = name
-        self.children = self.children_container(children)
+        self._children = self.children_container(children)
         self.hyperparameters = kwargs
         # some validation
-        assert isinstance(self.children, ChildrenContainer)
+        assert isinstance(self._children, ChildrenContainer)
         assert isinstance(self.input_keys, (list, tuple))
         assert isinstance(self.hyperparameter_names, (list, tuple, set))
         for key in kwargs:
@@ -71,7 +71,7 @@ class NodeImpl(NodeAPI):
         root = "%s(%s)" % (self.__class__.__name__, param_str)
         # OPTIMIZE
         children = [repr(child).replace("\n", "\n| ")
-                    for child in self.children]
+                    for child in self._children]
         children_str = "\n| ".join([root] + children)
         return children_str
 
@@ -79,24 +79,10 @@ class NodeImpl(NodeAPI):
     def name(self):
         return self._name
 
-    def serialization_children(self):
-        """
-        API for which children to serialize, as a ChildrenContainer of the
-        same class as self.children
-        Overwriting this function allows subclasses to have pseudo-children:
-        child nodes that are not serialized.
-
-        Example use case: having a parent node perform pre-processing before
-        passing to a child
-        """
-        return self.children
-
     def _to_architecture_data(self):
-        serialization_children = self.serialization_children()
-        assert isinstance(serialization_children, self.children.__class__)
         return dict(
             name=self.name,
-            children=children_container_to_data(serialization_children),
+            children=children_container_to_data(self._children),
             hyperparameters=self.hyperparameters,
         )
 
@@ -121,7 +107,7 @@ class NodeImpl(NodeAPI):
         """
         by default, return children in children_container
         """
-        return list(iter(self.children))
+        return list(iter(self._children))
 
     def init_state(self, network):
         """

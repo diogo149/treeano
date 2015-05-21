@@ -35,6 +35,7 @@ class Network(object):
             # initialize some parts of node_state
             node_state["current_variables"] = {}
             node_state["original_variables"] = {}
+            node_state["additional_data"] = {}
             self.node_state[node.name] = node_state
         # initialize state
         # ---
@@ -184,6 +185,17 @@ class RelativeNetwork(object):
     def store_inputs(self, inputs):
         self._state["inputs"] = inputs
 
+    def set_data(self, key, value):
+        # we don't want ambiguity with names, thus don't allow
+        # the same name as a variable, and also don't allow overwriting
+        # additional_data
+        assert key not in self._state["additional_data"]
+        assert key not in self._state["current_variables"]
+        self._state["additional_data"][key] = value
+
+    def get_data(self, key):
+        return self._state["additional_data"][key]
+
     def get_variable(self, variable_name):
         return self._state["current_variables"][variable_name]
 
@@ -227,6 +239,15 @@ class RelativeNetwork(object):
                 # only keep variables where all filters match
                 if len(tag_filters - variable.tags) == 0]
 
+    def find_nodes_in_subtree(self, cls):
+        """
+        return all nodes with the given class
+        """
+        def predicate(node):
+            return node.__class__ is cls
+
+        return filter(predicate, self.graph.architecture_subtree(self._name))
+
     def create_variable(self, name, **kwargs):
         """
         creates a new output variable for the current node
@@ -236,9 +257,11 @@ class RelativeNetwork(object):
         assert name not in self._state['original_variables']
         new_name = "%s.%s" % (self._name, name)
         # prepare initialization strategies
-        inits = self.find_hyperparameter(["shared_initializations"],
-                                         default_value=[])
-        kwargs["shared_initializations"] = inits
+        if "shared_initializations" not in kwargs:
+            inits = self.find_hyperparameter(["shared_initializations"],
+                                             default_value=[])
+            kwargs["shared_initializations"] = inits
+        # same metadata about the network
         kwargs["relative_network"] = self
         # create the variable
         variable = VariableWrapper(new_name, **kwargs)

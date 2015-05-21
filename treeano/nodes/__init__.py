@@ -1,4 +1,6 @@
 import simple
+import updates
+import scan
 import test_utils
 
 from simple import (ReferenceNode,
