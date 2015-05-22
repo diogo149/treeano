@@ -4,6 +4,7 @@ import nose.tools as nt
 import numpy as np
 import theano
 
+import treeano.core
 from treeano import nodes
 
 floatX = theano.config.floatX
@@ -100,3 +101,20 @@ def test_network_doesnt_mutate():
     root_node.build()
     nt.assert_equal(original_dict,
                     root_node.__dict__)
+
+
+def test_node_with_generated_children_can_serialize():
+    root_node = nodes.ContainerNode("c", [
+        nodes.SequentialNode(
+            "s1",
+            [nodes.InputNode("in1", shape=(3, 4, 5)),
+             nodes.SendToNode("stn1", reference="fcn", to_key="b")]),
+        nodes.SequentialNode(
+            "s2",
+            [nodes.InputNode("in2", shape=(3, 4, 5)),
+             nodes.SendToNode("stn2", reference="fcn", to_key="a")]),
+        nodes.FunctionCombineNode("fcn", combine_fn=lambda *args: sum(args))
+    ])
+    root_node.build()
+    root2 = treeano.core.node_from_data(treeano.core.node_to_data(root_node))
+    nt.assert_equal(root_node, root2)

@@ -609,8 +609,6 @@
 - have hyperparameter precedence favor closer to the node over more specific hyperparameter name
   - eg. if conv layer defines strides, but hyperparamnode defines conv_strides, use conv's hyperparameter
 - test
-  - add test for node w/ generated children: create, serialize, deserialize, make sure same
-  - unit test that before and after building a network, the __dict__ of a node is the same
   - add serialization tests for all nodes
 - more sophisticated way of finding nodes in subtree
   - eg. finding scan state nodes whose scan is the current scan
