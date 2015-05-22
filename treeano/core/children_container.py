@@ -10,6 +10,10 @@ class ChildrenContainer(six.with_metaclass(abc.ABCMeta, object)):
     API for dealing with the children of nodes (which are also nodes)
     """
 
+    def __eq__(self, other):
+        return ((self.__class__ == other.__class__)
+                and (self.to_data() == other.to_data()))
+
     @abc.abstractproperty
     def children(self):
         """

@@ -600,8 +600,7 @@
   - SumNode
 - CombineNode with a combine function
 - recurrent.py
-- network.get_all_inputs
-- CombineDenseNode
+- DenseCombineNode
   - SplitCombine + LinearNode each + combine with sum + BiasNode
 - FunctionCombineNode
 - LinearMappingNode

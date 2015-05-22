@@ -1,3 +1,6 @@
+import copy
+
+import nose.tools as nt
 import numpy as np
 import theano
 
@@ -79,3 +82,21 @@ def test_function_combine_node():
     np.testing.assert_allclose(fn3(x, y)[0], y)
     fn4 = fcn_network(lambda x, y: y + 0 * x)
     np.testing.assert_allclose(fn4(x, y)[0], x)
+
+
+def test_network_doesnt_mutate():
+    root_node = nodes.ContainerNode("c", [
+        nodes.SequentialNode(
+            "s1",
+            [nodes.InputNode("in1", shape=(3, 4, 5)),
+             nodes.SendToNode("stn1", reference="fcn", to_key="b")]),
+        nodes.SequentialNode(
+            "s2",
+            [nodes.InputNode("in2", shape=(3, 4, 5)),
+             nodes.SendToNode("stn2", reference="fcn", to_key="a")]),
+        nodes.FunctionCombineNode("fcn", combine_fn=lambda *args: sum(args))
+    ])
+    original_dict = copy.deepcopy(root_node.__dict__)
+    root_node.build()
+    nt.assert_equal(original_dict,
+                    root_node.__dict__)
