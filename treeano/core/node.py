@@ -59,6 +59,16 @@ class NodeAPI(six.with_metaclass(abc.ABCMeta, object)):
         """
 
     @abc.abstractmethod
+    def init_long_range_dependencies(self, network):
+        """
+        defines long-range dependcies between nodes in the network
+        (eg. not the normal parent+child relationships)
+
+        cannot assume anything about the order other nodes are called in
+        NOTE: will be called exactly once
+        """
+
+    @abc.abstractmethod
     def init_state(self, network):
         """
         defines all additional state (eg. parameters), possibly in a lazy

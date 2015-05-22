@@ -109,6 +109,11 @@ class NodeImpl(NodeAPI):
         """
         return list(iter(self._children))
 
+    def init_long_range_dependencies(self, network):
+        """
+        by default, do not initialize any long range dependencies
+        """
+
     def init_state(self, network):
         """
         by default, do nothing with the state

@@ -37,6 +37,11 @@ class Network(object):
             node_state["original_variables"] = {}
             node_state["additional_data"] = {}
             self.node_state[node.name] = node_state
+        # initialize long range dependencies
+        # ---
+        # order doesn't matter
+        for node in self.graph.architectural_tree_nodes_root_to_leaves():
+            node.init_long_range_dependencies(self.relative_network(node))
         # initialize state
         # ---
         # outer nodes have their state initialized
@@ -341,10 +346,23 @@ class RelativeNetwork(object):
         a container node be sent to the container to allow it to propagate
         forward in the DAG
         """
-        self.graph.add_dependency(node_name,
-                                  self._name,
-                                  from_key=from_key,
-                                  to_key=to_key)
+        self.add_dependency(node_name,
+                            self._name,
+                            from_key=from_key,
+                            to_key=to_key)
+
+    def forward_output_to(self,
+                          node_name,
+                          from_key="default",
+                          to_key="default"):
+        """
+        forwards output of the current node (with key from_key) to the given
+        node (with key to_key)
+        """
+        self.add_dependency(self._name,
+                            node_name,
+                            from_key=from_key,
+                            to_key=to_key)
 
     def add_dependency(self,
                        from_name,

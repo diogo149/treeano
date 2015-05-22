@@ -471,6 +471,41 @@
     - where in the network to initialize state from
       - this is a hyperparameter because taking the initial state as the input to the node is almost certainly wrong in the context of a scan node (you want to initialize with a value that is not dependent on time)
     - how many time steps back to look
+- what is the proper way of initializing long-range dependencies?
+  - these behave differently from other dependencies and cannot occur in the normal order
+    - eg. if a SendToNode sends its output to a SequentialNode that has already had its state/dependencies initialized, this messes up the dependencies of the latter's children
+  - what order makes sense for init_state?
+    - going top down makes sense
+      - rationale: if a parent sets up dependencies for its children, children can then manipulate/introspect their dependencies
+        - eg. SequentialNode currently uses this
+  - options
+    - special case SendToNode's in network.build to call it before all others
+      - cons
+        - inelegant
+    - have an init_long_range_dependencies method for nodes
+      - has no guarantees about which order these would be called in
+      - pros
+        - more general than special casing SendToNode
+      - cons
+        - adds more to the node interface
+    - make init_state idempotent and calling it again
+      - pros
+        - it's generally nicer to have things idempotent
+        - can ensure that init_state is called in an order that makes sense
+      - cons
+        - (unnecessarily?) limiting
+        - some amount of upfront work
+        - might be unsufficient
+          - ie. might have to undo some effects - which will lead to it being limiting
+    - make init_state not dependent on network topology
+      - pros
+        - simpler (?)
+      - cons
+        - very limiting
+          - how to solve the sequential node input forwarding issue?
+  - conclusion
+    - going with init_long_range_dependencies
+      - most general (ie. will allow other nodes to reimplement what SendToNode does) while solving the problem
 * assumptions
 - shared variables (eg. parameter tensors) will have a fixed size
 - nodes are in a directed acyclic graph
@@ -564,6 +599,7 @@
 - for cost:
   - SendToNode
   - SumNode
+- network.get_all_inputs
 - multidensenode
 - have container node return variable that throws exception AssertOp
 - allow theano var for inputnode to be a parameter to be passed in
@@ -769,6 +805,7 @@
   - add __repr__
   - add .W .b syntax shortcut for accessing state
   - add get_state set_state which does not overlap with current_variables
+- add __repr__ for variablewrapper
 - make sure all intermediate variables are named
   - for ease of debugging
 - implement
@@ -884,6 +921,7 @@
   - if one network uses the same variables, but with different shapes, the test_value's might break
 - testing
 ** RNNs
+- add truncate_gradient parameter
 - taps for recurrent nets
 - how to handle updates for RandomStates?
   - options:
@@ -960,6 +998,11 @@
       - look into attentional interfaces
         - https://github.com/bartvm/blocks/blob/master/blocks/bricks/attention.py
 ** canopy
+- for each hook, document:
+  - when it occurs
+    - eg. on compile, after each batch, after each chunk, etc.
+- problem: how to have decomplected monitoring
+  - want to monitor completely different weights in the same way
 - treeano should not have hooks
   - there should be a clean separation of mapping from parameterization to theano variable and all the extra (modular) logic
 - canopy
@@ -972,8 +1015,10 @@
 - function wrappers
   - assert shape of numpy array is same as that of the input variable
 - workflows / hooks
+  - training
   - distillation
     - input: network1, outputkey1, network2, outputkey2, data generator
+  - distillation from caffe model
   - resuming an in-training model
   - optionally resuming an in-training model, or restarting
   - printing progressbar after each epoch
@@ -1001,6 +1046,9 @@
         - behaves like importance map
       - show input patch that maximally activates a conv neuron
       - deconvolutional networks
+    - saving learning curves
+    - post-training report
+      - eg. examples which are the most wrong
   - monitoring
     - printing out certain values
       - eg. loss
@@ -1008,6 +1056,61 @@
     - alerting on certain conditions
       - eg. nan's or inf's
       - eg. magnitude of gradient/weight matrix too high
+    - relationships between variables
+  - AUC / accuracy logging
+  - saving model
+  - logging batch normalization mean/variance updates
+  - logging how close rolling BN mean/variance is to actual mean/variance
+  - hyperparameter optimization
+  - active learning
+  - q learning
+  - curriculum learning
+    - from the data point of view (ie. changing data distribution)
+  - experience replay for hard-ish negatives
+  - early stopping
+  - hyperparameter annealing
+    - eg.
+      - dropout
+      - learning rate
+      - the weight of a loss function
+  - sliding window application
+  - approximate sliding window apply
+    - eg. SPPnet
+  - attaching preprocessing to a model
+    - rationale: so that a serialized model can have preprocessing built in
+  - chunking batches together
+    - ratioanle: optimized GPU transfer
+  - saving last x values of variables
+  - auto-stop on nan
+  - parameter hot-swapping
+  - restarting from previous state w/ lower learning rate
+  - proper BN initialization
+  - alternating training
+    - between several models
+  - adversarial training
+  - hard negative mining
+  - gradual hard negative mining
+    - eg. facenet
+  - serialization
+    - both model & learning states (ie. states of the wrapper functions)
+      - thus learning state must be serializable
+      - should serialize all inner state
+      - need hierarchical state for wrappers/hooks/workflows
+  - net surgery
+  - easily testing a new node
+    - generate inputs / outputs / extra layers (eg. cost/updates/etc.)
+  - run model on MNIST/CIFAR/etc.
+  - localization
+  - detection
+  - segmentation
+  - cascade of models
+    - not necessarily trained jointly (?)
+  - test time augmentation
+  - ensembling
+  - dynamic curriculum learning
+    - saving mistaken examples for replaying
+    - with metric learning
+      - starting with easy values
 - blocks callback hooks
   - before_training : bool - is invoked before training.
   - before_first_epoch : bool - is invoked before the first epoch.
