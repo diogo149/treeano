@@ -1,3 +1,6 @@
+import theano
+import theano.tensor as T
+
 from .. import core
 
 
@@ -26,16 +29,42 @@ class ContainerNode(core.WrapperNodeImpl):
     between them
     """
 
-    input_keys = ("first_child_output",)
+    input_keys = ()
 
     def init_state(self, network):
-        # by default, returns the output of its first child
-        # ---
-        # this was done because it's a sensible default, and other nodes
-        # assume that every node has an output
-        # additionally, returning the input of this node didn't work, because
-        # sometimes the node has no input (eg. if it contains the input
-        # node)
+        """
+        do nothing
+        """
+
+    def compute_output(self, network):
+        # return variable that always returns an assertion error
+        # because the output should not be used
+        network.create_variable(
+            name="default",
+            variable=T.opt.Assert()(T.constant(0.0), 0),
+            shape=(),
+        )
+
+
+@core.register_node("splitter")
+class SplitterNode(core.WrapperNodeImpl):
+
+    """
+    passes the input of the node into each of its children
+    """
+
+    input_keys = ()
+
+    def init_state(self, network):
         children = self.architecture_children()
-        network.take_output_from(children[0].name,
-                                 to_key="first_child_output")
+        for child in children:
+            network.forward_input_to(child.name)
+
+    def compute_output(self, network):
+        # return variable that always returns an assertion error
+        # because the output should not be used
+        network.create_variable(
+            name="default",
+            variable=T.opt.Assert()(T.constant(0.0), 0),
+            shape=(),
+        )
