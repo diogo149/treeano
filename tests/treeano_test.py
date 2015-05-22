@@ -4,14 +4,12 @@ from __future__ import print_function, unicode_literals
 import numpy as np
 import theano
 import lasagne
-import nose.tools as nt
 
 import treeano
 import treeano.lasagne
 from treeano import UpdateDeltas
 from treeano.lasagne.initialization import GlorotUniform
 from treeano.nodes import (InputNode,
-                           ReferenceNode,
                            SequentialNode,
                            IdentityNode,
                            HyperparameterNode,
@@ -383,15 +381,3 @@ def test_update_scale_node():
     ).build()
     ud = network.update_deltas
     assert ud[network["fc"].get_variable("W").variable] == -10
-
-
-def test_reference_node():
-    network = SequentialNode("s", [
-        InputNode("input1", shape=(3, 4, 5)),
-        InputNode("input2", shape=(5, 4, 3)),
-        ReferenceNode("ref", reference="input1"),
-    ]).build()
-
-    fn = network.function(["input1"], ["ref"])
-    x = np.random.randn(3, 4, 5).astype(floatX)
-    np.testing.assert_allclose(fn(x)[0], x)
