@@ -2,6 +2,7 @@ import theano
 import theano.tensor as T
 
 from .. import core
+from . import simple
 
 
 @core.register_node("sequential")
@@ -68,3 +69,43 @@ class SplitterNode(core.WrapperNodeImpl):
             variable=T.opt.Assert()(T.constant(0.0), 0),
             shape=(),
         )
+
+
+@core.register_node("split_combine")
+class SplitCombineNode(core.WrapperNodeImpl):
+
+    """
+    passes the input of the node into each of its children
+    """
+
+    hyperparameter_names = (SplitterNode.hyperparameter_names
+                            + simple.FunctionCombineNode.hyperparameter_names)
+    input_keys = ("combine_node_output",)
+
+    def architecture_children(self):
+        combine_node = simple.FunctionCombineNode(self.name + "_combiner")
+        # adding a container so that the input is not passed to it
+        combine_container = ContainerNode(self.name + "_combiner_container",
+                                          [combine_node])
+        children = super(SplitCombineNode, self).architecture_children()
+        new_children = []
+        for idx, child in enumerate(children):
+            new_children.append(
+                SequentialNode(
+                    "%s_sequential_%d" % (self.name, idx),
+                    [child,
+                     simple.SendToNode(
+                         "%s_send_to_%d" % (self.name, idx),
+                         send_to_reference=combine_node.name,
+                         to_key="%s_%d" % (self.name, idx),
+                     )]))
+        return [SplitterNode(
+            self.name + "_splitter",
+            [combine_container] + new_children,
+        )]
+
+    def init_state(self, network):
+        # forward input to child (splitter node)
+        super(SplitCombineNode, self).init_state(network)
+        network.take_output_from(self.name + "_combiner",
+                                 to_key="combine_node_output")

@@ -14,7 +14,8 @@ from simple import (ReferenceNode,
                     FunctionCombineNode)
 from containers import (SequentialNode,
                         ContainerNode,
-                        SplitterNode)
+                        SplitterNode,
+                        SplitCombineNode)
 from updates import (UpdateScaleNode)
 
 from test_utils import check_serialization

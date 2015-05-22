@@ -802,6 +802,8 @@
 - add check in compute_output phase to make sure network doesn't return additional inputs
   - rationale: they do not get recorded in the node's "inputs"
     - thus makes it harder to compute shape
+- add shortcuts for nodes that wrap other nodes
+  - eg. to inherit their hyperparameters
 - think about how to specify if a node owns a weight
   - perhaps if nodes that used parameters had ParameterNode's, it would be easy to have a drop in replacement as a reference to a parameter elsewhere in the network
 - composite nodes
