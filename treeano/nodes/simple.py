@@ -152,3 +152,42 @@ class CostNode(core.NodeImpl):
             variable=aggregate_cost,
             shape=(),
         )
+
+
+@core.register_node("fn_combine")
+class FunctionCombineNode(core.NodeImpl):
+
+    """
+    Combines each of its inputs with the given combine function
+
+    NOTE: inputs are passed in sorted according to their to_key
+
+    combine_fn:
+    function that takes in several theano variables and returns a new
+    theano variable
+
+    shape_fn:
+    optional function to calculate the shape of the output given the shapes
+    of the inputs
+    """
+
+    hyperparameter_names = ("combine_fn",
+                            "shape_fn")
+
+    def init_state(self, network):
+        self.input_keys = tuple(sorted(network.get_all_input_keys()))
+
+    def compute_output(self, network, *input_vws):
+        combine_fn = network.find_hyperparameter(["combine_fn"])
+        shape_fn = network.find_hyperparameter(["shape_fn"], None)
+        if shape_fn is None:
+            shape = None
+        else:
+            shape = shape_fn(*[input_vw.shape for input_vw in input_vws])
+        var = combine_fn(*[input_vw.variable for input_vw in input_vws])
+        network.create_variable(
+            name="default",
+            variable=var,
+            shape=shape,
+            tags={"output"}
+        )

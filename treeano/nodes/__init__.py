@@ -10,7 +10,8 @@ from simple import (ReferenceNode,
                     HyperparameterNode,
                     InputNode,
                     IdentityNode,
-                    CostNode)
+                    CostNode,
+                    FunctionCombineNode)
 from containers import (SequentialNode,
                         ContainerNode,
                         SplitterNode)

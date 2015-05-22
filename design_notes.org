@@ -598,8 +598,14 @@
   - have recurrent net working as fast as if done in pure theano w/ strict=True
 - for cost:
   - SumNode
+- CombineNode with a combine function
+- recurrent.py
 - network.get_all_inputs
-- multidensenode
+- CombineDenseNode
+  - SplitCombine + LinearNode each + combine with sum + BiasNode
+- FunctionCombineNode
+- LinearMappingNode
+  - can copy weights w/ tag copy into parent node, for debuggability
 - allow theano var for inputnode to be a parameter to be passed in
 - have hyperparameter precedence favor closer to the node over more specific hyperparameter name
   - eg. if conv layer defines strides, but hyperparamnode defines conv_strides, use conv's hyperparameter
@@ -793,6 +799,9 @@
   print((total_time, np.mean(losses[-100:])))
 #+END_SRC
 ** misc
+- add check in compute_output phase to make sure network doesn't return additional inputs
+  - rationale: they do not get recorded in the node's "inputs"
+    - thus makes it harder to compute shape
 - think about how to specify if a node owns a weight
   - perhaps if nodes that used parameters had ParameterNode's, it would be easy to have a drop in replacement as a reference to a parameter elsewhere in the network
 - composite nodes

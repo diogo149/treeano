@@ -122,14 +122,23 @@ class TreeanoGraph(object):
             # TODO maybe use a custom exception
             raise
 
+    def all_input_edges_for_node(self, node_name):
+        """
+        returns all edges and their corresponding data going into the given
+        node
+        """
+        edges = self.computation_graph.edges(data=True)
+        for edge_from, edge_to, datamap in edges:
+            if edge_to == node_name:
+                yield (edge_from, edge_to, datamap)
+
     def input_edge_for_node(self, node_name, to_key="default"):
         """
         searches for the input node and from_key of a given node with a given
         to_key, and returns None if not found
         """
-        edges = self.computation_graph.edges(data=True)
-        for edge_from, edge_to, datamap in edges:
-            if edge_to == node_name and datamap.get("to_key") == to_key:
+        for edge_from, _, datamap in self.all_input_edges_for_node(node_name):
+            if datamap.get("to_key") == to_key:
                 from_key = datamap["from_key"]
                 return (edge_from, from_key)
         return None

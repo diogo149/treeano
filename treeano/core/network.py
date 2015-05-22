@@ -377,6 +377,17 @@ class RelativeNetwork(object):
                                   from_key=from_key,
                                   to_key=to_key)
 
+    def get_all_input_keys(self):
+        """
+        returns all input keys of the current node
+        """
+        keys = []
+        for _, _, datamap in self.graph.all_input_edges_for_node(self._name):
+            to_key = datamap.get("to_key")
+            if to_key is not None:
+                keys.append(to_key)
+        return keys
+
 
 def build_network(root_node):
     network = Network(root_node)
