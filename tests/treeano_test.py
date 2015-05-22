@@ -4,12 +4,14 @@ from __future__ import print_function, unicode_literals
 import numpy as np
 import theano
 import lasagne
+import nose.tools as nt
 
 import treeano
 import treeano.lasagne
 from treeano import UpdateDeltas
 from treeano.lasagne.initialization import GlorotUniform
 from treeano.nodes import (InputNode,
+                           ReferenceNode,
                            SequentialNode,
                            IdentityNode,
                            HyperparameterNode,
@@ -116,10 +118,22 @@ def test_toy_updater_node():
     fn1 = network.function([], ["a"])
     init_value = fn1()
     fn2 = network.function([], ["a"], include_updates=True)
-    np.testing.assert_allclose(init_value[0], fn2()[0])
-    np.testing.assert_allclose(init_value[0] + 42, fn2()[0])
-    np.testing.assert_allclose(init_value[0] + 84, fn1()[0])
-    np.testing.assert_allclose(init_value[0] + 84, fn1()[0])
+    np.testing.assert_allclose(init_value[0],
+                               fn2()[0],
+                               rtol=1e-5,
+                               atol=1e-8)
+    np.testing.assert_allclose(init_value[0] + 42,
+                               fn2()[0],
+                               rtol=1e-5,
+                               atol=1e-8)
+    np.testing.assert_allclose(init_value[0] + 84,
+                               fn1()[0],
+                               rtol=1e-5,
+                               atol=1e-8)
+    np.testing.assert_allclose(init_value[0] + 84,
+                               fn1()[0],
+                               rtol=1e-5,
+                               atol=1e-8)
 
 
 def test_hyperparameter_node():
@@ -160,7 +174,10 @@ def test_ones_initialization():
 
     network = DummyNode("dummy").build()
     fn = network.function([], ["dummy"])
-    np.testing.assert_allclose(fn()[0], np.ones((1, 2, 3)).astype(floatX))
+    np.testing.assert_allclose(fn()[0],
+                               np.ones((1, 2, 3)).astype(floatX),
+                               rtol=1e-5,
+                               atol=1e-8)
 
 
 def test_dense_node():
@@ -178,7 +195,10 @@ def test_dense_node():
     fn = network.function(["a"], ["d"])
     x = np.random.randn(3, 4, 5).astype(floatX)
     res = np.dot(x.reshape(3, 20), np.ones((20, 14))) + np.ones(14)
-    np.testing.assert_allclose(fn(x)[0], res)
+    np.testing.assert_allclose(fn(x)[0],
+                               res,
+                               rtol=1e-5,
+                               atol=1e-8)
 
 
 def test_fully_connected_and_relu_node():
@@ -197,7 +217,10 @@ def test_fully_connected_and_relu_node():
     fn = network.function(["a"], ["d"])
     x = np.random.randn(3, 4, 5).astype(floatX)
     res = np.dot(x.reshape(3, 20), np.ones((20, 14))) + np.ones(14)
-    np.testing.assert_allclose(fn(x)[0], np.clip(res, 0, np.inf))
+    np.testing.assert_allclose(fn(x)[0],
+                               np.clip(res, 0, np.inf),
+                               rtol=1e-5,
+                               atol=1e-8)
 
 
 def test_glorot_uniform_initialization():
@@ -216,11 +239,16 @@ def test_glorot_uniform_initialization():
     fc_node = network["b"]
     W_value = fc_node.get_variable("W").value
     b_value = fc_node.get_variable("b").value
-    np.testing.assert_allclose(0, W_value.mean(), atol=1e-2)
+    np.testing.assert_allclose(0,
+                               W_value.mean(),
+                               atol=1e-2)
     np.testing.assert_allclose(np.sqrt(2.0 / (20 + 1000)),
                                W_value.std(),
                                atol=1e-2)
-    np.testing.assert_allclose(np.zeros(1000), b_value)
+    np.testing.assert_allclose(np.zeros(1000),
+                               b_value,
+                               rtol=1e-5,
+                               atol=1e-8)
 
 
 def test_cost_node():
@@ -246,7 +274,10 @@ def test_cost_node():
     res = np.clip(res, 0, np.inf)
     y = np.random.randn(3, 14).astype(floatX)
     res = np.mean((y - res) ** 2)
-    np.testing.assert_allclose(fn(x, y)[0], res)
+    np.testing.assert_allclose(fn(x, y)[0],
+                               res,
+                               rtol=1e-5,
+                               atol=1e-8)
 
 
 def test_update_node():
@@ -265,11 +296,16 @@ def test_update_node():
     fc_node = network["b"]
     W_value = fc_node.get_variable("W").value
     b_value = fc_node.get_variable("b").value
-    np.testing.assert_allclose(0, W_value.mean(), atol=1e-2)
+    np.testing.assert_allclose(0,
+                               W_value.mean(),
+                               atol=1e-2)
     np.testing.assert_allclose(np.sqrt(2.0 / (20 + 1000)),
                                W_value.std(),
                                atol=1e-2)
-    np.testing.assert_allclose(np.zeros(1000), b_value)
+    np.testing.assert_allclose(np.zeros(1000),
+                               b_value,
+                               rtol=1e-5,
+                               atol=1e-8)
 
 
 def test_sgd_node():
@@ -300,7 +336,10 @@ def test_sgd_node():
     y = np.random.randn(3, 14).astype(floatX)
     initial_cost = fn(x, y)
     next_cost = fn(x, y)
-    np.testing.assert_allclose(initial_cost, next_cost)
+    np.testing.assert_allclose(initial_cost,
+                               next_cost,
+                               rtol=1e-5,
+                               atol=1e-8)
     prev_cost = fn2(x, y)
     for _ in range(10):
         current_cost = fn2(x, y)
@@ -344,3 +383,12 @@ def test_update_scale_node():
     ).build()
     ud = network.update_deltas
     assert ud[network["fc"].get_variable("W").variable] == -10
+
+
+@nt.raises(ValueError)
+def test_reference_node1():
+    # reference node can't have multiple inputs
+    SequentialNode("s", [
+        InputNode("input", shape=(3, 4, 5)),
+        ReferenceNode("ref", reference="input"),
+    ]).build()

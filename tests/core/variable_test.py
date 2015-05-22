@@ -22,7 +22,7 @@ def test_variable2():
                                               shape=(3, 4, 5),
                                               is_shared=True)
     assert s.value.sum() == 0
-    x = np.random.randn(3, 4, 5)
+    x = np.random.randn(3, 4, 5).astype(theano.config.floatX)
     s.value = x
     assert np.allclose(s.value, x)
     try:

@@ -171,7 +171,7 @@ class ScanNode(core.Wrapper1NodeImpl):
         # each scan state should probably have a unique next state
         # delete the assertion if this assumption does not hold
         # (the code should work just fine, this is just a sanity check)
-        assert len(scan_state_next_states) == len(set(scan_state_next_states))
+        assert len(scan_state_next_names) == len(set(scan_state_next_names))
         scan_state_next_networks = [network[name]
                                     for name in scan_state_next_names]
         scan_state_next = [net.get_variable("default")
@@ -208,7 +208,7 @@ class ScanNode(core.Wrapper1NodeImpl):
             assert len(scan_vars) == (num_inputs
                                       + num_outputs
                                       + num_non_sequences)
-            assert len(num_outputs) == len(scan_state_nodes)
+            assert num_outputs == len(scan_state_nodes)
 
             # break down scan vars into appropriate categories
             scan_input_vars = scan_vars[:num_inputs]

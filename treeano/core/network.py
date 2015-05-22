@@ -183,6 +183,9 @@ class RelativeNetwork(object):
         return self._network[name]
 
     def store_inputs(self, inputs):
+        """
+        stores the inputs for the current node
+        """
         self._state["inputs"] = inputs
 
     def set_data(self, key, value):
