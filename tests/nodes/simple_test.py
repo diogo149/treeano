@@ -178,3 +178,35 @@ def test_add_bias_node():
     bias_var.value = y
     # test that adding works
     np.testing.assert_allclose(fn(x)[0], x + y)
+
+
+def test_linear_mapping_node_shape():
+    def get_shapes(output_dim):
+        network = nodes.SequentialNode("s", [
+            nodes.InputNode("in", shape=(3, 4, 5)),
+            nodes.LinearMappingNode("linear", output_dim=output_dim),
+        ]).build()
+        weight_shape = network["linear"].get_variable("weight").shape
+        output_shape = network["s"].get_variable("default").shape
+        return weight_shape, output_shape
+
+    nt.assert_equal(((5, 10), (3, 4, 10)), get_shapes(10))
+    nt.assert_equal(((5, 1), (3, 4, 1)),
+                    get_shapes(1))
+
+
+def test_linear_mapping_node():
+    network = nodes.SequentialNode("s", [
+        nodes.InputNode("in", shape=(3, 4, 5)),
+        nodes.LinearMappingNode("linear", output_dim=6),
+    ]).build()
+    weight_var = network["linear"].get_variable("weight")
+    fn = network.function(["in"], ["s"])
+    x = np.random.randn(3, 4, 5).astype(floatX)
+    W = np.random.randn(5, 6).astype(floatX)
+    # test that weight is 0 initially
+    np.testing.assert_allclose(fn(x)[0], np.zeros((3, 4, 6)))
+    # set weight_var value to new value
+    weight_var.value = W
+    # test that adding works
+    np.testing.assert_allclose(fn(x)[0], np.dot(x, W))

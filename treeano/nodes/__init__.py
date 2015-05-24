@@ -13,7 +13,8 @@ from simple import (ReferenceNode,
                     IdentityNode,
                     CostNode,
                     FunctionCombineNode,
-                    AddBiasNode)
+                    AddBiasNode,
+                    LinearMappingNode)
 from containers import (SequentialNode,
                         ContainerNode,
                         SplitterNode,

@@ -251,3 +251,39 @@ class AddBiasNode(core.NodeImpl):
             shape=in_var.shape,
             tags={"output"},
         )
+
+
+@core.register_node("linear_mapping")
+class LinearMappingNode(core.NodeImpl):
+
+    """
+    node that applies a linear mapping to the last dimension of its input
+    (a dot product with a parameter)
+    """
+
+    hyperparameter_names = ("shared_initializations",
+                            "initializations",
+                            "inits",
+                            "output_dim")
+
+    def compute_output(self, network, in_var):
+        inits = network.find_hyperparameter(["shared_initializations",
+                                             "initializations",
+                                             "inits"],
+                                            None)
+        output_dim = network.find_hyperparameter(["output_dim"])
+        weight_shape = (in_var.shape[-1], output_dim)
+        output_shape = tuple(in_var.shape[:-1]) + (output_dim, )
+        W = network.create_variable(
+            name="weight",
+            is_shared=True,
+            shape=weight_shape,
+            tags={"parameter", "weight"},
+            shared_initializations=inits,
+        )
+        network.create_variable(
+            name="default",
+            variable=(T.dot(in_var.variable, W.variable)),
+            shape=output_shape,
+            tags={"output"},
+        )
