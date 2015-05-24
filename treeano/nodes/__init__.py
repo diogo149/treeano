@@ -2,6 +2,7 @@ import simple
 import containers
 import updates
 import scan
+import recurrent
 import toy
 import test_utils
 
@@ -11,7 +12,8 @@ from simple import (ReferenceNode,
                     InputNode,
                     IdentityNode,
                     CostNode,
-                    FunctionCombineNode)
+                    FunctionCombineNode,
+                    AddBiasNode)
 from containers import (SequentialNode,
                         ContainerNode,
                         SplitterNode,

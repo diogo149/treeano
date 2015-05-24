@@ -11,6 +11,10 @@ def register_node(name):
     assert isinstance(name, six.string_types)
 
     def inner(cls):
+        # we want to allow overwriting (eg. if the file is refreshed)
+        # sometimes, but not accidentaly overwriting
+        if name in NODES:
+            assert cls.__name__ == NODES[name].__name__
         NODES[name] = cls
         return cls
     return inner
@@ -58,6 +62,10 @@ def register_children_container(name):
     assert isinstance(name, six.string_types)
 
     def inner(cls):
+        # we want to allow overwriting (eg. if the file is refreshed)
+        # sometimes, but not accidentaly overwriting
+        if name in CHILDREN_CONTAINERS:
+            assert cls.__name__ == CHILDREN_CONTAINERS[name].__name__
         CHILDREN_CONTAINERS[name] = cls
         return cls
     return inner
