@@ -594,24 +594,23 @@
 - recurrent networks
 * TODOs
 ** v2
-- goals:
-  - have recurrent net working as fast as if done in pure theano w/ strict=True
-- for cost:
-  - SumNode
-- CombineNode with a combine function
-- recurrent.py
-- DenseCombineNode
-  - SplitCombine + LinearNode each + combine with sum + BiasNode
-- FunctionCombineNode
+- test bias node
 - LinearMappingNode
-  - can copy weights w/ tag copy into parent node, for debuggability
+- DenseNode
+- MLP
+- recurrent.py
+- fix FIXME's in scan.py
+- ScalarSumNode
+- DenseCombineNode
+  - SplitCombine + LinearMappingNode each + combine with sum + BiasNode
 - allow theano var for inputnode to be a parameter to be passed in
 - have hyperparameter precedence favor closer to the node over more specific hyperparameter name
   - eg. if conv layer defines strides, but hyperparamnode defines conv_strides, use conv's hyperparameter
-- test
-  - add serialization tests for all nodes
 - more sophisticated way of finding nodes in subtree
   - eg. finding scan state nodes whose scan is the current scan
+- test: create recurrent net that loads weights from treeano net, and assert results are exactly the same
+- goals:
+  - have recurrent net working as fast as if done in pure theano w/ strict=True
 *** recurrent test
 #+BEGIN_SRC python
   import numpy as np
@@ -926,6 +925,7 @@
 - potential issue: sharing variables between networks when test_value's are enabled
   - if one network uses the same variables, but with different shapes, the test_value's might break
 - testing
+  - add serialization tests for all nodes
 ** RNNs
 - add truncate_gradient parameter
 - taps for recurrent nets

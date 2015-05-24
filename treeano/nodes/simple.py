@@ -175,7 +175,7 @@ class FunctionCombineNode(core.NodeImpl):
                             "shape_fn")
 
     def init_state(self, network):
-        self.input_keys = tuple(sorted(network.get_all_input_keys()))
+        self.input_keys = tuple(sorted(network.get_all_input_edges().keys()))
 
     def compute_output(self, network, *input_vws):
         combine_fn = network.find_hyperparameter(["combine_fn"])
@@ -190,4 +190,64 @@ class FunctionCombineNode(core.NodeImpl):
             variable=var,
             shape=shape,
             tags={"output"}
+        )
+
+
+@core.register_node("constant")
+class ConstantNode(core.NodeImpl):
+
+    """
+    node that returns a constant value
+    """
+
+    hyperparameter_names = ("constant_value", "value")
+    input_keys = ()
+
+    def compute_output(self, network):
+        value = network.find_hyperparameter(["constant_value", "value"])
+        shape = value.shape if hasattr(value, "shape") else ()
+        network.create_variable(
+            name="default",
+            variable=T.constant(value),
+            shape=shape,
+            tags={"output"},
+        )
+
+
+@core.register_node("add_bias")
+class AddBiasNode(core.NodeImpl):
+
+    """
+    node that adds a bias parameter to its input
+    """
+
+    hyperparameter_names = ("shared_initializations",
+                            "initializations",
+                            "inits",
+                            "broadcastable")
+
+    def compute_output(self, network, in_var):
+        inits = network.find_hyperparameter(["shared_initializations",
+                                             "initializations",
+                                             "inits"],
+                                            None)
+        broadcastable = network.find_hyperparameter(
+            ["broadcastable"],
+            (False,) * in_var.ndim)
+        assert len(broadcastable) == in_var.ndim
+        shape = tuple([1 if is_broadcastable else size
+                       for is_broadcastable, size in zip(broadcastable,
+                                                         in_var.shape)])
+        b = network.create_variable(
+            name="bias",
+            is_shared=True,
+            shape=shape,
+            tags={"parameter", "bias"},
+            shared_initializations=inits,
+        )
+        network.create_variable(
+            name="default",
+            variable=(in_var.variable + b.variable),
+            shape=in_var.shape,
+            tags={"output"},
         )

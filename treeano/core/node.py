@@ -56,6 +56,7 @@ class NodeAPI(six.with_metaclass(abc.ABCMeta, object)):
     def architecture_children(self):
         """
         returns all child nodes of the given node in the architectural tree
+        as a list
         """
 
     @abc.abstractmethod

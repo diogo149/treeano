@@ -48,6 +48,10 @@ class ScanStateNode(core.NodeImpl):
     """
     Container for hidden state, where one specifies an initial value and
     a next value via other nodes in the tree
+
+    initial_scan_state_reference:
+    optional reference to a node to take initial state from
+    if not given, the default input of the node is used
     """
 
     hyperparameter_names = ("initial_scan_state_reference",
@@ -59,14 +63,20 @@ class ScanStateNode(core.NodeImpl):
     input_keys = ("initial_state",)
 
     def init_state(self, network):
-        initial_scan_state_reference = network.find_hyperparameter(
+        node_name = network.find_hyperparameter(
             ["initial_scan_state_reference",
              "initial_state_reference",
-             "initial_state"])
-        network.take_output_from(
-            initial_scan_state_reference,
-            to_key="initial_state")
-        network.set_data("initial_state_name", initial_scan_state_reference)
+             "initial_state"],
+            None)
+        if node_name is not None:
+            # add dependency in dag
+            network.take_output_from(
+                node_name,
+                to_key="initial_state")
+        else:
+            # otherwise set it to the default input of the node
+            node_name = network.get_all_input_edges()["default"]
+        network.set_data("initial_state_name", node_name)
 
     def compute_output(self, network, initial_state):
         # create a new variable representing the output of this node,

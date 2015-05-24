@@ -24,6 +24,16 @@ def test_function_combine_node_serialization():
     nodes.check_serialization(nodes.FunctionCombineNode("a"))
 
 
+def test_add_bias_node_serialization():
+    nodes.check_serialization(nodes.AddBiasNode("a"))
+    nodes.check_serialization(nodes.AddBiasNode(
+        "a",
+        inits=[],
+        # need to make broadcastable a list because json (de)serialization
+        # converts tuples to lists
+        broadcastable=[True, False, True]))
+
+
 def test_reference_node():
     network = nodes.SequentialNode("s", [
         nodes.InputNode("input1", shape=(3, 4, 5)),
@@ -118,3 +128,53 @@ def test_node_with_generated_children_can_serialize():
     root_node.build()
     root2 = treeano.core.node_from_data(treeano.core.node_to_data(root_node))
     nt.assert_equal(root_node, root2)
+
+
+def test_add_bias_node_broadcastable():
+    def get_bias_shape(broadcastable):
+        return nodes.SequentialNode("s", [
+            nodes.InputNode("in", shape=(3, 4, 5)),
+            (nodes.AddBiasNode("b", broadcastable=broadcastable)
+             if broadcastable is not None
+             else nodes.AddBiasNode("b"))
+        ]).build()["b"].get_variable("bias").shape
+
+    nt.assert_equal((3, 4, 5),
+                    get_bias_shape(None))
+    nt.assert_equal((1, 4, 1),
+                    get_bias_shape((True, False, True)))
+    nt.assert_equal((3, 1, 5),
+                    get_bias_shape((False, True, False)))
+
+
+@nt.raises(AssertionError)
+def test_add_bias_node_broadcastable_incorrect_size1():
+    nodes.SequentialNode("s", [
+        nodes.InputNode("in", shape=(3, 4, 5)),
+        nodes.AddBiasNode("b", broadcastable=(True, False))
+    ]).build()
+
+
+@nt.raises(AssertionError)
+def test_add_bias_node_broadcastable_incorrect_size2():
+    nodes.SequentialNode("s", [
+        nodes.InputNode("in", shape=(3, 4, 5)),
+        nodes.AddBiasNode("b", broadcastable=(True, False, True, False))
+    ]).build()
+
+
+def test_add_bias_node():
+    network = nodes.SequentialNode("s", [
+        nodes.InputNode("in", shape=(3, 4, 5)),
+        nodes.AddBiasNode("b")
+    ]).build()
+    bias_var = network["b"].get_variable("bias")
+    fn = network.function(["in"], ["s"])
+    x = np.random.randn(3, 4, 5).astype(floatX)
+    y = np.random.randn(3, 4, 5).astype(floatX)
+    # test that bias is 0 initially
+    np.testing.assert_allclose(fn(x)[0], x)
+    # set bias_var value to new value
+    bias_var.value = y
+    # test that adding works
+    np.testing.assert_allclose(fn(x)[0], x + y)

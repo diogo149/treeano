@@ -265,7 +265,7 @@ class RelativeNetwork(object):
         assert name not in self._state['original_variables']
         new_name = "%s.%s" % (self._name, name)
         # prepare initialization strategies
-        if "shared_initializations" not in kwargs:
+        if kwargs.get("shared_initializations") is None:
             inits = self.find_hyperparameter(["shared_initializations"],
                                              default_value=[])
             kwargs["shared_initializations"] = inits
@@ -377,16 +377,19 @@ class RelativeNetwork(object):
                                   from_key=from_key,
                                   to_key=to_key)
 
-    def get_all_input_keys(self):
+    def get_all_input_edges(self):
         """
-        returns all input keys of the current node
+        returns a map from input keys of the current node to the node where
+        the edge is from
         """
-        keys = []
-        for _, _, datamap in self.graph.all_input_edges_for_node(self._name):
+        edges = {}
+        for edge in self.graph.all_input_edges_for_node(self._name):
+            edge_from, edge_to, datamap = edge
+            assert edge_to == self._name
             to_key = datamap.get("to_key")
             if to_key is not None:
-                keys.append(to_key)
-        return keys
+                edges[to_key] = edge_from
+        return edges
 
 
 def build_network(root_node):
