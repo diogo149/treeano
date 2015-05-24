@@ -2,6 +2,7 @@ import simple
 import containers
 import updates
 import scan
+import composite
 import recurrent
 import toy
 import test_utils
@@ -21,5 +22,6 @@ from containers import (SequentialNode,
                         SplitterNode,
                         SplitCombineNode)
 from updates import (UpdateScaleNode)
+from composite import (DenseNode)
 
 from test_utils import check_serialization

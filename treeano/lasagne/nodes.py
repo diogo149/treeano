@@ -1,7 +1,9 @@
 import numpy as np
 import lasagne
 
+from .. import utils
 from .. import core
+from .. import nodes
 
 
 @core.register_node("lasagne_dense")
@@ -49,20 +51,10 @@ class DenseNode(core.NodeImpl):
         )
 
 
-@core.register_node("lasagne_relu")
-class ReLUNode(core.NodeImpl):
-
-    """
-    rectified linear unit
-    """
-
-    def compute_output(self, network, in_var):
-        network.create_variable(
-            "default",
-            variable=lasagne.nonlinearities.rectify(in_var.variable),
-            shape=in_var.shape,
-            tags={"output"},
-        )
+def ReLUNode(name):
+    return nodes.ApplyNode(name,
+                           fn=lasagne.nonlinearities.rectify,
+                           shape_fn=utils.identity)
 
 
 @core.register_node("lasagne_sgd")

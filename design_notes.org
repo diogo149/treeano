@@ -594,12 +594,14 @@
 - recurrent networks
 * TODOs
 ** v2
-- test bias node
-- LinearMappingNode
-- DenseNode
+- AdamNode
+- test training DenseNode
 - MLP
 - recurrent.py
 - fix FIXME's in scan.py
+- ApplyNode
+  - for applying pure theano functions
+  - eg. flatten
 - ScalarSumNode
 - DenseCombineNode
   - SplitCombine + LinearMappingNode each + combine with sum + BiasNode
