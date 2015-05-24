@@ -14,7 +14,8 @@ from simple import (ReferenceNode,
                     CostNode,
                     FunctionCombineNode,
                     AddBiasNode,
-                    LinearMappingNode)
+                    LinearMappingNode,
+                    ApplyNode)
 from containers import (SequentialNode,
                         ContainerNode,
                         SplitterNode,

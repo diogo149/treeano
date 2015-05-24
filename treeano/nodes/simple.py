@@ -6,7 +6,6 @@ implementation, but simple in that they do a single thing
 from __future__ import division, absolute_import
 from __future__ import print_function, unicode_literals
 
-
 import theano
 import theano.tensor as T
 
@@ -283,7 +282,31 @@ class LinearMappingNode(core.NodeImpl):
         )
         network.create_variable(
             name="default",
-            variable=(T.dot(in_var.variable, W.variable)),
+            variable=T.dot(in_var.variable, W.variable),
             shape=output_shape,
+            tags={"output"},
+        )
+
+
+@core.register_node("apply")
+class ApplyNode(core.NodeImpl):
+
+    """
+    applies a pure theano function
+    """
+
+    hyperparameter_names = ("fn", "shape_fn")
+
+    def compute_output(self, network, in_var):
+        fn = network.find_hyperparameter(["fn"])
+        shape_fn = network.find_hyperparameter(["shape_fn"], None)
+        if shape_fn is None:
+            shape = None
+        else:
+            shape = shape_fn(in_var.shape)
+        network.create_variable(
+            name="default",
+            variable=fn(in_var.variable),
+            shape=shape,
             tags={"output"},
         )

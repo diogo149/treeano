@@ -3,6 +3,7 @@ import copy
 import nose.tools as nt
 import numpy as np
 import theano
+import theano.tensor as T
 
 import treeano.core
 from treeano import nodes
@@ -32,6 +33,15 @@ def test_add_bias_node_serialization():
         # need to make broadcastable a list because json (de)serialization
         # converts tuples to lists
         broadcastable=[True, False, True]))
+
+
+def test_linear_mapping_node_serialization():
+    nodes.check_serialization(nodes.LinearMappingNode("a"))
+    nodes.check_serialization(nodes.LinearMappingNode("a", output_dim=3))
+
+
+def test_apply_node_serialization():
+    nodes.check_serialization(nodes.ApplyNode("a"))
 
 
 def test_reference_node():
@@ -210,3 +220,15 @@ def test_linear_mapping_node():
     weight_var.value = W
     # test that adding works
     np.testing.assert_allclose(fn(x)[0], np.dot(x, W))
+
+
+def test_apply_node():
+    network = nodes.SequentialNode("s", [
+        nodes.InputNode("in", shape=(3, 4, 5)),
+        nodes.ApplyNode("a", fn=T.sum, shape_fn=lambda x: ()),
+    ]).build()
+    fn = network.function(["in"], ["s"])
+    x = np.random.randn(3, 4, 5).astype(floatX)
+    np.testing.assert_allclose(fn(x)[0],
+                               x.sum(),
+                               rtol=1e-5)

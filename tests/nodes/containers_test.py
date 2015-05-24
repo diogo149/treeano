@@ -63,4 +63,4 @@ def test_split_combine_node():
     fn = network.function(["in"], ["scn"])
     np.testing.assert_allclose(4 * x + 3,
                                fn(x)[0],
-                               rtol=1e-5)
+                               rtol=1e-4)
