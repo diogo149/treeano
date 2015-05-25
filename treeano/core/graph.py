@@ -17,6 +17,8 @@ def init_name_to_node(root_node):
 
         # add children to stack
         children = node.architecture_children()
+        for child in children:
+            assert child.name
         nodes.extend(children)
     return name_to_node
 

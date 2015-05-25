@@ -20,7 +20,7 @@ def test_update_scale_node():
         "cun",
         nodes.SequentialNode("seq", [
             nodes.InputNode("i", shape=(1, 2, 3)),
-            nodes.DenseNode("fc", nodes.IdentityNode("id"), num_units=5)
+            nodes.DenseNode("fc", num_units=5)
         ]),
         value=5,
     ).build()
@@ -34,7 +34,7 @@ def test_update_scale_node():
             nodes.InputNode("i", shape=(1, 2, 3)),
             nodes.UpdateScaleNode(
                 "usn",
-                nodes.DenseNode("fc", nodes.IdentityNode("id"), num_units=5),
+                nodes.DenseNode("fc", num_units=5),
                 scale_factor=-2)
         ]),
         value=5,

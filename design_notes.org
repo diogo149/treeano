@@ -677,6 +677,8 @@
 - recurrent networks
 * TODOs
 ** v2
+- make wrapper around T.nnet.categorical_crossentropy
+  - assert dtype of ytrue == int32, and ndim == 1
 - test training DenseNode (MNIST)
 - MLP
 - recurrent.py
@@ -873,6 +875,8 @@
   print((total_time, np.mean(losses[-100:])))
 #+END_SRC
 ** misc
+- name all theano variables
+  - when copying use theano.clone so that variables can be shared
 - add more initializations
   - https://github.com/Lasagne/Lasagne/blob/master/lasagne/init.py
 - have children container verify every element is of type NodeAPI

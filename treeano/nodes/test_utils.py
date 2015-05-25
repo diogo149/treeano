@@ -41,7 +41,8 @@ def check_updates_node(updates_node_cls, **hyperparameters):
             "updates",
             {"subtree": containers.SequentialNode("seq", [
                 simple.InputNode("input", shape=(3, 4, 5)),
-                composite.DenseNode("b", activations.ReLUNode("c"))]),
+                composite.DenseNode("b"),
+                activations.ReLUNode("c")]),
              "cost": costs.PredictionCostNode("cost", {
                  "preds": simple.ReferenceNode("preds_ref", reference="seq"),
                  "target": simple.InputNode("target", shape=(3, 14))})

@@ -33,22 +33,19 @@ def flatten_2d_shape(shape):
 
 
 @core.register_node("dense")
-class DenseNode(core.Wrapper1NodeImpl):
+class DenseNode(core.WrapperNodeImpl):
 
     """
     applies a dense neural network layer to the input
-
-    takes in a single node to be used as the activation function
     """
 
+    children_container = core.NoneChildrenContainer
     hyperparameter_names = ("num_units",
                             "shared_initializations",
                             "initializations",
                             "inits")
 
     def architecture_children(self):
-        children = super(DenseNode, self).architecture_children()
-        activation_node, = children
         return [
             containers.SequentialNode(
                 self._name + "_sequential",
@@ -56,8 +53,7 @@ class DenseNode(core.Wrapper1NodeImpl):
                                   fn=flatten_2d,
                                   shape_fn=flatten_2d_shape),
                  simple.LinearMappingNode(self._name + "_linear"),
-                 simple.AddBiasNode(self._name + "_bias"),
-                 activation_node])]
+                 simple.AddBiasNode(self._name + "_bias")])]
 
     def get_hyperparameter(self, network, name):
         if name == "output_dim":

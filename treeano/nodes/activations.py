@@ -1,6 +1,8 @@
 import abc
 import six
 
+import theano.tensor as T
+
 from .. import core
 
 
@@ -32,3 +34,9 @@ class ReLUNode(StatelessActivationNode):
 
     def activation(self, network, in_var):
         return relu(in_var.variable)
+
+
+class SoftmaxNode(StatelessActivationNode):
+
+    def activation(self, network, in_var):
+        return T.nnet.softmax(in_var.variable)
