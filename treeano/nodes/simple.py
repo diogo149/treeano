@@ -176,21 +176,36 @@ class AddBiasNode(core.NodeImpl):
 
     """
     node that adds a bias parameter to its input
+
+    takes in either a list of axes (as key broadcastable_axes) to broadcast
+    over, or as a tuple of booleans
     """
 
     hyperparameter_names = ("shared_initializations",
                             "initializations",
                             "inits",
-                            "broadcastable")
+                            "broadcastable_axes",
+                            "broadcastable",)
 
     def compute_output(self, network, in_var):
         inits = network.find_hyperparameter(["shared_initializations",
                                              "initializations",
                                              "inits"],
                                             None)
-        broadcastable = network.find_hyperparameter(
-            ["broadcastable"],
-            (False,) * in_var.ndim)
+        # have broadcastable as a tuple take precedence over broadcastable_axes
+        # ---
+        # rationale: because broadcastable_axes has a sensible default value
+        broadcastable = network.find_hyperparameter(["broadcastable"],
+                                                    None)
+        if broadcastable is None:
+            # by default, broadcast over axis 0 (minibatch axis)
+            broadcastable_axes = network.find_hyperparameter(
+                ["broadcastable_axes"],
+                [0])
+            broadcastable = [False] * in_var.ndim
+            for axis in broadcastable_axes:
+                broadcastable[axis] = True
+
         assert len(broadcastable) == in_var.ndim
         shape = tuple([1 if is_broadcastable else size
                        for is_broadcastable, size in zip(broadcastable,
@@ -204,7 +219,8 @@ class AddBiasNode(core.NodeImpl):
         )
         network.create_variable(
             name="default",
-            variable=(in_var.variable + b.variable),
+            variable=(in_var.variable + T.patternbroadcast(b.variable,
+                                                           broadcastable)),
             shape=in_var.shape,
             tags={"output"},
         )

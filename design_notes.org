@@ -599,6 +599,7 @@
 - node names are strings
 - all nodes will have a default output
 - shape dimensions of None mean that the shape is unspecified
+- the minibatch dimension will be dimension 0
 * random notes
 - model everything as a "layer"
   - including loss/objective
@@ -676,9 +677,6 @@
 - recurrent networks
 * TODOs
 ** v2
-- initialization
-  - uniform / normal
-- have bias node have broadcastable_axes = (0,) by default
 - test training DenseNode (MNIST)
 - MLP
 - recurrent.py
@@ -875,6 +873,8 @@
   print((total_time, np.mean(losses[-100:])))
 #+END_SRC
 ** misc
+- add more initializations
+  - https://github.com/Lasagne/Lasagne/blob/master/lasagne/init.py
 - have children container verify every element is of type NodeAPI
 - figure out easy solution for theano.config.floatX everywhere
 - rename UpdateScaleNode to MultiplyUpdatesNode

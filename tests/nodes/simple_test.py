@@ -149,7 +149,7 @@ def test_add_bias_node_broadcastable():
              else nodes.AddBiasNode("b"))
         ]).build()["b"].get_variable("bias").shape
 
-    nt.assert_equal((3, 4, 5),
+    nt.assert_equal((1, 4, 5),
                     get_bias_shape(None))
     nt.assert_equal((1, 4, 1),
                     get_bias_shape((True, False, True)))
@@ -176,7 +176,7 @@ def test_add_bias_node_broadcastable_incorrect_size2():
 def test_add_bias_node():
     network = nodes.SequentialNode("s", [
         nodes.InputNode("in", shape=(3, 4, 5)),
-        nodes.AddBiasNode("b")
+        nodes.AddBiasNode("b", broadcastable_axes=())
     ]).build()
     bias_var = network["b"].get_variable("bias")
     fn = network.function(["in"], ["s"])
