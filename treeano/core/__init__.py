@@ -21,7 +21,9 @@ from serialization_state import (register_node,
 from children_container import (ChildrenContainer,
                                 ListChildrenContainer,
                                 NoneChildrenContainer,
-                                ChildContainer)
+                                ChildContainer,
+                                DictChildrenContainer,
+                                DictChildrenContainerSchema)
 from network import MissingHyperparameter
 from node import NodeAPI
 from node_impl import NodeImpl, WrapperNodeImpl, Wrapper1NodeImpl
