@@ -40,38 +40,50 @@ class StandardUpdatesNode(six.with_metaclass(abc.ABCMeta,
                                              core.WrapperNodeImpl)):
 
     """
-    base node for providing the standard interface for updating
-
-    NOTE: gradient computation is factored out to enable future caching
+    base node class for providing the standard interface for updating
     """
 
     children_container = core.DictChildrenContainerSchema(
-        target=core.ChildContainer,
+        cost=core.ChildContainer,
         subtree=core.ChildContainer,
     )
     input_keys = ("subtree_output",)
 
     def init_state(self, network):
         """
-        by default, forward input to target and subtree, and take output
+        by default, forward input to cost and subtree, and take output
         from the subtree
         """
-        subtree = self._children["target"].children
-        target = self._children["target"].children
+        subtree = self._children["subtree"].children
+        cost = self._children["cost"].children
         # forward input to both children
         network.forward_input_to(subtree.name)
-        network.forward_input_to(target.name)
+        network.forward_input_to(cost.name)
         # take output from the subtree
         network.take_output_from(subtree.name, to_key="subtree_output")
         # make it known that the output of this node does NOT depend on the
-        # target node
-        network.remove_dependency(self.name, target.name)
+        # cost node
+        network.remove_dependency(cost.name, self.name)
 
     def new_update_deltas(self, network):
-        parameters = network.find_variables_in_subtree(["parameter"])
-        target = self._children["target"].children
-        cost = network[target.name].get_variable("default").variable
-        grads = T.grad(cost, parameters)
+        # compute parameters
+        # ---
+        # NOTE: only computing for parameters in subtree, not in cost
+        subtree = self._children["subtree"].children
+        subtree_network = network[subtree.name]
+        parameters = subtree_network.find_variables_in_subtree(["parameter"])
+
+        # calculate cost
+        cost = self._children["cost"].children
+        cost_var = network[cost.name].get_variable("default").variable
+
+        # find gradients
+        # ---
+        # NOTE: gradient computation is factored out to enable future caching
+        parameter_variables = [p.variable for p in parameters]
+        grads = T.grad(cost_var, parameter_variables)
+
+        # compute update deltas
         return self._new_update_deltas(network, parameters, grads)
 
     @abc.abstractmethod
@@ -92,8 +104,10 @@ class SGDNode(StandardUpdatesNode):
     def _new_update_deltas(self, network, parameters, grads):
         learning_rate = network.find_hyperparameter(["sgd_learning_rate",
                                                      "learning_rate"])
+        parameter_variables = [p.variable for p in parameters]
         return core.UpdateDeltas({param: -learning_rate * grad
-                                  for param, grad in zip(parameters, grads)})
+                                  for param, grad in zip(parameter_variables,
+                                                         grads)})
 
 
 # ################################### adam ###################################
@@ -181,8 +195,9 @@ class AdamNode(StandardUpdatesNode):
                                                "lambda_",
                                                "lambda"],
                                               1 - 1e-8)
+        parameter_variables = [p.variable for p in parameters]
         updates = adam_v4(grads,
-                          parameters,
+                          parameter_variables,
                           learning_rate=learning_rate,
                           beta1=beta1,
                           beta2=beta2,

@@ -141,12 +141,12 @@ class DictChildrenContainer(ChildrenContainer):
 
     def __iter__(self):
         return (x
-                for children_container in self.children.values()
+                for children_container in self._children.values()
                 for x in children_container)
 
     def to_data(self):
         return {k: serialization_state.children_container_to_data(v)
-                for k, v in six.iteritems(self.children)}
+                for k, v in six.iteritems(self._children)}
 
     @classmethod
     def from_data(cls, data):
@@ -157,10 +157,30 @@ class DictChildrenContainer(ChildrenContainer):
         return self._children[key]
 
 
+@serialization_state.register_children_container("dict_from_schema")
+class _DictChildrenContainerFromSchema(DictChildrenContainer):
+
+    """
+    like DictChildrenContainer, but unwraps the child nodes from their
+    container when calling .children
+
+    rationale:
+    - DictChildrenContainerSchema.__call__ behaves like a constructor
+    - it calls the respective ChildrenContainer constructors
+    - .children should return the same as what was passed to the constructor
+    - thus need .children to undo calling the ChildrenContainer constructors
+    """
+
+    @property
+    def children(self):
+        return {k: v.children for k, v in six.iteritems(self._children)}
+
+
 class DictChildrenContainerSchema(object):
 
     """
-    helper class for constructing DictChildrenContainer's given a schema
+    helper class for constructing a wrapped DictChildrenContainer's given a
+    schema
 
     eg.
     dccs = DictChildrenContainerSchema(
@@ -172,7 +192,7 @@ class DictChildrenContainerSchema(object):
     dccs({"foo": [ANode(), BNode()], "bar": CNode()})
     """
 
-    def __init__(self, **schema):
+    def __init__(self, _children_container=None, **schema):
         for k, v in six.iteritems(schema):
             assert isinstance(k, six.string_types)
             assert ChildrenContainer in v.__bases__
@@ -184,4 +204,4 @@ class DictChildrenContainerSchema(object):
         for k in children:
             new_children[k] = self.schema[k](children[k])
             assert isinstance(new_children[k], ChildrenContainer)
-        return DictChildrenContainer(new_children)
+        return _DictChildrenContainerFromSchema(new_children)

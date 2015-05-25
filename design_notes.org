@@ -680,7 +680,6 @@
   - uniform / normal
 - have bias node have broadcastable_axes = (0,) by default
 - test training DenseNode (MNIST)
-- test adam node
 - MLP
 - recurrent.py
 - fix FIXME's in scan.py
@@ -876,7 +875,12 @@
   print((total_time, np.mean(losses[-100:])))
 #+END_SRC
 ** misc
+- have children container verify every element is of type NodeAPI
+- figure out easy solution for theano.config.floatX everywhere
 - rename UpdateScaleNode to MultiplyUpdatesNode
+- rename ChildrenContainer.children
+  - rationale: calling self._children.children looks like it's reading grandchildren
+  - maybe self._children should be renamed
 - make sure all register strings and node names are in [a-zA-z_]
   - rationale: allows special symbols when creating nodes
     - eg. "dense#dense1"

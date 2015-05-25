@@ -42,3 +42,17 @@ class MultiplyConstantNode(core.NodeImpl):
             shape=in_var.shape,
             tags={"output"},
         )
+
+
+class ConstantUpdaterNode(core.Wrapper1NodeImpl):
+
+    """
+    provides updates as a constant value
+    """
+
+    hyperparameter_names = ("value",)
+
+    def new_update_deltas(self, network):
+        value = network.find_hyperparameter(["value"])
+        parameters = network.find_variables_in_subtree(["parameter"])
+        return core.UpdateDeltas({p.variable: value for p in parameters})

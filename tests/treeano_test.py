@@ -1,9 +1,13 @@
+"""
+TODO try to move these tests to the appropriate locations, and don't use
+the lasagne wrapped classes
+"""
+
 from __future__ import division, absolute_import
 from __future__ import print_function, unicode_literals
 
 import numpy as np
 import theano
-import lasagne
 
 import treeano
 import treeano.lasagne
@@ -12,13 +16,9 @@ from treeano.lasagne.initialization import GlorotUniform
 from treeano.nodes import (InputNode,
                            SequentialNode,
                            IdentityNode,
-                           HyperparameterNode,
-                           CostNode,
-                           UpdateScaleNode,
-                           ContainerNode,)
+                           HyperparameterNode)
 from treeano.lasagne.nodes import (DenseNode,
-                                   ReLUNode,
-                                   SGDNode)
+                                   ReLUNode)
 
 floatX = theano.config.floatX
 
@@ -247,137 +247,3 @@ def test_glorot_uniform_initialization():
                                b_value,
                                rtol=1e-5,
                                atol=1e-8)
-
-
-def test_cost_node():
-    np.random.seed(42)
-    network = HyperparameterNode(
-        "g",
-        ContainerNode("f", [
-            SequentialNode("e", [
-                InputNode("input", shape=(3, 4, 5)),
-                DenseNode("b"),
-                ReLUNode("c"),
-                CostNode("cost", reference="target"),
-            ]),
-            InputNode("target", shape=(3, 14)),
-        ]),
-        num_units=14,
-        loss_function=lasagne.objectives.mse,
-        shared_initializations=[OnesInitialization()]
-    ).build()
-    fn = network.function(["input", "target"], ["cost"])
-    x = np.random.randn(3, 4, 5).astype(floatX)
-    res = np.dot(x.reshape(3, 20), np.ones((20, 14))) + np.ones(14)
-    res = np.clip(res, 0, np.inf)
-    y = np.random.randn(3, 14).astype(floatX)
-    res = np.mean((y - res) ** 2)
-    np.testing.assert_allclose(fn(x, y)[0],
-                               res,
-                               rtol=1e-5,
-                               atol=1e-8)
-
-
-def test_update_node():
-    np.random.seed(42)
-    nodes = [
-        InputNode("a", shape=(3, 4, 5)),
-        DenseNode("b"),
-        ReLUNode("e"),
-    ]
-    sequential = SequentialNode("c", nodes)
-    hp_node = HyperparameterNode("d",
-                                 sequential,
-                                 num_units=1000,
-                                 shared_initializations=[GlorotUniform()])
-    network = hp_node.build()
-    fc_node = network["b"]
-    W_value = fc_node.get_variable("W").value
-    b_value = fc_node.get_variable("b").value
-    np.testing.assert_allclose(0,
-                               W_value.mean(),
-                               atol=1e-2)
-    np.testing.assert_allclose(np.sqrt(2.0 / (20 + 1000)),
-                               W_value.std(),
-                               atol=1e-2)
-    np.testing.assert_allclose(np.zeros(1000),
-                               b_value,
-                               rtol=1e-5,
-                               atol=1e-8)
-
-
-def test_sgd_node():
-    np.random.seed(42)
-    network = HyperparameterNode(
-        "g",
-        SGDNode("sgd",
-                ContainerNode("f", [
-                    SequentialNode("e", [
-                        InputNode("input", shape=(3, 4, 5)),
-                        DenseNode("b"),
-                        ReLUNode("c"),
-                        CostNode("cost", reference="target"),
-                    ]),
-                    InputNode("target", shape=(3, 14)),
-                ])),
-        num_units=14,
-        loss_function=lasagne.objectives.mse,
-        shared_initializations=[OnesInitialization()],
-        cost_reference="cost",
-        learning_rate=0.01,
-    ).build()
-    fn = network.function(["input", "target"], ["cost"])
-    fn2 = network.function(["input", "target"],
-                           ["cost"],
-                           include_updates=True)
-    x = np.random.randn(3, 4, 5).astype(floatX)
-    y = np.random.randn(3, 14).astype(floatX)
-    initial_cost = fn(x, y)
-    next_cost = fn(x, y)
-    np.testing.assert_allclose(initial_cost,
-                               next_cost,
-                               rtol=1e-5,
-                               atol=1e-8)
-    prev_cost = fn2(x, y)
-    for _ in range(10):
-        current_cost = fn2(x, y)
-        assert prev_cost > current_cost
-        prev_cost = current_cost
-
-
-def test_update_scale_node():
-
-    class ConstantUpdaterNode(treeano.Wrapper1NodeImpl):
-
-        hyperparameter_names = ("value",)
-
-        def mutate_update_deltas(self, network, update_deltas):
-            value = network.find_hyperparameter(["value"])
-            parameters = network.find_variables_in_subtree(["parameter"])
-            for parameter in parameters:
-                update_deltas[parameter.variable] = value
-
-    # testing constant updater
-    network = ConstantUpdaterNode(
-        "cun",
-        SequentialNode("seq", [
-            InputNode("i", shape=(1, 2, 3)),
-            DenseNode("fc", num_units=5)
-        ]),
-        value=5,
-    ).build()
-    ud = network.update_deltas
-    assert ud[network["fc"].get_variable("W").variable] == 5
-
-    network = ConstantUpdaterNode(
-        "cun",
-        SequentialNode("seq", [
-            InputNode("i", shape=(1, 2, 3)),
-            UpdateScaleNode("usn",
-                            DenseNode("fc", num_units=5),
-                            scale_factor=-2)
-        ]),
-        value=5,
-    ).build()
-    ud = network.update_deltas
-    assert ud[network["fc"].get_variable("W").variable] == -10

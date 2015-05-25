@@ -110,48 +110,6 @@ class IdentityNode(core.NodeImpl):
     """
     # NOTE: default implementation of NodeImpl is Identity
 
-LOSS_AGGREGATORS = {
-    'mean': T.mean,
-    'sum': T.sum,
-}
-
-
-@core.register_node("cost")
-class CostNode(core.NodeImpl):
-
-    """
-    takes in a loss function and a reference to a target node, and computes
-    the aggregate loss between the nodes input and the target
-    """
-
-    hyperparameter_names = ("target_reference",
-                            "reference",
-                            "loss_function",
-                            "loss_aggregator")
-    input_keys = ("default", "target")
-
-    def init_state(self, network):
-        network.take_output_from(
-            network.find_hyperparameter(["target_reference",
-                                         "reference"]),
-            to_key="target")
-
-    def compute_output(self, network, preds, target):
-        loss_function = network.find_hyperparameter(["loss_function"])
-        loss_aggregator = network.find_hyperparameter(["loss_aggregator"],
-                                                      "mean")
-        loss_aggregator = LOSS_AGGREGATORS.get(loss_aggregator,
-                                               # allow user defined function
-                                               loss_aggregator)
-        cost = loss_function(preds.variable, target.variable)
-        aggregate_cost = loss_aggregator(cost)
-
-        network.create_variable(
-            "default",
-            variable=aggregate_cost,
-            shape=(),
-        )
-
 
 @core.register_node("fn_combine")
 class FunctionCombineNode(core.NodeImpl):

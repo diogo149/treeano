@@ -1,6 +1,8 @@
 import simple
 import containers
+import activations
 import updates
+import costs
 import scan
 import composite
 import recurrent
@@ -12,7 +14,6 @@ from simple import (ReferenceNode,
                     HyperparameterNode,
                     InputNode,
                     IdentityNode,
-                    CostNode,
                     FunctionCombineNode,
                     AddBiasNode,
                     LinearMappingNode,
@@ -21,10 +22,15 @@ from containers import (SequentialNode,
                         ContainerNode,
                         SplitterNode,
                         SplitCombineNode)
+from activations import (StatelessActivationNode,
+                         ReLUNode)
 from updates import (UpdateScaleNode,
                      StandardUpdatesNode,
                      SGDNode,
                      AdamNode)
+from costs import (AggregatorNode,
+                   ElementwisePredictionCostNode,
+                   PredictionCostNode)
 from composite import (DenseNode)
 
 from test_utils import check_serialization
