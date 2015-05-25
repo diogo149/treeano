@@ -4,6 +4,7 @@ lasagne
 
 import core
 import nodes
+import inits
 
 from core import (UpdateDeltas,
                   SharedInitialization,
