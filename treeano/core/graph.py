@@ -85,6 +85,13 @@ class TreeanoGraph(object):
     def nodes(self):
         return self._nodes(None)
 
+    def remove_dependency(self, from_name, to_name):
+        """
+        removes a computation graph dependency from a node with "from_name" as
+        a name to a node with "to_name" as a name
+        """
+        self.computation_graph.remove_edge(from_name, to_name)
+
     def add_dependency(self,
                        from_name,
                        to_name,
@@ -118,6 +125,8 @@ class TreeanoGraph(object):
         try:
             nx.topological_sort(self.computation_graph)
         except nx.NetworkXUnfeasible:
+            # TODO this might not be sufficient, since an edge between
+            # from_name to to_name might have existed before this operation
             self.computation_graph.remove_edge(from_name, to_name)
             # TODO maybe use a custom exception
             raise

@@ -1,3 +1,13 @@
+"""
+nodes that provide updates for shared variables
+"""
+import abc
+
+import six
+import numpy as np
+import theano
+import theano.tensor as T
+
 from .. import core
 
 
@@ -19,3 +29,163 @@ class UpdateScaleNode(core.Wrapper1NodeImpl):
         parameters = network.find_variables_in_subtree(["parameter"])
         for parameter in parameters:
             update_deltas[parameter.variable] *= scale_factor
+
+
+# ############################ standard updaters ############################
+# ---
+# updaters that take in the parameters and their gradient w.r.t. a cost
+
+
+class StandardUpdatesNode(six.with_metaclass(abc.ABCMeta,
+                                             core.WrapperNodeImpl)):
+
+    """
+    base node for providing the standard interface for updating
+
+    NOTE: gradient computation is factored out to enable future caching
+    """
+
+    children_container = core.DictChildrenContainerSchema(
+        target=core.ChildContainer,
+        subtree=core.ChildContainer,
+    )
+    input_keys = ("subtree_output",)
+
+    def init_state(self, network):
+        """
+        by default, forward input to target and subtree, and take output
+        from the subtree
+        """
+        subtree = self._children["target"].children
+        target = self._children["target"].children
+        # forward input to both children
+        network.forward_input_to(subtree.name)
+        network.forward_input_to(target.name)
+        # take output from the subtree
+        network.take_output_from(subtree.name, to_key="subtree_output")
+        # make it known that the output of this node does NOT depend on the
+        # target node
+        network.remove_dependency(self.name, target.name)
+
+    def new_update_deltas(self, network):
+        parameters = network.find_variables_in_subtree(["parameter"])
+        target = self._children["target"].children
+        cost = network[target.name].get_variable("default").variable
+        grads = T.grad(cost, parameters)
+        return self._new_update_deltas(network, parameters, grads)
+
+    @abc.abstractmethod
+    def _new_update_deltas(self, network, parameters, grads):
+        pass
+
+
+@core.register_node("sgd")
+class SGDNode(StandardUpdatesNode):
+
+    """
+    node that provides updates via SGD
+    """
+
+    hyperparameter_names = ("sgd_learning_rate",
+                            "learning_rate")
+
+    def _new_update_deltas(self, network, parameters, grads):
+        learning_rate = network.find_hyperparameter(["sgd_learning_rate",
+                                                     "learning_rate"])
+        return core.UpdateDeltas({param: -learning_rate * grad
+                                  for param, grad in zip(parameters, grads)})
+
+
+# ################################### adam ###################################
+
+
+def adam_v4(all_grads,
+            all_params,
+            learning_rate=0.001,
+            beta1=0.9,
+            beta2=0.999,
+            epsilon=1e-8,
+            lambda_=1 - 1e-8):
+    """
+    based on Adam update rule http://arxiv.org/abs/1412.6980
+    (v4 or v5, which is the same as v4)
+    """
+    updates = []
+
+    # alpha / stepsize / learning rate are all the same thing
+    # using alpha because that is what is used in the paper
+    alpha = learning_rate
+
+    t = theano.shared(np.array(0., dtype=theano.config.floatX))
+    t_next = t + 1
+    beta1_t = beta1 * lambda_ ** t
+
+    # compute some values only once
+    # unbias terms to take into account initializing with 0
+    m_unbias_term = 1 - beta1 ** t_next
+    v_unbias_term = T.sqrt(1 - beta2 ** t_next)
+    epsilon_hat = epsilon * v_unbias_term
+    alpha_t = alpha * v_unbias_term / m_unbias_term
+
+    for param, grad in zip(all_params, all_grads):
+        # 1st moment
+        mparam = theano.shared(np.zeros(param.get_value().shape,
+                                        dtype=theano.config.floatX))
+        # 2nd moment
+        vparam = theano.shared(np.zeros(param.get_value().shape,
+                                        dtype=theano.config.floatX))
+
+        # new value for 1st moment estimate
+        m = beta1_t * mparam + (1 - beta1_t) * grad
+        # new value for 2nd moment estimate
+        v = beta2 * vparam + (1 - beta2) * T.sqr(grad)
+
+        param_next = param - alpha_t * m / (T.sqrt(v) + epsilon_hat)
+
+        updates.append((mparam, m))
+        updates.append((vparam, v))
+        updates.append((param, param_next))
+
+    updates.append((t, t_next))
+    return updates
+
+
+@core.register_node("adam")
+class AdamNode(StandardUpdatesNode):
+
+    """
+    node that provides updates via Adam update rule
+    """
+
+    hyperparameter_names = ("adam_learning_rate",
+                            "adam_alpha",
+                            "learning_rate",
+                            "adam_beta1",
+                            "beta1")
+
+    def _new_update_deltas(self, network, parameters, grads):
+        learning_rate = network.find_hyperparameter(["adam_learning_rate",
+                                                     "adam_alpha",
+                                                     "learning_rate"],
+                                                    0.001)
+        beta1 = network.find_hyperparameter(["adam_beta1",
+                                             "beta1"],
+                                            0.9)
+        beta2 = network.find_hyperparameter(["adam_beta2",
+                                             "beta2"],
+                                            0.999)
+        epsilon = network.find_hyperparameter(["adam_epsilon",
+                                               "epsilon"],
+                                              1e-8)
+        lambda_ = network.find_hyperparameter(["adam_lambda",
+                                               "lambda_",
+                                               "lambda"],
+                                              1 - 1e-8)
+        updates = adam_v4(grads,
+                          parameters,
+                          learning_rate=learning_rate,
+                          beta1=beta1,
+                          beta2=beta2,
+                          epsilon=epsilon,
+                          lambda_=lambda_)
+        return core.UpdateDeltas.from_updates(updates)

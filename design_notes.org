@@ -506,6 +506,88 @@
   - conclusion
     - going with init_long_range_dependencies
       - most general (ie. will allow other nodes to reimplement what SendToNode does) while solving the problem
+- nice to have feature: auto-convert children nodes as strings to reference nodes
+  - how to do this?
+    - promote ReferenceNode into core/ (?)
+    - where would this logic go?
+    - the nodes would require a unique name
+  - should we do this?
+    - pros
+      - would make the syntax a lot easier
+    - cons
+      - inelegent / requires special casing
+      - results in a node without a name
+    - conclusion
+      - no need to add it to the core
+      - we can later add an easier interface for representing networks of nodes
+      - that way we can keep interface logic in one place
+- what is the best way of handling nodes with multiple dependencies?
+  - use cases:
+    - cost node
+      - takes in prediction and target
+    - update node
+      - takes in cost and parameter subtree
+  - alternatives
+    - take in an argument of the reference
+      - pros
+        - makes the most sense architecturally (?)
+      - cons
+        - somewhat repetitive
+    - expect an input with a given to_key
+      - cons
+        - hardest to guarantee correctness of
+        - least idiomatic
+          - because to_key's are not normally used
+        - little current functionality that allows easy linking to to_key
+          - ie. only SendToNode
+    - take in a child node
+      - pros
+        - seems to be the most composable way of handling it
+        - provides a location for nodes
+          - ie. doesn't require container nodes everywhere to hold the nodes
+      - cons
+        - adds additional nodes to the graph
+        - encourages weird topologies
+          - eg. taking in an argument of the reference doesn't encourage the ref to be part of the subtree
+        - what about nodes that already have a child node?
+    - take in a named child node
+      - eg. SomeNode("foo", {"thing1": ANode(), "thing2": BNode()})
+      - pros
+        - would make more sense than taking in a child node
+        - would enable other use cases as well
+          - eg. split-combine node taking in split paths and a combiner node
+      - cons
+        - doesn't handle the case of nested children
+          - eg. split-combine node taking in a list of children + a single combiner
+  - conclusion
+    - best option: taking in named child nodes
+- named child nodes
+  - problems
+    - how to elegantly handle when most nodes only have homogeneous children?
+      - in a way that fits with everything else
+      - specifically, how does this behave when NodeAPI.architecture_children() is called?
+    - how to handle nested data structures of children?
+      - eg. a node that takes in one node, and then a list of nodes
+        - eg. split-combine node taking in split paths and a combiner node
+      - this is a problem for both:
+        - a node reading in its children
+        - converting the child container to data
+  - solution:
+    - typed schema
+      - from string key to ChildContainer constructor which is performed recursively
+- should parents be allowed to have children that the parent does not depend on?
+  - rationale:
+    - dependencies are relevant to ~compute_output~, not necessarily the other phases of network building
+    - no matter what, parents have to have children that they don't actually depend on - the question is whether or not that should be reflected in the computation graph
+      - eg. computing quantities only relevant to updates
+  - use case:
+    - should an update node store a cost node?
+      - pros
+        - it gives the cost node a spot in the subtree
+      - cons
+        - somewhat makes less sense from a computation graph perspective
+  - conclusion:
+    - yes, because the computation graph should reflect the logical network (in this case)
 * assumptions
 - shared variables (eg. parameter tensors) will have a fixed size
 - nodes are in a directed acyclic graph
@@ -594,20 +676,17 @@
 - recurrent networks
 * TODOs
 ** v2
-- AdamNode
-- test training DenseNode
+- initialization
+  - uniform / normal
+- have bias node have broadcastable_axes = (0,) by default
+- test training DenseNode (MNIST)
+- test adam node
 - MLP
 - recurrent.py
 - fix FIXME's in scan.py
-- ApplyNode
-  - for applying pure theano functions
-  - eg. flatten
 - ScalarSumNode
 - DenseCombineNode
   - SplitCombine + LinearMappingNode each + combine with sum + BiasNode
-- allow theano var for inputnode to be a parameter to be passed in
-- have hyperparameter precedence favor closer to the node over more specific hyperparameter name
-  - eg. if conv layer defines strides, but hyperparamnode defines conv_strides, use conv's hyperparameter
 - more sophisticated way of finding nodes in subtree
   - eg. finding scan state nodes whose scan is the current scan
 - test: create recurrent net that loads weights from treeano net, and assert results are exactly the same
@@ -797,6 +876,13 @@
   print((total_time, np.mean(losses[-100:])))
 #+END_SRC
 ** misc
+- rename UpdateScaleNode to MultiplyUpdatesNode
+- make sure all register strings and node names are in [a-zA-z_]
+  - rationale: allows special symbols when creating nodes
+    - eg. "dense#dense1"
+- allow theano var for inputnode to be a parameter to be passed in
+- have hyperparameter precedence favor closer to the node over more specific hyperparameter name
+  - eg. if conv layer defines strides, but hyperparamnode defines conv_strides, use conv's hyperparameter
 - add check in compute_output phase to make sure network doesn't return additional inputs
   - rationale: they do not get recorded in the node's "inputs"
     - thus makes it harder to compute shape
@@ -804,6 +890,7 @@
   - eg. to inherit their hyperparameters
 - think about how to specify if a node owns a weight
   - perhaps if nodes that used parameters had ParameterNode's, it would be easy to have a drop in replacement as a reference to a parameter elsewhere in the network
+- change terminology to not refer to variable wrappers as variables
 - composite nodes
   - sequentialhyperparameternode
   - DenseNode = As2DNode + LinearMappingNode + BiasNode
@@ -857,6 +944,10 @@
   - if shape is not given, print warning and calculate
     - theano.function([x, y], [x], on_unused_input="ignore")(2, 3)
 - make insides of update algorithms inspectable (eg. intermediates in nesterov momentum)
+- redesign from_key, to_key graph
+  - rationale:
+    - the edge is currently stores as something like (from_name, to_name, {from_key: xxx, to_key: xxx})
+    - this means that only one connection from from_name to to_name can exist
 - tree of hyperparameter precedence
   - instead of having each node define the fallbacks of each hyperparameter, have it reference a tree so that shared hyperparameters have the same fallbacks
   - pros

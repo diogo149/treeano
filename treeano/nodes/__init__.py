@@ -21,7 +21,10 @@ from containers import (SequentialNode,
                         ContainerNode,
                         SplitterNode,
                         SplitCombineNode)
-from updates import (UpdateScaleNode)
+from updates import (UpdateScaleNode,
+                     StandardUpdatesNode,
+                     SGDNode,
+                     AdamNode)
 from composite import (DenseNode)
 
 from test_utils import check_serialization

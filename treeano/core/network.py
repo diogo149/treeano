@@ -377,6 +377,13 @@ class RelativeNetwork(object):
                                   from_key=from_key,
                                   to_key=to_key)
 
+    def remove_dependency(self, from_name, to_name):
+        """
+        wrapper around self.graph.remove_dependency
+        """
+        self.graph.remove_dependency(from_name=from_name,
+                                     to_name=to_name)
+
     def get_all_input_edges(self):
         """
         returns a map from input keys of the current node to the node where
