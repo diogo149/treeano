@@ -875,6 +875,7 @@
   print((total_time, np.mean(losses[-100:])))
 #+END_SRC
 ** misc
+- add testing files in examples/ to test cases
 - name all theano variables
   - when copying use theano.clone so that variables can be shared
 - add more initializations
@@ -956,6 +957,8 @@
   - rationale:
     - the edge is currently stores as something like (from_name, to_name, {from_key: xxx, to_key: xxx})
     - this means that only one connection from from_name to to_name can exist
+- create more types of containers:
+  - https://github.com/torch/nn/blob/master/doc/table.md
 - tree of hyperparameter precedence
   - instead of having each node define the fallbacks of each hyperparameter, have it reference a tree so that shared hyperparameters have the same fallbacks
   - pros
@@ -1051,7 +1054,7 @@
     - maybe have a tag "non_sequences" for variables in the current subtree to be treated as such
       - everything else is treated as an output?
   - how to deal with non_sequences
-    - remember which variables are non-sequences and use theano.replace to do a variable replace with the new variables representing the non-sequences
+    - remember which variables are non-sequences and use theano.clone to do a variable replace with the new variables representing the non-sequences
 - how to deal with multiple sequences to recur over?
   - eg. sensor setting
     - sequences: some visual signal, some numeric signal

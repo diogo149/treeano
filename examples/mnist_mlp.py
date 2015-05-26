@@ -40,10 +40,10 @@ model = tn.HyperparameterNode(
         [tn.InputNode("x", shape=(None, 28 * 28)),
          tn.DenseNode("fc1"),
          tn.ReLUNode("relu1"),
-         # TODO dropout
+         tn.DropoutNode("do1"),
          tn.DenseNode("fc2"),
          tn.ReLUNode("relu2"),
-         # TODO dropout
+         tn.DropoutNode("do2"),
          tn.DenseNode("fc3"),
          tn.SoftmaxNode("preds"),
          ]),

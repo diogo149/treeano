@@ -18,6 +18,7 @@ This is currently a work in progress!
   - lasagne
   - pydot
   - pygraphviz
+  - scikit-learn (for the examples)
 * Dev dependencies
 - nose
 - sniffer

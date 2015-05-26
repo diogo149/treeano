@@ -3,6 +3,7 @@ import containers
 import activations
 import updates
 import costs
+import stochastic
 import scan
 import composite
 import recurrent
@@ -32,6 +33,7 @@ from updates import (UpdateScaleNode,
 from costs import (AggregatorNode,
                    ElementwisePredictionCostNode,
                    PredictionCostNode)
+from stochastic import (DropoutNode)
 from composite import (DenseNode)
 
 from test_utils import check_serialization
