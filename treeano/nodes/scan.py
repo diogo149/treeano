@@ -9,6 +9,7 @@ from __future__ import print_function, unicode_literals
 import theano
 
 from .. import core
+from .. import utils
 
 
 @core.register_node("scan_input")
@@ -243,7 +244,7 @@ class ScanNode(core.Wrapper1NodeImpl):
             assert len(to_replace) == len(for_replace)
 
             # perform scan
-            new_outputs = theano.clone(
+            new_outputs = utils.deep_clone(
                 element_output_vars,
                 replace=dict(zip(to_replace, for_replace)),
             )

@@ -2,6 +2,7 @@ __all__ = """
 lasagne
 """.split()
 
+import utils
 import core
 import nodes
 import inits
