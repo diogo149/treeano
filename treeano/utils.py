@@ -9,6 +9,10 @@ def identity(x):
     return x
 
 
+def first(f, *args):
+    return f
+
+
 def deep_clone(output, replace, **kwargs):
     """
     like theano.clone, but makes sure to replace in the default_update of

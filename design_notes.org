@@ -624,6 +624,20 @@
     - there doesn't seem to be enough use cases to justify a big global defaults container and an additional concept
     - by encapsulating this in network, it should be easy to change later
     - accessing values can still come from find_hyperparameter
+- RNN initial hidden state
+  - problem
+    - the input shape must be the same as the output shape
+    - the output shape may depend on the input shape (ie. identity)
+      - thus cannot rely on looking at the output shape
+    - the shape may not be available
+      - eg. for zero initialization, or initializing with a shared variable
+    - shape must be known ahead of time!
+    - for parameters that are shared across a dimension, we need to know the eventual size of that dimension
+      - thus needs batch size, etc.
+  - solution
+    - tile node - behaves like theano.tensor.tile
+    - need to manually give the batch size
+      - ie. can't be determined automatically
 * assumptions
 - shared variables (eg. parameter tensors) will have a fixed size
 - nodes are in a directed acyclic graph
@@ -636,6 +650,7 @@
 - all nodes will have a default output
 - shape dimensions of None mean that the shape is unspecified
 - a batch_axis is None, then there is no minibatch (doing single element at a time)
+- shapes should be tuples
 * random notes
 - model everything as a "layer"
   - including loss/objective
@@ -928,6 +943,9 @@
   print((total_time, np.mean(losses[-100:])))
 #+END_SRC
 ** misc
+- how can nodes pass hyperparameters into their children the right way?
+  - overwriting get_hyperparameter is wrong, because it affects all children
+  - ideally we want to apply it only to the correct children
 - canopy.transformations.
   - remove_dropout
     - replaces dropout with identity
@@ -951,6 +969,10 @@
 - SubnetworkNode
   - take in an existing treeano model, but treat it like a black box, only using replace's on it
   - sample use case: dropout distillation
+  - might be useful to configure certain things to pass through
+    - eg.
+      - hyperparameters queries
+      - updates
 - make sure all state of updates is stored in node
   - that way learning is 100% serializable
 - ability to serialize only a subtree

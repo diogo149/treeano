@@ -1,4 +1,9 @@
+import theano
+import theano.tensor as T
+
+from .. import utils
 from .. import core
+from . import simple
 from . import containers
 from . import scan
 
@@ -17,25 +22,64 @@ class SimpleRecurrentNode(core.Wrapper1NodeImpl):
     x ---> h
 
     the input is x as a sequence, the output is h as a sequence
+
+    http://en.wikipedia.org/wiki/Recurrent_neural_network#Elman_networks_and_Jordan_networks
     """
 
-    # FIXME
-    hyperparameter_names = ("num_units",)
+    hyperparameter_names = (("num_units",
+                             "batch_size")
+                            + scan.ScanNode.hyperparameter_names)
 
     def architecture_children(self):
+        # set activation node as only child
         children = super(SimpleRecurrentNode, self).architecture_children()
         activation_node, = children
 
-        # FIXME
         scan_node = scan.ScanNode(
             self._name + "_scan",
             containers.SequentialNode(
                 self._name + "_sequential",
-                [containers.SplitCombineNode(
-                    self._name + "_splitcombine",
-                    [
-                        # FIXME
-                    ]),
-                 activation_node,
-                 ]))
+                [
+                    containers.SplitCombineNode(
+                        self._name + "_splitcombine",
+                        [
+                            # mapping from input to hidden state
+                            simple.LinearMappingNode(
+                                self._name + "_XtoH"),
+                            # mapping from previous hidden state to hidden
+                            # state
+                            containers.SequentialNode(
+                                self._name + "_innersequential",
+                                [simple.ConstantNode(
+                                    self._name + "_initialstate"),
+                                 scan.ScanStateNode(
+                                     self._name + "_recurrentstate",
+                                     # setting new state as output of the
+                                     # activation
+                                     next_state=activation_node.name),
+                                 simple.LinearMappingNode(
+                                     self._name + "_HtoH"),
+                                 ]),
+                        ],
+                        combine_fn=T.add,
+                        shape_fn=utils.first),
+                    simple.AddBiasNode(self._name + "_bias"),
+                    activation_node,
+                ]))
         return [scan_node]
+
+    def get_hyperparameter(self, network, name):
+        if name == "output_dim":
+            # remap a child looking for "output_dim" to "num_units"
+            return network.find_hyperparameter(["num_units"])
+        elif name == "constant_value":
+            num_units = network.find_hyperparameter(["num_units"])
+            batch_size = network.find_hyperparameter(["batch_size"])
+            if batch_size is None:
+                shape = (num_units,)
+            else:
+                shape = (batch_size, num_units)
+            return T.zeros(shape)
+        else:
+            return super(SimpleRecurrentNode, self).get_hyperparameter(network,
+                                                                       name)

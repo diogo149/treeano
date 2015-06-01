@@ -48,7 +48,10 @@ class ScanStateNode(core.NodeImpl):
 
     """
     Container for hidden state, where one specifies an initial value and
-    a next value via other nodes in the tree
+    a next value via other nodes in the tree.
+
+    NOTE: initial state MUST have the correct shape (ie. same shape as
+    the output of the next_state node)
 
     initial_scan_state_reference:
     optional reference to a node to take initial state from
@@ -69,17 +72,26 @@ class ScanStateNode(core.NodeImpl):
              "initial_state_reference",
              "initial_state"],
             None)
-        if node_name is not None:
-            # add dependency in dag
-            network.take_output_from(
-                node_name,
-                to_key="initial_state")
-        else:
+        if node_name is None:
             # otherwise set it to the default input of the node
             node_name = network.get_all_input_edges()["default"]
-        network.set_data("initial_state_name", node_name)
+        # add dependency in dag
+        network.take_output_from(
+            node_name,
+            to_key="initial_state")
+        # set next state node
+        next_state = network.find_hyperparameter(["next_scan_state_reference",
+                                                  "next_state_reference",
+                                                  "next_state"])
+        network.set_data("next_state", next_state)
 
     def compute_output(self, network, initial_state):
+        # copy initial state, to be later referenced
+        network.copy_variable(
+            name="initial_state",
+            previous_variable=initial_state,
+            tags={"input"},
+        )
         # create a new variable representing the output of this node,
         # so that the scan node can replace it with the node's input at a
         # previous time step
@@ -88,7 +100,7 @@ class ScanStateNode(core.NodeImpl):
             is_shared=False,
             shape=initial_state.shape,
             broadcastable=initial_state.broadcastable,
-            tags={"input"},
+            tags={"output"},
         )
 
 
@@ -173,34 +185,39 @@ class ScanNode(core.Wrapper1NodeImpl):
         scan_state_order = sorted(range(len(scan_state_idxs)),
                                   key=lambda x: scan_state_idxs[x])
         # get the node name of the next state from each scan state node
-        scan_state_next_names = [
-            net.find_hyperparameter(
-                ["next_scan_state_reference",
-                 "next_state_reference",
-                 "next_state"])
-            for net in scan_state_networks]
+        scan_state_next_names = [net.get_data("next_state")
+                                 for net in scan_state_networks]
         # each scan state should probably have a unique next state
         # delete the assertion if this assumption does not hold
         # (the code should work just fine, this is just a sanity check)
         assert len(scan_state_next_names) == len(set(scan_state_next_names))
         scan_state_next_networks = [network[name]
                                     for name in scan_state_next_names]
-        scan_state_next = [net.get_variable("default")
-                           for net in scan_state_next_networks]
+        scan_state_next_vws = [net.get_variable("default")
+                               for net in scan_state_next_networks]
         scan_state_next_idxs = [all_outputs.index(var)
-                                for var in scan_state_next]
+                                for var in scan_state_next_vws]
         # finding initial states
-        scan_state_initial_names = [net.get_data("initial_state_name")
-                                    for net in scan_state_networks]
-        scan_state_initial_networks = [network[name]
-                                       for name in scan_state_initial_names]
-        scan_state_initial = [net.get_variable("default")
-                              for net in scan_state_initial_networks]
-        scan_state_initial_vars = [variable_wrapper.variable
-                                   for variable_wrapper in scan_state_initial]
+        scan_state_initial_vws = [net.get_variable("initial_state")
+                                  for net in scan_state_networks]
         # updates outputs_info to contain initial state
-        for idx, initial_var in zip(scan_state_idxs, scan_state_initial_vars):
-            outputs_info[idx] = initial_var
+        for idx, node, init_vw, next_vw in zip(scan_state_idxs,
+                                               scan_state_nodes,
+                                               scan_state_initial_vws,
+                                               scan_state_next_vws):
+            # make sure initial and final shape are the same
+            # ---
+            # NOTE: node is only passed in for debugging purposes
+            assert init_vw.shape == next_vw.shape, dict(
+                msg=("Initial and final state from ScanStateNode must be "
+                     "the same."),
+                node=node,
+                init_shape=init_vw.shape,
+                next_shape=next_vw.shape,
+                init_vw=init_vw,
+                next_vw=next_vw,
+            )
+            outputs_info[idx] = init_vw.variable
 
         # ############################## non_sequences ########################
         # ---
@@ -235,7 +252,7 @@ class ScanNode(core.Wrapper1NodeImpl):
             # non sequences
             to_replace += non_sequence_vars
             for_replace += scan_non_sequences
-            # recurrent state nodes
+            # scan state nodes
             for state_idx, scan_output_var in zip(scan_state_order,
                                                   scan_output_vars):
                 to_replace.append(scan_state_vars[state_idx])
@@ -254,7 +271,7 @@ class ScanNode(core.Wrapper1NodeImpl):
             # set next state for recurrent state nodes
             for state_idx, next_idx in zip(scan_state_idxs,
                                            scan_state_next_idxs):
-                final_outputs[state_idx] = next_idx
+                final_outputs[state_idx] = final_outputs[next_idx]
 
             return final_outputs
 

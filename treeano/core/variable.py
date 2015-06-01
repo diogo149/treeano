@@ -186,7 +186,8 @@ class VariableWrapper(object):
             # shape doesn't change that defaults to True)
 
             # FIXME calculate shape
-            assert False
+            # assert False
+            self.shape_ = tuple(self.variable_.shape.eval())
         return self.shape_
 
     @property
