@@ -13,6 +13,10 @@ def first(f, *args):
     return f
 
 
+def squared_error(preds, target):
+    return (preds - target) ** 2
+
+
 def deep_clone(output, replace, **kwargs):
     """
     like theano.clone, but makes sure to replace in the default_update of

@@ -27,6 +27,8 @@ from containers import (SequentialNode,
                         SplitCombineNode)
 from activations import (StatelessActivationNode,
                          ReLUNode,
+                         TanhNode,
+                         SigmoidNode,
                          SoftmaxNode)
 from updates import (UpdateScaleNode,
                      StandardUpdatesNode,

@@ -14,19 +14,19 @@ from . import simple
 from . import containers
 
 
-def flatten_2d(v):
+def _flatten_1d_or_2d(v):
     if v.ndim > 2:
         return T.flatten(v, outdim=2)
-    elif v.ndim == 2:
+    elif 1 <= v.ndim <= 2:
         return v
     else:
         raise ValueError
 
 
-def flatten_2d_shape(shape):
+def _flatten_1d_or_2d_shape(shape):
     if len(shape) > 2:
         return (shape[0], np.prod(shape[1:]))
-    elif len(shape) == 2:
+    elif 1 <= len(shape) <= 2:
         return shape
     else:
         raise ValueError
@@ -50,10 +50,11 @@ class DenseNode(core.WrapperNodeImpl):
             containers.SequentialNode(
                 self._name + "_sequential",
                 [simple.ApplyNode(self._name + "_flatten",
-                                  fn=flatten_2d,
-                                  shape_fn=flatten_2d_shape),
+                                  fn=_flatten_1d_or_2d,
+                                  shape_fn=_flatten_1d_or_2d_shape),
                  simple.LinearMappingNode(self._name + "_linear"),
-                 simple.AddBiasNode(self._name + "_bias")])]
+                 simple.AddBiasNode(self._name + "_bias")
+                 ])]
 
     def get_hyperparameter(self, network, name):
         if name == "output_dim":

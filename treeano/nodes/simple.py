@@ -231,10 +231,14 @@ class AddBiasNode(core.NodeImpl):
             tags={"parameter", "bias"},
             shared_initializations=inits,
         )
+        b_var = b.variable
+        # not calling patternbroadcast if not broadcastable, because it seems
+        # to have a small overhead
+        if any(broadcastable):
+            b_var = T.patternbroadcast(b_var, broadcastable)
         network.create_variable(
             name="default",
-            variable=(in_var.variable + T.patternbroadcast(b.variable,
-                                                           broadcastable)),
+            variable=(in_var.variable + b_var),
             shape=in_var.shape,
             tags={"output"},
         )

@@ -40,3 +40,15 @@ class SoftmaxNode(StatelessActivationNode):
 
     def activation(self, network, in_var):
         return T.nnet.softmax(in_var.variable)
+
+
+class TanhNode(StatelessActivationNode):
+
+    def activation(self, network, in_var):
+        return T.tanh(in_var.variable)
+
+
+class SigmoidNode(StatelessActivationNode):
+
+    def activation(self, network, in_var):
+        return T.nnet.sigmoid(in_var.variable)

@@ -79,7 +79,10 @@ class SimpleRecurrentNode(core.Wrapper1NodeImpl):
                 shape = (num_units,)
             else:
                 shape = (batch_size, num_units)
-            return T.zeros(shape)
+            zeros = T.zeros(shape)
+            # unfortunately, theano.tensor.zeros makes the result broadcastable
+            # if the shape of any dimension is 1, so we have to undo this
+            return T.patternbroadcast(zeros, (False,) * len(shape))
         else:
             return super(SimpleRecurrentNode, self).get_hyperparameter(network,
                                                                        name)
