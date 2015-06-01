@@ -16,6 +16,9 @@ def test_simple_recurrent_node_serialization():
 
 
 def test_simple_recurrent_node():
+    # just testing that it runs
+    # ---
+    # the test may look dumb, but it's found a LOT of problems
     network = nodes.SequentialNode(
         "n",
         [nodes.InputNode("in", shape=(3, 4, 5)),
@@ -27,4 +30,6 @@ def test_simple_recurrent_node():
     ).build()
     fn = network.function(["in"], ["n"])
     x = np.random.rand(3, 4, 5).astype(fX)
-    fn(x)
+    res = fn(x)[0]
+    # 3 = scan axis, 4 = batch axis, 35 = num output units
+    nt.assert_equal(res.shape, (3, 4, 35))

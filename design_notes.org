@@ -743,7 +743,6 @@
 ** v2
 - RNNs
   - recurrent.py
-    - add SimpleRecurrentNode
     - ScanNode recurrent architectures
     - add in normal LSTM/GRU/SRN
   - fix FIXME's in scan.py
