@@ -1,4 +1,5 @@
 import simple
+import theanode
 import containers
 import activations
 import updates
@@ -19,6 +20,7 @@ from simple import (ReferenceNode,
                     AddBiasNode,
                     LinearMappingNode,
                     ApplyNode)
+from theanode import (TileNode)
 from containers import (SequentialNode,
                         ContainerNode,
                         SplitterNode,
