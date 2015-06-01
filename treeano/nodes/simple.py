@@ -162,10 +162,18 @@ class ConstantNode(core.NodeImpl):
 
     def compute_output(self, network):
         value = network.find_hyperparameter(["constant_value", "value"])
-        shape = value.shape if hasattr(value, "shape") else ()
+        if isinstance(value, theano.gof.graph.Variable):
+            variable = value
+            shape = None
+        elif isinstance(value, theano.compile.sharedvalue.SharedVariable):
+            variable = value
+            shape = value.get_value().shape
+        else:
+            variable = T.constant(value)
+            shape = value.shape if hasattr(value, "shape") else ()
         network.create_variable(
             name="default",
-            variable=T.constant(value),
+            variable=variable,
             shape=shape,
             tags={"output"},
         )
@@ -192,16 +200,22 @@ class AddBiasNode(core.NodeImpl):
                                              "initializations",
                                              "inits"],
                                             None)
-        # have broadcastable as a tuple take precedence over broadcastable_axes
-        # ---
-        # rationale: because broadcastable_axes has a sensible default value
+        # gather hyperparameters
         broadcastable = network.find_hyperparameter(["broadcastable"],
                                                     None)
+        broadcastable_axes = network.find_hyperparameter(
+            ["broadcastable_axes"],
+            None)
+        batch_axis = network.find_hyperparameter(["batch_axis"])
+        # have broadcastable as a tuple take precedence over broadcastable_axes
         if broadcastable is None:
-            # by default, broadcast over axis 0 (minibatch axis)
-            broadcastable_axes = network.find_hyperparameter(
-                ["broadcastable_axes"],
-                [0])
+            if broadcastable_axes is None:
+                if batch_axis is None:
+                    # no minibatch axis = no default broadcasting
+                    broadcastable_axes = []
+                else:
+                    # by default, broadcast over minibatch axis, if any
+                    broadcastable_axes = [batch_axis]
             broadcastable = [False] * in_var.ndim
             for axis in broadcastable_axes:
                 broadcastable[axis] = True

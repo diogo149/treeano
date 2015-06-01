@@ -21,6 +21,10 @@ class Network(object):
         self.root_node = root_node
         self.node_state = {}
         self.update_deltas = UpdateDeltas()
+        # parameterize me if ever there is a need
+        self.default_hyperparameters = dict(
+            batch_axis=0,
+        )
 
     def build(self):
         """
@@ -220,6 +224,7 @@ class RelativeNetwork(object):
         "foo". if that isn't found, it searches for a hyperparameter named
         "bar", and if that isn't found returns 42
         """
+        # lookthrough hyperparameters of all ancestors
         ancestors = list(self.graph.architecture_ancestors(self._name))
         for hyperparameter_key in hyperparameter_keys:
             for node in [self._node] + ancestors:
@@ -229,12 +234,20 @@ class RelativeNetwork(object):
                     pass
                 else:
                     return value
-        if default_value is NoDefaultValue:
+        # try returning the given default value, if any
+        if default_value is not NoDefaultValue:
+            return default_value
+        else:
+            # try global default hyperparameters
+            # ---
+            # this has lowest precedence
+            for hyperparameter_key in hyperparameter_keys:
+                if hyperparameter_key in self.default_hyperparameters:
+                    return self.default_hyperparameters[hyperparameter_key]
+            # otherwise, raise an exception
             raise MissingHyperparameter(dict(
                 hyperparameter_keys=hyperparameter_keys,
             ))
-        else:
-            return default_value
 
     def find_variables_in_subtree(self, tag_filters):
         """

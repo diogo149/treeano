@@ -588,6 +588,42 @@
         - somewhat makes less sense from a computation graph perspective
   - conclusion:
     - yes, because the computation graph should reflect the logical network (in this case)
+- how to handle batch axis in a modular manner?
+  - how to handle initial state in recurrent nets in a modular manner?
+    - needs to be repeated batch dimension times
+  - also used in nodes like bias node and batch normalization
+  - alternatives
+    - hard code it in
+      - ie. batch_axis = axis 0
+      - pros
+        - minimal boiler plate
+        - batch size is used by many things (eg. which dimension bias nodes should broadcast over)
+        - every other library does this
+        - seems unlikely that we would frequently want to change which dim is the batch dimension
+      - cons
+        - additional assumption
+        - counter-example: cuda-convnet uses c01b
+    - have a default argument of batch_axis for nodes that need it
+      - pros
+        - makes a lot of sense with current design
+      - cons
+        - this logic will be peppered everywhere
+        - lots of nodes will end up requiring batch_axis, when it seems like it could be an assumption that a batch_axis exists?
+    - have some sort of global defaults container
+      - pros
+        - general solution
+          - may be useful for other commonly used hyperparameters
+            - batch_axis
+            - channel_axis
+            - scan_axis
+          - it may be nice to have all this logic in 1 spot
+      - cons
+        - additional concept to build
+  - conclusion
+    - create simple global defaults map in network object
+    - there doesn't seem to be enough use cases to justify a big global defaults container and an additional concept
+    - by encapsulating this in network, it should be easy to change later
+    - accessing values can still come from find_hyperparameter
 * assumptions
 - shared variables (eg. parameter tensors) will have a fixed size
 - nodes are in a directed acyclic graph
@@ -599,7 +635,7 @@
 - node names are strings
 - all nodes will have a default output
 - shape dimensions of None mean that the shape is unspecified
-- the minibatch dimension will be dimension 0
+- a batch_axis is None, then there is no minibatch (doing single element at a time)
 * random notes
 - model everything as a "layer"
   - including loss/objective
@@ -657,17 +693,25 @@
   - question: conceptually, how does one perform initialization with existing shareds
     - SharedInitialization.fromNode(other_network, backup_initialization=NoInitialization())
       - set default to having no init
-* features
+* about
+** features
+- GOAL: it should be easier to do NEW things than theano
 - modularity
   - kind of a design goal of the other features
   - "tricks" can be made 100% self-contained
+- composability
+  - storing updates as changes in the values instead of new values
+    - allow arithmetic on the amount changes
+  - nodes can update themselves
 - hierarichical specification of hyperparameters
   - customize each subnetwork
-- nodes can update themselves
-- storing updates as changes in the values instead of new values
-  - allow arithmetic on the amount changes
-* planned features
 - serialization
+  - including
+    - architecture
+    - parameters
+    - all other state
+      - a necessity for doing things like restarting training with stateful optimization algorithms
+** planned features
 - easy variable sharing between networks
 - easy weight sharing between networks
 - auto-"chunk"-ing theano variables
@@ -675,20 +719,29 @@
 - graph transformations
   - eg. give me a new network with all ReLUs substituted for leaky ReLUs
 - recurrent networks
+** hard to do in other packages
+- serialization
+- freezing the parameters of some part of the network
+- increasing learning rate / step size for some part of the network
+- applying transformations to updates (eg. gradient clipping)
 * TODOs
 ** v2
+- RNNs
+  - recurrent.py
+    - add SimpleRecurrentNode
+    - ScanNode recurrent architectures
+    - add in normal LSTM/GRU/SRN
+  - fix FIXME's in scan.py
+    - more sophisticated way of finding nodes in subtree
+      - eg. finding scan state nodes whose scan is the current scan
+  - test: create recurrent net that loads weights from treeano net, and assert results are exactly the same
 - make wrapper around T.nnet.categorical_crossentropy
   - assert dtype of ytrue == int32, and ndim == 1
-- test training DenseNode (MNIST)
-- MLP
-- recurrent.py
-- fix FIXME's in scan.py
 - ScalarSumNode
+- rename inits.Normal to NormalWeightInitialization
 - DenseCombineNode
   - SplitCombine + LinearMappingNode each + combine with sum + BiasNode
-- more sophisticated way of finding nodes in subtree
-  - eg. finding scan state nodes whose scan is the current scan
-- test: create recurrent net that loads weights from treeano net, and assert results are exactly the same
+- test mnist vs lasagne - should have same performance
 - goals:
   - have recurrent net working as fast as if done in pure theano w/ strict=True
 *** recurrent test
@@ -875,6 +928,36 @@
   print((total_time, np.mean(losses[-100:])))
 #+END_SRC
 ** misc
+- canopy.transformations.
+  - remove_dropout
+    - replaces dropout with identity
+  - remove_node
+    - replaces node with single child
+  - remove_subtree
+    - replaces node with identity
+  - remove_parent
+    - replaces parent with node
+  - something to transform nodes of one type to another
+    - eg. dropout to gaussianfastdropout
+  - replace_node
+    - replace node with a new node
+    - eg. replace input node with some shared variable container (StateNode?) for optimizing input wrt parameters as a visualiztion
+- new parameter tags:
+  - updates_state
+    - rationale: might want to reset it
+- updates composability
+  - can compose together: momentum, nesterov momentum, etc.
+- add inception layer treeano/sandbox/nodes/
+- SubnetworkNode
+  - take in an existing treeano model, but treat it like a black box, only using replace's on it
+  - sample use case: dropout distillation
+- make sure all state of updates is stored in node
+  - that way learning is 100% serializable
+- ability to serialize only a subtree
+  - that way training state (eg. updates) doesn't have to be serialized
+- create hyperparameter annealing
+  - save hp as shared state
+  - plug in an annealing algorithm
 - add testing files in examples/ to test cases
 - name all theano variables
   - when copying use theano.clone so that variables can be shared
@@ -886,9 +969,10 @@
 - rename ChildrenContainer.children
   - rationale: calling self._children.children looks like it's reading grandchildren
   - maybe self._children should be renamed
-- make sure all register strings and node names are in [a-zA-z_]
+- make sure all register strings, node names, and to/from keys are in [a-zA-z_]
   - rationale: allows special symbols when creating nodes
     - eg. "dense#dense1"
+  - maybe?
 - allow theano var for inputnode to be a parameter to be passed in
 - have hyperparameter precedence favor closer to the node over more specific hyperparameter name
   - eg. if conv layer defines strides, but hyperparamnode defines conv_strides, use conv's hyperparameter
@@ -908,7 +992,6 @@
   - add __repr__
   - add .W .b syntax shortcut for accessing state
   - add get_state set_state which does not overlap with current_variables
-- add __repr__ for variablewrapper
 - make sure all intermediate variables are named
   - for ease of debugging
 - implement
@@ -971,6 +1054,7 @@
   - triplet network
   - network with parameter sharing
     - eg. autoencoder with transpose as weight
+- spatialdropout
 - temperaturesoftmaxnode
 - temperature softmax + categorical cross entropy + rescaling due to temperature (* T^2)
 - gradient caching node
@@ -1028,6 +1112,14 @@
 - PYTHONPATH=~/repos/treeano:$PYTHONPATH sniffer
 - potential issue: sharing variables between networks when test_value's are enabled
   - if one network uses the same variables, but with different shapes, the test_value's might break
+- auto-test nodes
+  - have fast tests:
+    - test serialization
+    - test that it can get output from input
+    - test that shape calculation is correct
+  - slow tests:
+    - for parameter layers:
+      - test that loss can decrease: input -> node -> mean layer -> output
 - testing
   - add serialization tests for all nodes
 ** RNNs
@@ -1107,6 +1199,25 @@
     - attentional models
       - look into attentional interfaces
         - https://github.com/bartvm/blocks/blob/master/blocks/bricks/attention.py
+** other libs
+- nodes for data augmentation
+  - eg. https://groups.google.com/forum/#!topic/lasagne-users/kRlgOrGQOH4
+    - NOTE: gaussian blur looks broken - looks like a mean blur
+- hessian free optimization
+  - https://github.com/boulanni/theano-hf/blob/master/hf.py
+- https://github.com/vitruvianscience/OpenDeep
+  - custom decay functions
+    - https://github.com/vitruvianscience/OpenDeep/blob/master/opendeep/utils/decay.py
+- downhill
+  - https://github.com/lmjohns3/downhill
+  - http://downhill.readthedocs.org/en/stable/
+  - lots of optimization algorithms implemented
+    - eg. ESGD
+- theanets
+  - https://github.com/lmjohns3/theanets
+  - http://theanets.readthedocs.org/en/latest/reference.html
+  - same person as downhill
+  - has a lots of implemented stuff
 ** canopy
 - for each hook, document:
   - when it occurs
@@ -1124,6 +1235,8 @@
   - maybe
 - function wrappers
   - assert shape of numpy array is same as that of the input variable
+  - padding w/ 0s for minibatch dim (to match input variable)
+  - chunking numpy arrays
 - workflows / hooks
   - training
   - distillation
@@ -1155,6 +1268,7 @@
       - show grad(image_class, input)
         - behaves like importance map
       - show input patch that maximally activates a conv neuron
+      - given mean image, maximize class score - L2 norm
       - deconvolutional networks
     - saving learning curves
     - post-training report
@@ -1194,6 +1308,7 @@
   - auto-stop on nan
   - parameter hot-swapping
   - restarting from previous state w/ lower learning rate
+  - using pre-trained networks
   - proper BN initialization
   - alternating training
     - between several models
@@ -1215,12 +1330,15 @@
   - segmentation
   - cascade of models
     - not necessarily trained jointly (?)
+  - data augmentation
   - test time augmentation
   - ensembling
   - dynamic curriculum learning
     - saving mistaken examples for replaying
     - with metric learning
       - starting with easy values
+  - polyak averaging
+    - training hook?
 - blocks callback hooks
   - before_training : bool - is invoked before training.
   - before_first_epoch : bool - is invoked before the first epoch.
