@@ -67,7 +67,7 @@ network = with_updates.build()
 
 train_fn = network.function(["x", "y"], ["cost"], include_updates=True)
 # TODO remove dropout for valid_fn
-valid_fn = network.function(["x", "y"], ["cost", "model"])
+valid_fn = network.function(["x", "y"], ["cost", "preds"])
 
 
 # ################################# training #################################
