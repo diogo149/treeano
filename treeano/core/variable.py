@@ -199,3 +199,7 @@ class VariableWrapper(object):
         assert new_value.dtype == self.dtype
         assert new_value.shape == self.shape
         self.variable.set_value(new_value)
+
+    def __repr__(self):
+        return "{cls}(name={name})".format(cls=self.__class__.__name__,
+                                           name=self.name)
