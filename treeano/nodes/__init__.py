@@ -25,7 +25,7 @@ from containers import (SequentialNode,
                         ContainerNode,
                         SplitterNode,
                         SplitCombineNode)
-from activations import (StatelessActivationNode,
+from activations import (BaseActivationNode,
                          ReLUNode,
                          TanhNode,
                          SigmoidNode,

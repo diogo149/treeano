@@ -6,7 +6,7 @@ import theano.tensor as T
 from .. import core
 
 
-class StatelessActivationNode(six.with_metaclass(abc.ABCMeta, core.NodeImpl)):
+class BaseActivationNode(six.with_metaclass(abc.ABCMeta, core.NodeImpl)):
 
     """
     base node class for activation functions
@@ -30,25 +30,25 @@ def relu(x):
     return 0.5 * (x + abs(x))
 
 
-class ReLUNode(StatelessActivationNode):
+class ReLUNode(BaseActivationNode):
 
     def activation(self, network, in_var):
         return relu(in_var.variable)
 
 
-class SoftmaxNode(StatelessActivationNode):
+class SoftmaxNode(BaseActivationNode):
 
     def activation(self, network, in_var):
         return T.nnet.softmax(in_var.variable)
 
 
-class TanhNode(StatelessActivationNode):
+class TanhNode(BaseActivationNode):
 
     def activation(self, network, in_var):
         return T.tanh(in_var.variable)
 
 
-class SigmoidNode(StatelessActivationNode):
+class SigmoidNode(BaseActivationNode):
 
     def activation(self, network, in_var):
         return T.nnet.sigmoid(in_var.variable)
