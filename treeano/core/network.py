@@ -276,7 +276,8 @@ class RelativeNetwork(object):
         # we don't want to overwrite an existing value
         assert name not in self._state['current_variables']
         assert name not in self._state['original_variables']
-        new_name = "%s.%s" % (self._name, name)
+        # FIXME have a defined name separator
+        new_name = "%s:%s" % (self._name, name)
         # prepare initialization strategies
         if kwargs.get("shared_initializations") is None:
             inits = self.find_hyperparameter(["shared_initializations"],
