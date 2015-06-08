@@ -57,6 +57,8 @@ class NodeAPI(six.with_metaclass(abc.ABCMeta, object)):
         """
         returns all child nodes of the given node in the architectural tree
         as a list
+
+        should be stateless as this may be called multiple times
         """
 
     @abc.abstractmethod
