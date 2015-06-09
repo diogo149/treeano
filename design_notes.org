@@ -757,10 +757,10 @@
     - could be implemented with SumNode
       - there's a tensor sum, which sums the input
       - there's a aggregator sum, which sums all inputs into 1
-  - DenseCombineNode
-    - SplitCombine + LinearMappingNode each + combine with sum + BiasNode
-- figure out how to make recurrent node's not require batch size
-  - would be cool to have symbolic shapes work
+- hyperparameters that affect topology
+  - eg.
+    - whether or not to send input to children
+  - should it even be an option?
 - RNNs
   - recurrent.py
     - ScanNode recurrent architectures
@@ -769,12 +769,22 @@
     - more sophisticated way of finding nodes in subtree
       - eg. finding scan state nodes whose scan is the current scan
   - test: create recurrent net that loads weights from treeano net, and assert results are exactly the same
+  - test if computing extra outputs slows scan down, even if they aren't used
 - make wrapper around T.nnet.categorical_crossentropy
   - assert dtype of ytrue == int32, and ndim == 1
 - rename inits.Normal to NormalWeightInitialization
 - test mnist vs lasagne - should have same performance
 - goals:
   - have recurrent net working as fast as if done in pure theano w/ strict=True
+** shape calculation
+- try test_value's with scan
+- maybe have shape be a symbolic scalar - that way equality checks can be done
+  - eg.
+    - let x be variable batch size
+    - let y be variable time size
+    - can have some nodes have shape 3 * x
+- figure out how to make recurrent node's not require batch size
+  - would be cool to have symbolic shapes work
 ** misc
 - parameterize weight layers out of linear mapping / bias
 - more information when querying
@@ -929,6 +939,8 @@
     - var.name = "somename"
     - have a defined name separator
       - eg. $NODE:$VAR
+    - TODO: also have a defined child name separator
+      - eg. dense_bias, dense_linear
 - make sure all intermediate variables are named
   - for ease of debugging
 - ability to instrument debugging in only a subtree

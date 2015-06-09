@@ -60,31 +60,6 @@ def test_nested_sequential_network():
     x = np.random.rand(3, 4, 5).astype(floatX)
     assert np.allclose(fn(x), x)
 
-# if False:
-#     # NOTE: ugly
-#     import pylab
-#     nx.draw_networkx(
-#         network.graph.computation_graph,
-#         nx.spring_layout(network.graph.computation_graph),
-#         node_size=500)
-#     pylab.show()
-# if False:
-#     # plot computation_graph
-#     import pylab
-#     nx.draw_networkx(
-#         network.graph.computation_graph,
-#         nx.graphviz_layout(network.graph.computation_graph),
-#         node_size=500)
-#     pylab.show()
-# if False:
-#     # plot architectural_tree
-#     import pylab
-#     nx.draw_networkx(
-#         network.graph.architectural_tree,
-#         nx.graphviz_layout(network.graph.architectural_tree),
-#         node_size=500)
-#     pylab.show()
-
 
 def test_toy_updater_node():
 
