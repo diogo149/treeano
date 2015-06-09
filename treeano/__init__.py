@@ -1,5 +1,6 @@
 __all__ = """
 lasagne
+visualization
 """.split()
 
 import utils
