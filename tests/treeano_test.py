@@ -20,6 +20,8 @@ from treeano.nodes import (InputNode,
 from treeano.lasagne.nodes import (DenseNode,
                                    ReLUNode)
 
+from . import utils
+
 floatX = theano.config.floatX
 
 
@@ -144,12 +146,6 @@ def test_hyperparameter_node():
     assert network["a"].find_hyperparameter(["choo"], 32) == 32
 
 
-class OnesInitialization(treeano.SharedInitialization):
-
-    def initialize_value(self, var):
-        return np.ones(var.shape).astype(var.dtype)
-
-
 def test_ones_initialization():
     class DummyNode(treeano.NodeImpl):
 
@@ -157,7 +153,7 @@ def test_ones_initialization():
 
         def get_hyperparameter(self, network, hyperparameter_name):
             if hyperparameter_name == "shared_initializations":
-                return [OnesInitialization()]
+                return [utils.OnesInitialization()]
             else:
                 return super(DummyNode, self).get_hyperparameter(
                     network,
@@ -185,10 +181,11 @@ def test_dense_node():
         DenseNode("b"),
     ]
     sequential = SequentialNode("c", nodes)
-    hp_node = HyperparameterNode("d",
-                                 sequential,
-                                 num_units=14,
-                                 shared_initializations=[OnesInitialization()])
+    hp_node = HyperparameterNode(
+        "d",
+        sequential,
+        num_units=14,
+        shared_initializations=[utils.OnesInitialization()])
     network = hp_node.build()
     fn = network.function(["a"], ["d"])
     x = np.random.randn(3, 4, 5).astype(floatX)
@@ -207,10 +204,11 @@ def test_fully_connected_and_relu_node():
         ReLUNode("e"),
     ]
     sequential = SequentialNode("c", nodes)
-    hp_node = HyperparameterNode("d",
-                                 sequential,
-                                 num_units=14,
-                                 shared_initializations=[OnesInitialization()])
+    hp_node = HyperparameterNode(
+        "d",
+        sequential,
+        num_units=14,
+        shared_initializations=[utils.OnesInitialization()])
     network = hp_node.build()
     fn = network.function(["a"], ["d"])
     x = np.random.randn(3, 4, 5).astype(floatX)
