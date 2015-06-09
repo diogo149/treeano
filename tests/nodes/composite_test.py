@@ -49,7 +49,7 @@ def test_dense_combine_node():
     nt.assert_equal(res.shape, (3, 8))
 
 
-def test_dense_node_and_dense_combine_node():
+def test_dense_node_and_dense_combine_node1():
     # testing that dense node and dense combine node with identity child
     # return the same thing
     network1 = tn.HyperparameterNode(
@@ -78,3 +78,51 @@ def test_dense_node_and_dense_combine_node():
     fn1 = network1.function(["in"], ["fc3"])
     fn2 = network2.function(["in"], ["fc3"])
     np.testing.assert_allclose(fn1(x), fn2(x))
+
+
+def test_dense_node_and_dense_combine_node2():
+    # testing that summing the output of 2 dense nodes is the same as
+    # applying a dense combine node with 2 identities (+ bias)
+    # and the same as multiplying the output of 1 dense node by 2
+    network0 = tn.HyperparameterNode(
+        "hp",
+        tn.SequentialNode(
+            "seq",
+            [tn.InputNode("in", shape=(3, 4, 5)),
+             tn.DenseNode("dense1", num_units=6),
+             tn.toy.MultiplyConstantNode("mul", value=2)]
+        ),
+        shared_initializations=[utils.OnesInitialization()]
+    ).build()
+    network1 = tn.HyperparameterNode(
+        "hp",
+        tn.SequentialNode(
+            "seq",
+            [tn.InputNode("in", shape=(3, 4, 5)),
+             tn.ElementwiseSumNode(
+                 "sum",
+                 [tn.DenseNode("dense1", num_units=6),
+                  tn.DenseNode("dense2", num_units=6)])]
+        ),
+        shared_initializations=[utils.OnesInitialization()]
+    ).build()
+    network2 = tn.HyperparameterNode(
+        "hp",
+        tn.SequentialNode(
+            "seq",
+            [tn.InputNode("in", shape=(3, 4, 5)),
+             tn.DenseCombineNode(
+                 "fc",
+                 [tn.IdentityNode("i1"),
+                  tn.IdentityNode("i2")],
+                 num_units=6),
+             tn.AddBiasNode("bias")]
+        ),
+        shared_initializations=[utils.OnesInitialization()]
+    ).build()
+    x = np.random.randn(3, 4, 5).astype(fX)
+    fn0 = network0.function(["in"], ["hp"])
+    fn1 = network1.function(["in"], ["hp"])
+    fn2 = network2.function(["in"], ["hp"])
+    np.testing.assert_allclose(fn0(x), fn1(x))
+    np.testing.assert_allclose(fn0(x), fn2(x))
