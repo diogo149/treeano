@@ -126,3 +126,37 @@ def test_dense_node_and_dense_combine_node2():
     fn2 = network2.function(["in"], ["hp"])
     np.testing.assert_allclose(fn0(x), fn1(x))
     np.testing.assert_allclose(fn0(x), fn2(x))
+
+
+def test_dense_combine_node_uses_children():
+    network1 = tn.HyperparameterNode(
+        "hp",
+        tn.SequentialNode(
+            "seq",
+            [tn.InputNode("in", shape=(3, 4, 5)),
+             tn.toy.MultiplyConstantNode("mul", value=2),
+             tn.DenseCombineNode(
+                 "fc",
+                 [tn.IdentityNode("i1"),
+                  tn.IdentityNode("i2")],
+                 num_units=6)]
+        ),
+        shared_initializations=[utils.OnesInitialization()]
+    ).build()
+    network2 = tn.HyperparameterNode(
+        "hp",
+        tn.SequentialNode(
+            "seq",
+            [tn.InputNode("in", shape=(3, 4, 5)),
+             tn.DenseCombineNode(
+                 "fc",
+                 [tn.toy.MultiplyConstantNode("mul1", value=2),
+                  tn.toy.MultiplyConstantNode("mul2", value=2)],
+                 num_units=6)]
+        ),
+        shared_initializations=[utils.OnesInitialization()]
+    ).build()
+    x = np.random.randn(3, 4, 5).astype(fX)
+    fn1 = network1.function(["in"], ["hp"])
+    fn2 = network2.function(["in"], ["hp"])
+    np.testing.assert_allclose(fn1(x), fn2(x))

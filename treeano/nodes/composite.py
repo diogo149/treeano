@@ -90,7 +90,8 @@ class DenseCombineNode(core.WrapperNodeImpl):
         mapped_children = [
             containers.SequentialNode(
                 "%s_seq_%d" % (self._name, idx),
-                [_Flatten1dOr2dNode("%s_flatten_%d" % (self._name, idx)),
+                [child,
+                 _Flatten1dOr2dNode("%s_flatten_%d" % (self._name, idx)),
                  simple.LinearMappingNode("%s_linear_%d" % (self._name, idx))])
             for idx, child in enumerate(children)]
         return [
