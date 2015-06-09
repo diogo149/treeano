@@ -5,6 +5,7 @@ from .. import utils
 from .. import core
 from . import simple
 from . import containers
+from . import composite
 from . import scan
 
 
@@ -40,12 +41,11 @@ class SimpleRecurrentNode(core.Wrapper1NodeImpl):
             containers.SequentialNode(
                 self._name + "_sequential",
                 [
-                    containers.SplitCombineNode(
-                        self._name + "_splitcombine",
+                    composite.DenseCombineNode(
+                        self._name + "_densecombine",
                         [
                             # mapping from input to hidden state
-                            simple.LinearMappingNode(
-                                self._name + "_XtoH"),
+                            simple.IdentityNode(self._name + "_XforH"),
                             # mapping from previous hidden state to hidden
                             # state
                             containers.SequentialNode(
@@ -57,13 +57,9 @@ class SimpleRecurrentNode(core.Wrapper1NodeImpl):
                                      # setting new state as output of the
                                      # activation
                                      next_state=activation_node.name),
-                                 simple.LinearMappingNode(
-                                     self._name + "_HtoH"),
-                                 ]),
-                        ],
-                        combine_fn=T.add,
-                        shape_fn=utils.first),
-                    simple.AddBiasNode(self._name + "_bias"),
+                                 ])
+                        ]
+                    ),
                     activation_node,
                 ]))
         return [scan_node]
