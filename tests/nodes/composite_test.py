@@ -6,7 +6,7 @@ import theano.tensor as T
 import treeano
 from treeano import nodes
 
-floatX = theano.config.floatX
+fX = theano.config.floatX
 
 
 def test_dense_node_serialization():
@@ -22,7 +22,7 @@ def test_dense_node():
          nodes.DenseNode("fc2", num_units=7),
          nodes.DenseNode("fc3", num_units=8)]
     ).build()
-    x = np.random.randn(3, 4, 5).astype(floatX)
+    x = np.random.randn(3, 4, 5).astype(fX)
     fn = network.function(["in"], ["fc3"])
     res = fn(x)[0]
     nt.assert_equal(res.shape, (3, 8))

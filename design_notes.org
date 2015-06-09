@@ -745,7 +745,22 @@
 - hyperparameternode's seem unnecessary
   - maybe we should be able to add hyperparameters anywhere in the tree
 ** v2
-- have a fall back
+- make combinenode
+  - merge:
+    - function combine node
+    - concatentate node
+    - split combine node
+      - takes in: combiner, splits
+  - make: input combiner
+    - problem with input combiner: unordered
+  - ScalarSumNode
+    - could be implemented with SumNode
+      - there's a tensor sum, which sums the input
+      - there's a aggregator sum, which sums all inputs into 1
+  - DenseCombineNode
+    - SplitCombine + LinearMappingNode each + combine with sum + BiasNode
+- figure out how to make recurrent node's not require batch size
+  - would be cool to have symbolic shapes work
 - RNNs
   - recurrent.py
     - ScanNode recurrent architectures
@@ -756,17 +771,34 @@
   - test: create recurrent net that loads weights from treeano net, and assert results are exactly the same
 - make wrapper around T.nnet.categorical_crossentropy
   - assert dtype of ytrue == int32, and ndim == 1
-- ScalarSumNode
 - rename inits.Normal to NormalWeightInitialization
-- DenseCombineNode
-  - SplitCombine + LinearMappingNode each + combine with sum + BiasNode
 - test mnist vs lasagne - should have same performance
 - goals:
   - have recurrent net working as fast as if done in pure theano w/ strict=True
 ** misc
+- parameterize weight layers out of linear mapping / bias
+- more information when querying
+  - will allow for more advanced filtering in the future
+  - eg.
+    - weight initialization
+    - getting hyperparameter
+- SymbolicHyperparameterNode("foo", hyperparameters=["learning_rate", "momentum"])
+  - creates symbol variables for hyperparameters
+- scaled tanh
+  - 1.7159 * tanh(2/3 * x)
+- add inception layer treeano/sandbox/nodes/
+- auto shape computation
+  - use FAST_COMPILE mode, and do .shape symbolically, in case it can be optimized
+  - can use compute_test_value for shape computation
+  - eg. T.zeros((3,4,5)).shape.tag.test_value
 - how can nodes pass hyperparameters into their children the right way?
   - overwriting get_hyperparameter is wrong, because it affects all children
   - ideally we want to apply it only to the correct children
+  - alternatives:
+    - allow get_hyperparameter to know which node is calling find_hyperparameter
+      - in general, it seems like a good thing to allow more complex queries
+        - eg. maybe when calling weight initializations, you might want to query based on type of unit
+          - eg. to initialize recurrent states to something near identity
 - canopy.transformations.
   - remove_dropout
     - replaces dropout with identity
@@ -786,7 +818,6 @@
     - rationale: might want to reset it
 - updates composability
   - can compose together: momentum, nesterov momentum, etc.
-- add inception layer treeano/sandbox/nodes/
 - SubnetworkNode
   - take in an existing treeano model, but treat it like a black box, only using replace's on it
   - sample use case: dropout distillation
@@ -802,12 +833,9 @@
   - save hp as shared state
   - plug in an annealing algorithm
 - add testing files in examples/ to test cases
-- name all theano variables
-  - when copying use theano.clone so that variables can be shared
 - add more initializations
   - https://github.com/Lasagne/Lasagne/blob/master/lasagne/init.py
 - have children container verify every element is of type NodeAPI
-- figure out easy solution for theano.config.floatX everywhere
 - rename UpdateScaleNode to MultiplyUpdatesNode
 - rename ChildrenContainer.children
   - rationale: calling self._children.children looks like it's reading grandchildren
@@ -835,8 +863,6 @@
   - add __repr__
   - add .W .b syntax shortcut for accessing state
   - add get_state set_state which does not overlap with current_variables
-- make sure all intermediate variables are named
-  - for ease of debugging
 - implement
   - LSTM / GRU
     - https://github.com/fchollet/keras/blob/master/keras/layers/recurrent.py
@@ -892,6 +918,27 @@
   - cons
     - might be complex to understand
     - defining hyperparameters in more than one place
+** debugging
+- name all theano variables
+  - https://groups.google.com/forum/#!msg/theano-users/QoXZZxP5uHE/Krptqwktp7sJ
+    - options
+      - g2 = theano.compile.deep_copy_op(g)
+      - g3 = theano.compile.view_op(g)
+      - g4 = T.tensor_copy(g)
+  - ie. add names to variables
+    - var.name = "somename"
+    - have a defined name separator
+      - eg. $NODE:$VAR
+- make sure all intermediate variables are named
+  - for ease of debugging
+- ability to instrument debugging in only a subtree
+- auto-creating tag.test_value
+  - http://deeplearning.net/software/theano/tutorial/debug_faq.html#using-test-values
+  - NOTE: incompatible with scan
+- auto return theano.printing.Print on VariableWrapper.variable in a debug mode
+- store last x values of a variable
+- look into auto-instrumenting local variables
+  - see https://github.com/shawntan/theano_toolkit/blob/master/parameters.py for a way to get access to local variables in a previous frame
 ** guides / demos / concrete things to build
 - try building:
   - triplet network
@@ -965,7 +1012,9 @@
       - test that loss can decrease: input -> node -> mean layer -> output
 - testing
   - add serialization tests for all nodes
+- copy downhill.test.util tests for optimizers
 ** RNNs
+- RNN note: mask for padding
 - add truncate_gradient parameter
 - taps for recurrent nets
 - how to handle updates for RandomStates?
@@ -1031,7 +1080,13 @@
 - javascript interface to expand nodes
   - more expanded = more low-level
 - parallelism for running gpu networks on a different process
-  - https://gist.github.com/albertz/4177e40d41cb7f9f7c68
+  - theano error (with forking after a cuda context is created)
+    - https://groups.google.com/forum/#!topic/theano-users/Pu4YKlZKwm4
+    - solution:
+      - start an additional thread initially to run all cuda stuff
+        - https://gist.github.com/albertz/4177e40d41cb7f9f7c68
+        - advantage:
+          - can use multiple GPUs
 - think about:
   - recursive NN
   - RNN
@@ -1042,7 +1097,7 @@
     - attentional models
       - look into attentional interfaces
         - https://github.com/bartvm/blocks/blob/master/blocks/bricks/attention.py
-** other libs
+** other libs / snippets of code that may be useful
 - nodes for data augmentation
   - eg. https://groups.google.com/forum/#!topic/lasagne-users/kRlgOrGQOH4
     - NOTE: gaussian blur looks broken - looks like a mean blur
@@ -1061,7 +1116,31 @@
   - http://theanets.readthedocs.org/en/latest/reference.html
   - same person as downhill
   - has a lots of implemented stuff
+- CTC layer
+  - https://github.com/rakeshvar/rnn_ctc/blob/master/ctc.py
+  - https://github.com/shawntan/rnn-experiment/blob/master/CTC.ipynb
 ** canopy
+- training loop
+  - what interface?
+    - needs
+      - data
+      - training function
+      - after training handler
+        - this could be combined into the training function
+    - simply:
+      - for thing in gen: fn(thing)
+      - fn can be wrapped by arbitrary handlers
+        - eg. stopping conditions
+  - handler state should be hierarchical
+    - eg. wrappers = [stop_after(seconds=100), wrap_every(5, some_other_wrapper), ...]
+      - here some_other_wrapper needs state under wrap_every
+  - should the training loop be aware of "batch"es? or can it be abstracted away into chunks
+    - separate questions
+      - should batches be exposed to the user?
+        - yes, may be useful for debugging
+      - should batches be exposed to the training loop?
+        - maybe not
+  - training_loop_from_network
 - for each hook, document:
   - when it occurs
     - eg. on compile, after each batch, after each chunk, etc.
@@ -1080,6 +1159,12 @@
   - assert shape of numpy array is same as that of the input variable
   - padding w/ 0s for minibatch dim (to match input variable)
   - chunking numpy arrays
+  - compile with nan detection mode
+    - http://deeplearning.net/software/theano/tutorial/debug_faq.html
+      - search for detect_nan
+      - filter out str(node).startswith("GpuAllocEmpty(")
+      - try to see if output[0] can be called as arg to np.isnan
+        - cannot convert PyCObject
 - workflows / hooks
   - training
   - distillation
@@ -1092,6 +1177,7 @@
   - dynamically changing network during training to things that should be easy in canopy
     - eg. adding additional losses
   - test on validation set every x chunks
+  - making a gif of pixelwise loss / heatmap / attention over time
   - visualization
     - print filters
     - find most similar inputs to input
@@ -1130,6 +1216,8 @@
   - logging how close rolling BN mean/variance is to actual mean/variance
   - hyperparameter optimization
   - active learning
+  - restarting training from a certain point
+    - issue: dataset state won't be kept
   - q learning
   - curriculum learning
     - from the data point of view (ie. changing data distribution)

@@ -5,6 +5,13 @@ from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 srng = RandomStreams()
 
 
+def all_equal(seq):
+    """
+    whether or not all elements of a sequence are equal
+    """
+    return len(set(seq)) == 1
+
+
 def identity(x):
     return x
 
