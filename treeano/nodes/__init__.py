@@ -44,6 +44,7 @@ from costs import (AggregatorNode,
                    ElementwisePredictionCostNode,
                    PredictionCostNode)
 from stochastic import (DropoutNode)
-from composite import (DenseNode)
+from composite import (DenseNode,
+                       DenseCombineNode)
 
 from test_utils import check_serialization
