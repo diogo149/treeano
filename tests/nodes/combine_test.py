@@ -17,6 +17,18 @@ def test_concatenate_node_serialization():
          tn.ConcatenateNode("c", [])]))
 
 
+def test_elementwise_sum_node_serialization():
+    tn.check_serialization(tn.ElementwiseSumNode("a", []))
+    tn.check_serialization(tn.ElementwiseSumNode(
+        "a",
+        [tn.ElementwiseSumNode("b", []),
+         tn.ElementwiseSumNode("c", [])]))
+
+
+def test_input_elementwise_sum_node_serialization():
+    tn.check_serialization(tn.InputElementwiseSumNode("a"))
+
+
 def test_concatenate_node():
 
     def replace_nones(shape):
@@ -58,3 +70,49 @@ def test_concatenate_node_wrong_shape():
                  [0, (3, 2, 4), (3, 2, 4), (3, 3, 4)],
                  [0, (3, 2, 4), (3, 2, 4), (3, None, 4)], ]:
         build_concatenate(*args)
+
+
+def test_elementwise_sum_node():
+    for s in [(),
+              (3, 4, 5)]:
+        network = tn.ElementwiseSumNode(
+            "es",
+            [tn.InputNode("i1", shape=s),
+             tn.InputNode("i2", shape=s),
+             tn.InputNode("i3", shape=s)],
+        ).build()
+        fn = network.function(["i1", "i2", "i3"], ["es"])
+        i1 = np.array(np.random.rand(*s), dtype=fX)
+        i2 = np.array(np.random.rand(*s), dtype=fX)
+        i3 = np.array(np.random.rand(*s), dtype=fX)
+        np.testing.assert_allclose(i1 + i2 + i3,
+                                   fn(i1, i2, i3)[0],
+                                   rtol=1e-5)
+
+
+def test_input_elementwise_sum_node():
+    for s in [(),
+              (3, 4, 5)]:
+        network = tn.ContainerNode(
+            "all",
+            [tn.InputElementwiseSumNode("ies"),
+             tn.SequentialNode(
+                 "seq1",
+                [tn.InputNode("i1", shape=s),
+                 tn.SendToNode("st1", reference="ies", to_key="in1")]),
+             tn.SequentialNode(
+                 "seq2",
+                 [tn.InputNode("i2", shape=s),
+                  tn.SendToNode("st2", reference="ies", to_key="in2")]),
+             tn.SequentialNode(
+                 "seq3",
+                 [tn.InputNode("i3", shape=s),
+                  tn.SendToNode("st3", reference="ies", to_key="in3")])]
+        ).build()
+        fn = network.function(["i1", "i2", "i3"], ["ies"])
+        i1 = np.array(np.random.rand(*s), dtype=fX)
+        i2 = np.array(np.random.rand(*s), dtype=fX)
+        i3 = np.array(np.random.rand(*s), dtype=fX)
+        np.testing.assert_allclose(i1 + i2 + i3,
+                                   fn(i1, i2, i3)[0],
+                                   rtol=1e-5)

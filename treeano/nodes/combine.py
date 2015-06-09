@@ -3,18 +3,23 @@ nodes for combining the outputs of multiple nodes
 """
 
 import abc
-import six
+import operator
 
+import six
 import theano.tensor as T
 
 from .. import utils
 from .. import core
 
 
-class BaseCombineNode(six.with_metaclass(abc.ABCMeta, core.WrapperNodeImpl)):
+# ############################### base classes ###############################
+
+
+class BaseChildrenCombineNode(six.with_metaclass(abc.ABCMeta,
+                                                 core.WrapperNodeImpl)):
 
     """
-    base node class for combining multiple outputs together
+    base node class for combining the outputs of a node's children together
     """
 
     @property
@@ -37,8 +42,31 @@ class BaseCombineNode(six.with_metaclass(abc.ABCMeta, core.WrapperNodeImpl)):
         pass
 
 
+class BaseInputCombineNode(six.with_metaclass(abc.ABCMeta, core.NodeImpl)):
+
+    """
+    base node class for combining all inputs of a node together
+
+    example use case: having a sum node that combines all inputs from
+    SendToNode's (eg. a main cost node where all other costs are sent to it)
+    """
+
+    def init_state(self, network):
+        """
+        forward the input of this node to each of the children as a default
+        """
+        self.input_keys = tuple(sorted(network.get_all_input_edges().keys()))
+
+    @abc.abstractmethod
+    def compute_output(self, network, *in_vws):
+        pass
+
+
+# ############################# implementations #############################
+
+
 @core.register_node("concatenate")
-class ConcatenateNode(BaseCombineNode):
+class ConcatenateNode(BaseChildrenCombineNode):
 
     """
     like theano.tensor.concatenate
@@ -93,9 +121,35 @@ class ConcatenateNode(BaseCombineNode):
         )
 
 
-# class ScalarSumNode(BaseCombineNode):
+def elementwise_sum(network, *in_vws):
+    # calculate and verify shape
+    input_shapes = [vw.shape for vw in in_vws]
+    assert utils.all_equal(input_shapes)
+    network.create_variable(
+        "default",
+        variable=reduce(operator.add, [vw.variable for vw in in_vws]),
+        shape=input_shapes[0],
+        tags={"output"},
+    )
 
-#     """
-#     computes a sum of the outputs of the inputs
-#     """
-#     pass
+
+@core.register_node("elementwise_sum")
+class ElementwiseSumNode(BaseChildrenCombineNode):
+
+    """
+    computes a sum of the outputs of the node's children
+    """
+
+    def compute_output(self, network, *in_vws):
+        elementwise_sum(network, *in_vws)
+
+
+@core.register_node("input_elementwise_sum")
+class InputElementwiseSumNode(BaseInputCombineNode):
+
+    """
+    computes a sum of the inputs of the node
+    """
+
+    def compute_output(self, network, *in_vws):
+        elementwise_sum(network, *in_vws)

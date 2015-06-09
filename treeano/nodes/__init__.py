@@ -22,8 +22,11 @@ from simple import (ReferenceNode,
                     LinearMappingNode,
                     ApplyNode)
 from theanode import (TileNode)
-from combine import (BaseCombineNode,
-                     ConcatenateNode)
+from combine import (BaseChildrenCombineNode,
+                     BaseInputCombineNode,
+                     ConcatenateNode,
+                     ElementwiseSumNode,
+                     InputElementwiseSumNode)
 from containers import (SequentialNode,
                         ContainerNode,
                         SplitterNode,
