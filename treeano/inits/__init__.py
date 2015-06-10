@@ -213,25 +213,27 @@ class OrthogonalInit(WeightInit):
 
 class SparseInit(WeightInit):
 
-    def __init__(self, num_init, weights_init, sparse_axes, sparse_init=None):
+    def __init__(self, ratio, weights_init, sparse_axes, sparse_init=None):
         """
         original motivation: hard limit the number of non-zero incoming
         connection weights to each unit
 
         from "Deep learning via Hessian-free optimization" 2010
 
-        num_init: fraction of non-sparse values along the sparse axis
+        ratio: fraction of non-sparse values along the sparse axis
 
         weights_init: initialization scheme to use for non-sparse entries
 
         sparse_axes: axes along which each has the exact amount of sparsity
+        eg. if sparse_axes == (1,), and W in R^2, then
+        (W != 0).mean(axis=0) == ratio (axis 1 has exactly ratio non-sparse)
 
         sparse_init: initialization scheme to use for sparse entries
         (default: ZeroInit())
         """
         if sparse_init is None:
             sparse_init = ZeroInit()
-        self.num_init = num_init
+        self.ratio = ratio
         self.weights_init = weights_init
         self.sparse_axes = sparse_axes
         self.sparse_init = sparse_init
@@ -239,10 +241,13 @@ class SparseInit(WeightInit):
     def initialize_value(self, vw):
         shape = vw.shape
         res = self.sparse_init.initialize_value(vw)
-        weights = self.weights_init.initialize_value(vw)
+        non_sparse = self.weights_init.initialize_value(vw)
 
+        mask_shape = [s
+                      for idx, s in enumerate(shape)
+                      if idx not in self.sparse_axes]
         tmp_idx = [slice(None) for _ in shape]
-        for idxs in itertools.product(*[shape[axis]
+        for idxs in itertools.product(*[list(range(shape[axis]))
                                         for axis in self.sparse_axes]):
             # construct an index into res
             # eg. (:, :, 3, :, 4)
@@ -250,11 +255,13 @@ class SparseInit(WeightInit):
                 tmp_idx[axis] = idx
             res_idx = tuple(tmp_idx)
 
-            tmp = np.random.uniform(size=vw.shape)
-            # NOTE: num_init = fraction of NON sparse values
-            # num_init = 1 -> not sparse at all
-            # num_init = 0 -> 100% sparse
-            non_sparse_idxs = tmp >= np.percentile(tmp, 100 * self.num_init)
-            res[res_idx][non_sparse_idxs] = weights[res_idx][non_sparse_idxs]
+            mask_vals = np.random.uniform(size=mask_shape)
+            # NOTE: ratio = fraction of NON sparse values
+            # ratio = 1 -> not sparse at all
+            # ratio = 0 -> 100% sparse
+            mask = mask_vals <= np.percentile(mask_vals, 100 * self.ratio)
+            res[res_idx][mask] = non_sparse[res_idx][mask]
 
+        # TODO should outputs be rescaled by 1 / self.ratio
+        # (to keep variance between layers ~1)
         return res
