@@ -745,18 +745,6 @@
 - hyperparameternode's seem unnecessary
   - maybe we should be able to add hyperparameters anywhere in the tree
 ** v2
-- make combinenode
-  - merge:
-    - function combine node
-    - concatentate node
-    - split combine node
-      - takes in: combiner, splits
-  - make: input combiner
-    - problem with input combiner: unordered
-  - ScalarSumNode
-    - could be implemented with SumNode
-      - there's a tensor sum, which sums the input
-      - there's a aggregator sum, which sums all inputs into 1
 - hyperparameters that affect topology
   - eg.
     - whether or not to send input to children
