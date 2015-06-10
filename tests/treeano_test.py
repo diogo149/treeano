@@ -119,34 +119,6 @@ def test_hyperparameter_node():
     assert network["a"].find_hyperparameter(["choo"], 32) == 32
 
 
-def test_ones_initialization():
-    class DummyNode(treeano.NodeImpl):
-
-        input_keys = ()
-
-        def get_hyperparameter(self, network, hyperparameter_name):
-            if hyperparameter_name == "shared_initializations":
-                return [treeano.inits.ConstantInit(1)]
-            else:
-                return super(DummyNode, self).get_hyperparameter(
-                    network,
-                    hyperparameter_name)
-
-        def compute_output(self, network):
-            network.create_variable(
-                "default",
-                is_shared=True,
-                shape=(1, 2, 3),
-            )
-
-    network = DummyNode("dummy").build()
-    fn = network.function([], ["dummy"])
-    np.testing.assert_allclose(fn()[0],
-                               np.ones((1, 2, 3)).astype(floatX),
-                               rtol=1e-5,
-                               atol=1e-8)
-
-
 def test_dense_node():
     np.random.seed(42)
     nodes = [
