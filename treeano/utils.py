@@ -1,5 +1,8 @@
 import theano
+import theano.tensor as T
 from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
+
+fX = theano.config.floatX
 
 # create shared random state to access
 srng = RandomStreams()
@@ -22,6 +25,18 @@ def first(f, *args):
 
 def squared_error(preds, target):
     return (preds - target) ** 2
+
+
+def categorical_crossentropy_i32(pred, target):
+    """
+    like theano.tensor.nnet.categorical_crossentropy, but with clearer
+    assertions on the expected input
+    """
+    assert target.dtype == "int32"
+    assert target.ndim == 1
+    assert pred.dtype == fX
+    assert pred.ndim == 2
+    return T.nnet.categorical_crossentropy(pred, target)
 
 
 def deep_clone(output, replace, **kwargs):

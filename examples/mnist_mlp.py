@@ -10,12 +10,14 @@ import theano.tensor as T
 import treeano
 import treeano.nodes as tn
 
+fX = theano.config.floatX
+
 # ############################### prepare data ###############################
 
 mnist = sklearn.datasets.fetch_mldata('MNIST original')
 # theano has a constant float type that it uses (float32 for GPU)
 # also rescaling to [0, 1] instead of [0, 255]
-X = mnist['data'].astype(theano.config.floatX) / 255.0
+X = mnist['data'].astype(fX) / 255.0
 y = mnist['target'].astype("int32")
 X_train, X_valid, y_train, y_valid = sklearn.cross_validation.train_test_split(
     X, y, random_state=42)
@@ -61,7 +63,7 @@ with_updates = tn.HyperparameterNode(
              "preds": tn.ReferenceNode("preds_ref", reference="model"),
              "target": tn.InputNode("y", shape=(None,), dtype="int32")},
          )}),
-    loss_function=T.nnet.categorical_crossentropy,
+    loss_function=treeano.utils.categorical_crossentropy_i32,
 )
 network = with_updates.build()
 
