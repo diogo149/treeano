@@ -9,8 +9,8 @@ import nodes
 import inits
 
 from core import (UpdateDeltas,
-                  SharedInitialization,
-                  WeightInitialization,
+                  SharedInit,
+                  WeightInit,
                   VariableWrapper,
                   register_node,
                   NodeImpl,

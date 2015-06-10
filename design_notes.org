@@ -745,8 +745,6 @@
 - hyperparameternode's seem unnecessary
   - maybe we should be able to add hyperparameters anywhere in the tree
 ** v2
-- make wrapper around T.nnet.categorical_crossentropy
-  - assert dtype of ytrue == int32, and ndim == 1
 - add adam state to network
 - test mnist vs lasagne - should have same performance
 ** RNNs

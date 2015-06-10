@@ -9,8 +9,8 @@ import node
 import node_impl
 
 from update_deltas import UpdateDeltas
-from initialization import (SharedInitialization,
-                            WeightInitialization)
+from inits import (SharedInit,
+                   WeightInit)
 from variable import VariableWrapper
 from serialization_state import (register_node,
                                  register_children_container,

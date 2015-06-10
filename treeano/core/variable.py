@@ -5,7 +5,7 @@ import numpy as np
 import theano
 import theano.tensor as T
 
-from .initialization import ZeroInitialization
+from .initialization import ZeroInit
 
 ENABLE_TEST_VALUE = theano.config.compute_test_value != "off"
 
@@ -154,7 +154,7 @@ class VariableWrapper(object):
                         break
                 else:
                     # default to zero initialization if none work
-                    initialization = ZeroInitialization()
+                    initialization = ZeroInit()
 
                 # create the shared variable
                 variable = initialization.create_shared(self)

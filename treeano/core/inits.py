@@ -1,13 +1,16 @@
 from __future__ import division, absolute_import
 from __future__ import print_function, unicode_literals
 
+import abc
+
+import six
 import numpy as np
 import theano
 
 # ############################### base classes ###############################
 
 
-class SharedInitialization(object):
+class SharedInit(six.with_metaclass(abc.ABCMeta, object)):
 
     """
     interface for initialization schemes of shared variables
@@ -33,15 +36,15 @@ class SharedInitialization(object):
         variable = theano.shared(**kwargs)
         return variable
 
+    @abc.abstractmethod
     def initialize_value(self, var):
         """
         creates appropriately initialized value for the given
         VariableWrapper
         """
-        raise NotImplementedError
 
 
-class WeightInitialization(SharedInitialization):
+class WeightInit(SharedInit):
 
     """
     base class for initializations that only work on weights
@@ -53,7 +56,7 @@ class WeightInitialization(SharedInitialization):
 # ############################# implementations #############################
 
 
-class ExceptionInitialization(SharedInitialization):
+class ExceptionInit(SharedInit):
 
     """
     initialization scheme that always throws an exception - so that
@@ -64,21 +67,31 @@ class ExceptionInitialization(SharedInitialization):
         assert False, "Initialization failed"
 
 
-class ZeroInitialization(SharedInitialization):
+class ConstantInit(SharedInit):
 
     """
-    initializes shared variable to zeros
+    initializes shared variable to a constant
     """
+
+    def __init__(self, constant):
+        self.constant = constant
 
     def initialize_value(self, var):
-        if len(var.broadcastable) > 0:
-            value = np.zeros(var.shape)
+        if var.ndim > 0:
+            value = self.constant * np.ones(var.shape)
         else:
-            value = 0
+            value = self.constant
         return value
 
 
-class PreallocatedInitialization(SharedInitialization):
+def ZeroInit():
+    """
+    initializes shared variable to zeros
+    """
+    return ConstantInit(0)
+
+
+class PreallocatedInit(SharedInit):
 
     """
     uses already defined shared variables and does NOT overwrite their

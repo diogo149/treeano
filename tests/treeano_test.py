@@ -20,8 +20,6 @@ from treeano.nodes import (InputNode,
 from treeano.lasagne.nodes import (DenseNode,
                                    ReLUNode)
 
-from . import utils
-
 floatX = theano.config.floatX
 
 
@@ -128,7 +126,7 @@ def test_ones_initialization():
 
         def get_hyperparameter(self, network, hyperparameter_name):
             if hyperparameter_name == "shared_initializations":
-                return [utils.OnesInitialization()]
+                return [treeano.inits.ConstantInit(1)]
             else:
                 return super(DummyNode, self).get_hyperparameter(
                     network,
@@ -160,7 +158,7 @@ def test_dense_node():
         "d",
         sequential,
         num_units=14,
-        shared_initializations=[utils.OnesInitialization()])
+        shared_initializations=[treeano.inits.ConstantInit(1)])
     network = hp_node.build()
     fn = network.function(["a"], ["d"])
     x = np.random.randn(3, 4, 5).astype(floatX)
@@ -183,7 +181,7 @@ def test_fully_connected_and_relu_node():
         "d",
         sequential,
         num_units=14,
-        shared_initializations=[utils.OnesInitialization()])
+        shared_initializations=[treeano.inits.ConstantInit(1)])
     network = hp_node.build()
     fn = network.function(["a"], ["d"])
     x = np.random.randn(3, 4, 5).astype(floatX)
