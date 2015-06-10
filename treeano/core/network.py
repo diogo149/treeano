@@ -26,6 +26,10 @@ class Network(object):
             batch_axis=0,
         )
 
+    @property
+    def is_built(self):
+        return hasattr(self, "graph")
+
     def build(self):
         """
         initialize network state
