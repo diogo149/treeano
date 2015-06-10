@@ -49,7 +49,7 @@ model = tn.HyperparameterNode(
          ]),
     num_units=512,
     dropout_probability=0.5,
-    shared_initializations=[treeano.inits.Normal(0.01)],
+    shared_initializations=[treeano.inits.NormalWeightInit(0.01)],
 )
 
 with_updates = tn.HyperparameterNode(

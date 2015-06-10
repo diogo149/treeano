@@ -3,7 +3,7 @@ import lasagne
 from .. import core
 
 
-class GlorotUniform(core.WeightInitialization):
+class GlorotUniformInit(core.WeightInitialization):
 
     # FIXME add parameters to constructor (eg. initialization_gain)
 

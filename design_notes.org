@@ -745,25 +745,76 @@
 - hyperparameternode's seem unnecessary
   - maybe we should be able to add hyperparameters anywhere in the tree
 ** v2
-- hyperparameters that affect topology
-  - eg.
-    - whether or not to send input to children
-  - should it even be an option?
-- RNNs
-  - recurrent.py
-    - ScanNode recurrent architectures
-    - add in normal LSTM/GRU/SRN
-  - fix FIXME's in scan.py
-    - more sophisticated way of finding nodes in subtree
-      - eg. finding scan state nodes whose scan is the current scan
-  - test: create recurrent net that loads weights from treeano net, and assert results are exactly the same
-  - test if computing extra outputs slows scan down, even if they aren't used
 - make wrapper around T.nnet.categorical_crossentropy
   - assert dtype of ytrue == int32, and ndim == 1
-- rename inits.Normal to NormalWeightInitialization
+- add adam state to network
 - test mnist vs lasagne - should have same performance
-- goals:
-  - have recurrent net working as fast as if done in pure theano w/ strict=True
+** RNNs
+- goals: have recurrent net working as fast as if done in pure theano w/ strict=True
+- time whether having lots of little scans or 1 big scan is better
+- test if computing extra outputs slows scan down, even if they aren't used
+- ScanNode recurrent architectures (LSTM/GRU)
+- add in normal (non-scannode) LSTM/GRU/SRN
+- fix FIXME's in scan.py
+  - more sophisticated way of finding nodes in subtree
+    - eg. finding scan state nodes whose scan is the current scan
+- RNN note: mask for padding
+- add truncate_gradient parameter
+- taps for recurrent nets
+- how to handle updates for RandomStates?
+  - options:
+    - ignore it and have default_updates handle it
+      - it would have to be explicitly ignored by scan
+    - add it to the updates
+      - problem: what if there are multiple scans - adding the updates don't make sense in this case
+      - pros:
+        - easier
+- theano.scan(strict=True)
+  - problem: issue with passing in random variables
+    - options
+      - ignore and use strict=False
+      - have a flag to ensure strict=True
+        - somehow verify that the graph has no random variables
+  - how to find non_sequences
+    - if a node accesses state from somewhere else in the tree (not under the current scan node), treat that output as a non-sequence
+    - treat RNG as a non-sequence
+    - all shared parameters in the current subtree should be non_sequences (?)
+    - maybe have a tag "non_sequences" for variables in the current subtree to be treated as such
+      - everything else is treated as an output?
+  - how to deal with non_sequences
+    - remember which variables are non-sequences and use theano.clone to do a variable replace with the new variables representing the non-sequences
+- how to deal with multiple sequences to recur over?
+  - eg. sensor setting
+    - sequences: some visual signal, some numeric signal
+  - alternatives
+    - have scaninputnode take in all inputs of scannode and forward them along
+      - then need reference node to read in the proper output variable from the scan input node
+      - pros
+        - semantically correct
+      - cons
+        - need the scaninputnode's name
+          - solution: name can be looked up like a hyperparameter
+    - have RecurrentInputNode's be manually specified, along with the key to be passed in
+      - looks at the input of the scan node with the key, and creates an input variable of the proper shape
+      - pros
+        - simpler than previous
+      - cons
+        - the "normal" case of a single input is harder
+        - creates more "noise" in the graph
+    - have a ScanAwareReferenceNode
+      - the node is aware of scan's semantics and performs the appropriate transformation of the variable
+      - this reference node can reference variables outside the scan, and the input gets automatically converted to an element from a sequence
+      - pros
+        - simplest of all
+        - most similar to non-scan functionality (referencenode)
+        - can add afterwards, thus allowing implementing the default case first
+      - cons
+        - doesn't work for nested scans (how do you know how much un-sequencing look like)
+          - solution: make it explicit about how many scan levels up/down to convert a variable
+    - make sequences / forwarding be a parameter of ScanNode (takes in a map of nodes and which outputs to forward to)
+  - conclusion:
+    - for now, use the ScanAwareReferenceNode seems like the best solution
+    - because it is compatible with the single output design, we can do this later
 ** shape calculation
 - try test_value's with scan
 - maybe have shape be a symbolic scalar - that way equality checks can be done
@@ -774,6 +825,10 @@
 - figure out how to make recurrent node's not require batch size
   - would be cool to have symbolic shapes work
 ** misc
+- hyperparameters that affect topology
+  - eg.
+    - whether or not to send input to children
+  - should it even be an option?
 - parameterize weight layers out of linear mapping / bias
 - more information when querying
   - will allow for more advanced filtering in the future
@@ -1015,64 +1070,6 @@
 - testing
   - add serialization tests for all nodes
 - copy downhill.test.util tests for optimizers
-** RNNs
-- RNN note: mask for padding
-- add truncate_gradient parameter
-- taps for recurrent nets
-- how to handle updates for RandomStates?
-  - options:
-    - ignore it and have default_updates handle it
-      - it would have to be explicitly ignored by scan
-    - add it to the updates
-      - problem: what if there are multiple scans - adding the updates don't make sense in this case
-      - pros:
-        - easier
-- theano.scan(strict=True)
-  - problem: issue with passing in random variables
-    - options
-      - ignore and use strict=False
-      - have a flag to ensure strict=True
-        - somehow verify that the graph has no random variables
-  - how to find non_sequences
-    - if a node accesses state from somewhere else in the tree (not under the current scan node), treat that output as a non-sequence
-    - treat RNG as a non-sequence
-    - all shared parameters in the current subtree should be non_sequences (?)
-    - maybe have a tag "non_sequences" for variables in the current subtree to be treated as such
-      - everything else is treated as an output?
-  - how to deal with non_sequences
-    - remember which variables are non-sequences and use theano.clone to do a variable replace with the new variables representing the non-sequences
-- how to deal with multiple sequences to recur over?
-  - eg. sensor setting
-    - sequences: some visual signal, some numeric signal
-  - alternatives
-    - have scaninputnode take in all inputs of scannode and forward them along
-      - then need reference node to read in the proper output variable from the scan input node
-      - pros
-        - semantically correct
-      - cons
-        - need the scaninputnode's name
-          - solution: name can be looked up like a hyperparameter
-    - have RecurrentInputNode's be manually specified, along with the key to be passed in
-      - looks at the input of the scan node with the key, and creates an input variable of the proper shape
-      - pros
-        - simpler than previous
-      - cons
-        - the "normal" case of a single input is harder
-        - creates more "noise" in the graph
-    - have a ScanAwareReferenceNode
-      - the node is aware of scan's semantics and performs the appropriate transformation of the variable
-      - this reference node can reference variables outside the scan, and the input gets automatically converted to an element from a sequence
-      - pros
-        - simplest of all
-        - most similar to non-scan functionality (referencenode)
-        - can add afterwards, thus allowing implementing the default case first
-      - cons
-        - doesn't work for nested scans (how do you know how much un-sequencing look like)
-          - solution: make it explicit about how many scan levels up/down to convert a variable
-    - make sequences / forwarding be a parameter of ScanNode (takes in a map of nodes and which outputs to forward to)
-  - conclusion:
-    - for now, use the ScanAwareReferenceNode seems like the best solution
-    - because it is compatible with the single output design, we can do this later
 ** future
 - make python3 compatible
 - use metaclass for registering classes for serialization

@@ -1,4 +1,4 @@
-import initialization
+import inits
 import nodes
 
 from nodes import (DenseNode,

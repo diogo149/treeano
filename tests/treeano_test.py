@@ -12,7 +12,7 @@ import theano
 import treeano
 import treeano.lasagne
 from treeano import UpdateDeltas
-from treeano.lasagne.initialization import GlorotUniform
+from treeano.lasagne.inits import GlorotUniformInit
 from treeano.nodes import (InputNode,
                            SequentialNode,
                            IdentityNode,
@@ -205,7 +205,7 @@ def test_glorot_uniform_initialization():
     hp_node = HyperparameterNode("d",
                                  sequential,
                                  num_units=1000,
-                                 shared_initializations=[GlorotUniform()])
+                                 shared_initializations=[GlorotUniformInit()])
     network = hp_node.build()
     fc_node = network["b"]
     W_value = fc_node.get_variable("W").value
