@@ -6,28 +6,24 @@ import theano
 import theano.tensor as T
 
 import treeano.core
-from treeano import nodes
+import treeano.nodes as tn
 
-floatX = theano.config.floatX
+fX = theano.config.floatX
 
 
 def test_reference_node_serialization():
-    nodes.check_serialization(nodes.ReferenceNode("a"))
-    nodes.check_serialization(nodes.ReferenceNode("a", reference="bar"))
+    tn.check_serialization(tn.ReferenceNode("a"))
+    tn.check_serialization(tn.ReferenceNode("a", reference="bar"))
 
 
 def test_send_to_node_serialization():
-    nodes.check_serialization(nodes.SendToNode("a"))
-    nodes.check_serialization(nodes.SendToNode("a", reference="bar"))
-
-
-def test_function_combine_node_serialization():
-    nodes.check_serialization(nodes.FunctionCombineNode("a"))
+    tn.check_serialization(tn.SendToNode("a"))
+    tn.check_serialization(tn.SendToNode("a", reference="bar"))
 
 
 def test_add_bias_node_serialization():
-    nodes.check_serialization(nodes.AddBiasNode("a"))
-    nodes.check_serialization(nodes.AddBiasNode(
+    tn.check_serialization(tn.AddBiasNode("a"))
+    tn.check_serialization(tn.AddBiasNode(
         "a",
         inits=[],
         # need to make broadcastable a list because json (de)serialization
@@ -36,86 +32,59 @@ def test_add_bias_node_serialization():
 
 
 def test_linear_mapping_node_serialization():
-    nodes.check_serialization(nodes.LinearMappingNode("a"))
-    nodes.check_serialization(nodes.LinearMappingNode("a", output_dim=3))
+    tn.check_serialization(tn.LinearMappingNode("a"))
+    tn.check_serialization(tn.LinearMappingNode("a", output_dim=3))
 
 
 def test_apply_node_serialization():
-    nodes.check_serialization(nodes.ApplyNode("a"))
+    tn.check_serialization(tn.ApplyNode("a"))
 
 
 def test_reference_node():
-    network = nodes.SequentialNode("s", [
-        nodes.InputNode("input1", shape=(3, 4, 5)),
-        nodes.InputNode("input2", shape=(5, 4, 3)),
-        nodes.ReferenceNode("ref", reference="input1"),
+    network = tn.SequentialNode("s", [
+        tn.InputNode("input1", shape=(3, 4, 5)),
+        tn.InputNode("input2", shape=(5, 4, 3)),
+        tn.ReferenceNode("ref", reference="input1"),
     ]).build()
 
     fn = network.function(["input1"], ["ref"])
-    x = np.random.randn(3, 4, 5).astype(floatX)
+    x = np.random.randn(3, 4, 5).astype(fX)
     np.testing.assert_allclose(fn(x)[0], x)
 
 
 def test_send_to_node():
-    network = nodes.ContainerNode("c", [
-        nodes.SequentialNode(
+    network = tn.ContainerNode("c", [
+        tn.SequentialNode(
             "s1",
-            [nodes.InputNode("in", shape=(3, 4, 5)),
-             nodes.SendToNode("stn1", reference="s2")]),
-        nodes.SequentialNode(
+            [tn.InputNode("in", shape=(3, 4, 5)),
+             tn.SendToNode("stn1", reference="s2")]),
+        tn.SequentialNode(
             "s2",
-            [nodes.SendToNode("stn2", reference="stn3")]),
-        nodes.SequentialNode(
+            [tn.SendToNode("stn2", reference="stn3")]),
+        tn.SequentialNode(
             "s3",
-            [nodes.SendToNode("stn3", reference="i")]),
-        nodes.IdentityNode("i"),
+            [tn.SendToNode("stn3", reference="i")]),
+        tn.IdentityNode("i"),
     ]).build()
 
     fn = network.function(["in"], ["i"])
-    x = np.random.randn(3, 4, 5).astype(floatX)
+    x = np.random.randn(3, 4, 5).astype(fX)
     np.testing.assert_allclose(fn(x)[0], x)
 
 
-def test_function_combine_node():
-    def fcn_network(combine_fn):
-        network = nodes.ContainerNode("c", [
-            nodes.SequentialNode(
-                "s1",
-                [nodes.InputNode("in1", shape=(3, 4, 5)),
-                 nodes.SendToNode("stn1", reference="fcn", to_key="b")]),
-            nodes.SequentialNode(
-                "s2",
-                [nodes.InputNode("in2", shape=(3, 4, 5)),
-                 nodes.SendToNode("stn2", reference="fcn", to_key="a")]),
-            nodes.FunctionCombineNode("fcn", combine_fn=combine_fn)
-        ]).build()
-        return network.function(["in1", "in2"], ["fcn"])
-    x = np.random.randn(3, 4, 5).astype(floatX)
-    y = np.random.randn(3, 4, 5).astype(floatX)
-    fn1 = fcn_network(lambda *args: sum(args))
-    np.testing.assert_allclose(fn1(x, y)[0], x + y)
-    fn2 = fcn_network(lambda x, y: x * y)
-    np.testing.assert_allclose(fn2(x, y)[0], x * y)
-    # testing alphabetical ordering of to_key
-    # ---
-    # adding other key times 0 to avoid unused input error
-    fn3 = fcn_network(lambda x, y: x + 0 * y)
-    np.testing.assert_allclose(fn3(x, y)[0], y)
-    fn4 = fcn_network(lambda x, y: y + 0 * x)
-    np.testing.assert_allclose(fn4(x, y)[0], x)
-
-
 def test_network_doesnt_mutate():
-    root_node = nodes.ContainerNode("c", [
-        nodes.SequentialNode(
+    root_node = tn.ContainerNode("c", [
+        tn.SequentialNode(
             "s1",
-            [nodes.InputNode("in1", shape=(3, 4, 5)),
-             nodes.SendToNode("stn1", reference="fcn", to_key="b")]),
-        nodes.SequentialNode(
+            [tn.InputNode("in", shape=(3, 4, 5)),
+             tn.SendToNode("stn1", reference="s2")]),
+        tn.SequentialNode(
             "s2",
-            [nodes.InputNode("in2", shape=(3, 4, 5)),
-             nodes.SendToNode("stn2", reference="fcn", to_key="a")]),
-        nodes.FunctionCombineNode("fcn", combine_fn=lambda *args: sum(args))
+            [tn.SendToNode("stn2", reference="stn3")]),
+        tn.SequentialNode(
+            "s3",
+            [tn.SendToNode("stn3", reference="i")]),
+        tn.IdentityNode("i"),
     ])
     original_dict = copy.deepcopy(root_node.__dict__)
     root_node.build()
@@ -124,16 +93,18 @@ def test_network_doesnt_mutate():
 
 
 def test_node_with_generated_children_can_serialize():
-    root_node = nodes.ContainerNode("c", [
-        nodes.SequentialNode(
+    root_node = tn.ContainerNode("c", [
+        tn.SequentialNode(
             "s1",
-            [nodes.InputNode("in1", shape=(3, 4, 5)),
-             nodes.SendToNode("stn1", reference="fcn", to_key="b")]),
-        nodes.SequentialNode(
+            [tn.InputNode("in", shape=(3, 4, 5)),
+             tn.SendToNode("stn1", reference="s2")]),
+        tn.SequentialNode(
             "s2",
-            [nodes.InputNode("in2", shape=(3, 4, 5)),
-             nodes.SendToNode("stn2", reference="fcn", to_key="a")]),
-        nodes.FunctionCombineNode("fcn", combine_fn=lambda *args: sum(args))
+            [tn.SendToNode("stn2", reference="stn3")]),
+        tn.SequentialNode(
+            "s3",
+            [tn.SendToNode("stn3", reference="i")]),
+        tn.IdentityNode("i"),
     ])
     root_node.build()
     root2 = treeano.core.node_from_data(treeano.core.node_to_data(root_node))
@@ -142,11 +113,11 @@ def test_node_with_generated_children_can_serialize():
 
 def test_add_bias_node_broadcastable():
     def get_bias_shape(broadcastable):
-        return nodes.SequentialNode("s", [
-            nodes.InputNode("in", shape=(3, 4, 5)),
-            (nodes.AddBiasNode("b", broadcastable=broadcastable)
+        return tn.SequentialNode("s", [
+            tn.InputNode("in", shape=(3, 4, 5)),
+            (tn.AddBiasNode("b", broadcastable=broadcastable)
              if broadcastable is not None
-             else nodes.AddBiasNode("b"))
+             else tn.AddBiasNode("b"))
         ]).build()["b"].get_variable("bias").shape
 
     nt.assert_equal((1, 4, 5),
@@ -159,29 +130,29 @@ def test_add_bias_node_broadcastable():
 
 @nt.raises(AssertionError)
 def test_add_bias_node_broadcastable_incorrect_size1():
-    nodes.SequentialNode("s", [
-        nodes.InputNode("in", shape=(3, 4, 5)),
-        nodes.AddBiasNode("b", broadcastable=(True, False))
+    tn.SequentialNode("s", [
+        tn.InputNode("in", shape=(3, 4, 5)),
+        tn.AddBiasNode("b", broadcastable=(True, False))
     ]).build()
 
 
 @nt.raises(AssertionError)
 def test_add_bias_node_broadcastable_incorrect_size2():
-    nodes.SequentialNode("s", [
-        nodes.InputNode("in", shape=(3, 4, 5)),
-        nodes.AddBiasNode("b", broadcastable=(True, False, True, False))
+    tn.SequentialNode("s", [
+        tn.InputNode("in", shape=(3, 4, 5)),
+        tn.AddBiasNode("b", broadcastable=(True, False, True, False))
     ]).build()
 
 
 def test_add_bias_node():
-    network = nodes.SequentialNode("s", [
-        nodes.InputNode("in", shape=(3, 4, 5)),
-        nodes.AddBiasNode("b", broadcastable_axes=())
+    network = tn.SequentialNode("s", [
+        tn.InputNode("in", shape=(3, 4, 5)),
+        tn.AddBiasNode("b", broadcastable_axes=())
     ]).build()
     bias_var = network["b"].get_variable("bias")
     fn = network.function(["in"], ["s"])
-    x = np.random.randn(3, 4, 5).astype(floatX)
-    y = np.random.randn(3, 4, 5).astype(floatX)
+    x = np.random.randn(3, 4, 5).astype(fX)
+    y = np.random.randn(3, 4, 5).astype(fX)
     # test that bias is 0 initially
     np.testing.assert_allclose(fn(x)[0], x)
     # set bias_var value to new value
@@ -192,9 +163,9 @@ def test_add_bias_node():
 
 def test_linear_mapping_node_shape():
     def get_shapes(output_dim):
-        network = nodes.SequentialNode("s", [
-            nodes.InputNode("in", shape=(3, 4, 5)),
-            nodes.LinearMappingNode("linear", output_dim=output_dim),
+        network = tn.SequentialNode("s", [
+            tn.InputNode("in", shape=(3, 4, 5)),
+            tn.LinearMappingNode("linear", output_dim=output_dim),
         ]).build()
         weight_shape = network["linear"].get_variable("weight").shape
         output_shape = network["s"].get_variable("default").shape
@@ -206,14 +177,14 @@ def test_linear_mapping_node_shape():
 
 
 def test_linear_mapping_node():
-    network = nodes.SequentialNode("s", [
-        nodes.InputNode("in", shape=(3, 4, 5)),
-        nodes.LinearMappingNode("linear", output_dim=6),
+    network = tn.SequentialNode("s", [
+        tn.InputNode("in", shape=(3, 4, 5)),
+        tn.LinearMappingNode("linear", output_dim=6),
     ]).build()
     weight_var = network["linear"].get_variable("weight")
     fn = network.function(["in"], ["s"])
-    x = np.random.randn(3, 4, 5).astype(floatX)
-    W = np.random.randn(5, 6).astype(floatX)
+    x = np.random.randn(3, 4, 5).astype(fX)
+    W = np.random.randn(5, 6).astype(fX)
     # test that weight is 0 initially
     np.testing.assert_allclose(fn(x)[0], np.zeros((3, 4, 6)))
     # set weight_var value to new value
@@ -223,12 +194,12 @@ def test_linear_mapping_node():
 
 
 def test_apply_node():
-    network = nodes.SequentialNode("s", [
-        nodes.InputNode("in", shape=(3, 4, 5)),
-        nodes.ApplyNode("a", fn=T.sum, shape_fn=lambda x: ()),
+    network = tn.SequentialNode("s", [
+        tn.InputNode("in", shape=(3, 4, 5)),
+        tn.ApplyNode("a", fn=T.sum, shape_fn=lambda x: ()),
     ]).build()
     fn = network.function(["in"], ["s"])
-    x = np.random.randn(3, 4, 5).astype(floatX)
+    x = np.random.randn(3, 4, 5).astype(fX)
     np.testing.assert_allclose(fn(x)[0],
                                x.sum(),
                                rtol=1e-5)

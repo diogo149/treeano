@@ -17,20 +17,18 @@ from simple import (ReferenceNode,
                     HyperparameterNode,
                     InputNode,
                     IdentityNode,
-                    FunctionCombineNode,
                     AddBiasNode,
                     LinearMappingNode,
                     ApplyNode)
 from theanode import (TileNode)
 from combine import (BaseChildrenCombineNode,
                      BaseInputCombineNode,
+                     InputFunctionCombineNode,
                      ConcatenateNode,
                      ElementwiseSumNode,
                      InputElementwiseSumNode)
 from containers import (SequentialNode,
-                        ContainerNode,
-                        SplitterNode,
-                        SplitCombineNode)
+                        ContainerNode)
 from activations import (BaseActivationNode,
                          ReLUNode,
                          TanhNode,

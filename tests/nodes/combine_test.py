@@ -9,6 +9,10 @@ import treeano.nodes as tn
 fX = theano.config.floatX
 
 
+def test_function_combine_node_serialization():
+    tn.check_serialization(tn.InputFunctionCombineNode("a"))
+
+
 def test_concatenate_node_serialization():
     tn.check_serialization(tn.ConcatenateNode("a", []))
     tn.check_serialization(tn.ConcatenateNode(
@@ -27,6 +31,35 @@ def test_elementwise_sum_node_serialization():
 
 def test_input_elementwise_sum_node_serialization():
     tn.check_serialization(tn.InputElementwiseSumNode("a"))
+
+
+def test_input_function_combine_node():
+    def fcn_network(combine_fn):
+        network = tn.ContainerNode("c", [
+            tn.SequentialNode(
+                "s1",
+                [tn.InputNode("in1", shape=(3, 4, 5)),
+                 tn.SendToNode("stn1", reference="fcn", to_key="b")]),
+            tn.SequentialNode(
+                "s2",
+                [tn.InputNode("in2", shape=(3, 4, 5)),
+                 tn.SendToNode("stn2", reference="fcn", to_key="a")]),
+            tn.InputFunctionCombineNode("fcn", combine_fn=combine_fn)
+        ]).build()
+        return network.function(["in1", "in2"], ["fcn"])
+    x = np.random.randn(3, 4, 5).astype(fX)
+    y = np.random.randn(3, 4, 5).astype(fX)
+    fn1 = fcn_network(lambda *args: sum(args))
+    np.testing.assert_allclose(fn1(x, y)[0], x + y)
+    fn2 = fcn_network(lambda x, y: x * y)
+    np.testing.assert_allclose(fn2(x, y)[0], x * y)
+    # testing alphabetical ordering of to_key
+    # ---
+    # adding other key times 0 to avoid unused input error
+    fn3 = fcn_network(lambda x, y: x + 0 * y)
+    np.testing.assert_allclose(fn3(x, y)[0], y)
+    fn4 = fcn_network(lambda x, y: y + 0 * x)
+    np.testing.assert_allclose(fn4(x, y)[0], x)
 
 
 def test_concatenate_node():

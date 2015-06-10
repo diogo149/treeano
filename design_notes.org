@@ -1011,6 +1011,8 @@
       - to substitute in only a subtree
     - adding different initialization
 ** code quality
+- consistent importing
+  - treeano.nodes as tn
 - PYTHONPATH=~/repos/treeano:$PYTHONPATH sniffer
 - potential issue: sharing variables between networks when test_value's are enabled
   - if one network uses the same variables, but with different shapes, the test_value's might break

@@ -65,6 +65,42 @@ class BaseInputCombineNode(six.with_metaclass(abc.ABCMeta, core.NodeImpl)):
 # ############################# implementations #############################
 
 
+@core.register_node("input_fn_combine")
+class InputFunctionCombineNode(BaseInputCombineNode):
+
+    """
+    Combines each of its inputs with the given combine function
+
+    NOTE: inputs are passed in sorted according to their to_key
+
+    combine_fn:
+    function that takes in several theano variables and returns a new
+    theano variable
+
+    shape_fn:
+    optional function to calculate the shape of the output given the shapes
+    of the inputs
+    """
+
+    hyperparameter_names = ("combine_fn",
+                            "shape_fn")
+
+    def compute_output(self, network, *in_vws):
+        combine_fn = network.find_hyperparameter(["combine_fn"])
+        shape_fn = network.find_hyperparameter(["shape_fn"], None)
+        if shape_fn is None:
+            shape = None
+        else:
+            shape = shape_fn(*[input_vw.shape for input_vw in in_vws])
+        var = combine_fn(*[input_vw.variable for input_vw in in_vws])
+        network.create_variable(
+            name="default",
+            variable=var,
+            shape=shape,
+            tags={"output"}
+        )
+
+
 @core.register_node("concatenate")
 class ConcatenateNode(BaseChildrenCombineNode):
 
