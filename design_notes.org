@@ -744,6 +744,14 @@
 - writing recurrent nets using scannode is much worse than writing in theano
 - hyperparameternode's seem unnecessary
   - maybe we should be able to add hyperparameters anywhere in the tree
+** decisions to make
+- hyperparameters that affect initialization
+  - eg. reading in in_axes and out_axes from the network
+- hyperparameters that affect topology
+  - eg.
+    - whether or not to send input to children
+  - should it even be an option?
+- should shared variables contain metadata on which axes are their input axes and which are their output axes
 ** v2
 - add adam state to network
 - test mnist vs lasagne - should have same performance
@@ -823,10 +831,6 @@
 - figure out how to make recurrent node's not require batch size
   - would be cool to have symbolic shapes work
 ** misc
-- hyperparameters that affect topology
-  - eg.
-    - whether or not to send input to children
-  - should it even be an option?
 - parameterize weight layers out of linear mapping / bias
 - more information when querying
   - will allow for more advanced filtering in the future

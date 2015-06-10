@@ -1,6 +1,6 @@
-import numpy as np
+import itertools
 
-from .. import core
+import numpy as np
 
 # for importing
 from ..core.inits import (SharedInit,
@@ -10,13 +10,251 @@ from ..core.inits import (SharedInit,
                           PreallocatedInit)
 
 
-class NormalWeightInit(core.WeightInit):
+# ################################ constants ################################
+
+
+# NOTE: these may be wrong
+# ---
+# eg. for a conv weight in theano, first axis is output filters and second
+# axis is number of input channels but for a linear mapping node, the first
+# axis is the input and the second is the output
+# ---
+# preferring defaults for convs, because linear mappings are symmetric
+DEFAULT_IN_AXES = (1,)
+DEFAULT_OUT_AXES = (0,)
+
+# sane defaults for gains
+GAINS = dict(
+    relu=np.sqrt(2),
+    tanh=1.1,
+    linear=1,
+)
+
+
+# ############################### weight inits ###############################
+
+
+class NormalWeightInit(WeightInit):
 
     def __init__(self, std=0.01, mean=0.0):
         self.std = std
         self.mean = mean
 
     def initialize_value(self, vw):
-        raw = np.random.randn(*vw.shape)
-        scaled = (self.mean + self.std * raw)
-        return scaled.astype(vw.dtype)
+        return np.random.normal(loc=self.mean,
+                                scale=self.std,
+                                size=vw.shape)
+
+
+class UniformWeightInit(WeightInit):
+
+    def __init__(self, range_=0.01):
+        try:
+            # range_ is a tuple
+            low, high = range_
+        except TypeError:
+            # range is a scalar
+            low, high = -range_, range_
+        self.low = low
+        self.high = high
+
+    def initialize_value(self, vw):
+        return np.random.uniform(low=self.low,
+                                 high=self.high,
+                                 size=vw.shape)
+
+
+def xavier_magnitude(shape, in_axes, out_axes, gain):
+    """
+    NOTE: does not differentiate between in_axes and out_axes, so they
+    can be switched
+    """
+    shape = np.array(shape)
+    other_axes_size = np.prod([s
+                               for dim, s in enumerate(shape)
+                               if not ((dim in in_axes)
+                                       or (dim in out_axes))])
+    in_axes_size = np.prod(shape[in_axes])
+    out_axes_size = np.prod(shape[out_axes])
+
+    base = np.sqrt(2.0 / ((in_axes_size + out_axes_size) * other_axes_size))
+    return base * gain
+
+
+class XavierNormalInit(WeightInit):
+
+    def __init__(self,
+                 gain=1,
+                 in_axes=DEFAULT_IN_AXES,
+                 out_axes=DEFAULT_OUT_AXES):
+        self.gain = gain
+        self.in_axes = in_axes
+        self.out_axes = out_axes
+
+    def initialize_value(self, vw):
+        magnitude = xavier_magnitude(vw.shape,
+                                     in_axes=self.in_axes,
+                                     out_axes=self.out_axes,
+                                     gain=self.gain)
+        return np.random.normal(loc=0,
+                                scale=magnitude,
+                                size=vw.shape)
+
+
+class XavierUniformInit(WeightInit):
+
+    def __init__(self,
+                 gain=1,
+                 in_axes=DEFAULT_IN_AXES,
+                 out_axes=DEFAULT_OUT_AXES):
+        self.gain = gain
+        self.in_axes = in_axes
+        self.out_axes = out_axes
+
+    def initialize_value(self, vw):
+        magnitude = np.sqrt(3) * xavier_magnitude(vw.shape,
+                                                  in_axes=self.in_axes,
+                                                  out_axes=self.out_axes,
+                                                  gain=self.gain)
+        return np.random.uniform(low=-magnitude,
+                                 high=magnitude,
+                                 size=vw.shape)
+
+
+def he_magnitude(shape, in_axes, out_axes, gain):
+    """
+    http://arxiv.org/abs/1502.01852
+
+    NOTE: does not differentiate between in_axes and out_axes, so they
+    can be switched
+    """
+    # consider all non-out_axes as in_axes
+    in_axes_size = np.prod([s
+                            for dim, s in enumerate(shape)
+                            if dim not in out_axes])
+    # NOTE: this is actually sqrt(2) in the paper, but a gain of sqrt(2)
+    # is recommended for ReLUs
+    base = np.sqrt(1.0 / in_axes_size)
+    return base * gain
+
+
+class HeNormalInit(WeightInit):
+
+    def __init__(self,
+                 gain=1,
+                 in_axes=DEFAULT_IN_AXES,
+                 out_axes=DEFAULT_OUT_AXES):
+        self.gain = gain
+        self.in_axes = in_axes
+        self.out_axes = out_axes
+
+    def initialize_value(self, vw):
+        magnitude = he_magnitude(vw.shape,
+                                 in_axes=self.in_axes,
+                                 out_axes=self.out_axes,
+                                 gain=self.gain)
+        return np.random.normal(loc=0,
+                                scale=magnitude,
+                                size=vw.shape)
+
+
+class HeUniformInit(WeightInit):
+
+    def __init__(self,
+                 gain=1,
+                 in_axes=DEFAULT_IN_AXES,
+                 out_axes=DEFAULT_OUT_AXES):
+        self.gain = gain
+        self.in_axes = in_axes
+        self.out_axes = out_axes
+
+    def initialize_value(self, vw):
+        magnitude = np.sqrt(3) * he_magnitude(vw.shape,
+                                              in_axes=self.in_axes,
+                                              out_axes=self.out_axes,
+                                              gain=self.gain)
+        return np.random.uniform(low=-magnitude,
+                                 high=magnitude,
+                                 size=vw.shape)
+
+
+class OrthogonalInit(WeightInit):
+
+    """
+    http://arxiv.org/abs/1312.6120
+    """
+
+    def __init__(self,
+                 gain=1,
+                 in_axes=DEFAULT_IN_AXES,
+                 out_axes=DEFAULT_OUT_AXES):
+        self.gain = gain
+        self.in_axes = in_axes
+        self.out_axes = out_axes
+
+    def initialize_value(self, vw):
+        shape = vw.shape
+        assert len(shape) >= 2
+        # TODO can get around this by making all output dimensions
+        # side-by-side (eg. (0, 1, 2))
+        assert len(self.out_axes) == 1
+        # consider all non-out_axes as in_axes
+        in_axes_size = np.prod([s
+                                for dim, s in enumerate(shape)
+                                if dim not in self.out_axes])
+        out_axes_size = shape[self.out_axes[0]]
+        # using logic similar to lasagne's
+        flat_shape = (out_axes_size, in_axes_size)
+        a = np.random.normal(0.0, 1.0, flat_shape)
+        u, _, v = np.linalg.svd(a, full_matrices=False)
+        q = u if u.shape == flat_shape else v
+        return self.gain * q.reshape(shape)
+
+
+class SparseInit(WeightInit):
+
+    def __init__(self, num_init, weights_init, sparse_axes, sparse_init=None):
+        """
+        original motivation: hard limit the number of non-zero incoming
+        connection weights to each unit
+
+        from "Deep learning via Hessian-free optimization" 2010
+
+        num_init: fraction of non-sparse values along the sparse axis
+
+        weights_init: initialization scheme to use for non-sparse entries
+
+        sparse_axes: axes along which each has the exact amount of sparsity
+
+        sparse_init: initialization scheme to use for sparse entries
+        (default: ZeroInit())
+        """
+        if sparse_init is None:
+            sparse_init = ZeroInit()
+        self.num_init = num_init
+        self.weights_init = weights_init
+        self.sparse_axes = sparse_axes
+        self.sparse_init = sparse_init
+
+    def initialize_value(self, vw):
+        shape = vw.shape
+        res = self.sparse_init.initialize_value(vw)
+        weights = self.weights_init.initialize_value(vw)
+
+        tmp_idx = [slice(None) for _ in shape]
+        for idxs in itertools.product(*[shape[axis]
+                                        for axis in self.sparse_axes]):
+            # construct an index into res
+            # eg. (:, :, 3, :, 4)
+            for idx, axis in zip(idxs, self.sparse_axes):
+                tmp_idx[axis] = idx
+            res_idx = tuple(tmp_idx)
+
+            tmp = np.random.uniform(size=vw.shape)
+            # NOTE: num_init = fraction of NON sparse values
+            # num_init = 1 -> not sparse at all
+            # num_init = 0 -> 100% sparse
+            non_sparse_idxs = tmp >= np.percentile(tmp, 100 * self.num_init)
+            res[res_idx][non_sparse_idxs] = weights[res_idx][non_sparse_idxs]
+
+        return res
