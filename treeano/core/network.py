@@ -34,6 +34,7 @@ class Network(object):
         """
         initialize network state
         """
+        assert not self.is_built
         self.graph = TreeanoGraph(self.root_node)
         # set node state for each node to be empty
         # ---
