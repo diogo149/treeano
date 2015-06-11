@@ -1,5 +1,7 @@
 import base
 import decorator
 
-from base import NetworkHandler, handled_function
-from decorator import function_handler
+from base import (NetworkHandlerAPI,
+                  NetworkHandlerImpl,
+                  handled_function)
+from decorator import call_handler

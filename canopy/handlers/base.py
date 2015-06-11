@@ -1,5 +1,10 @@
+from __future__ import division, absolute_import
+from __future__ import print_function, unicode_literals
+
+
 import abc
 import contextlib
+import time
 
 import six
 
@@ -35,12 +40,12 @@ class NetworkHandlerAPI(six.with_metaclass(abc.ABCMeta, object)):
         # make sure kwargs are not just a mutated version
         assert kwargs is not self._kwargs
         # recurse inward
-        self._inner_handler.compile_function(kwargs)
+        self._inner_handler.compile_function(state, kwargs)
 
     def initial_build(self, state, input_network, **kwargs):
-        with self.state.time_build():
+        with state.time_build():
             self.build(state, input_network)
-        with self.state.time_compile_function():
+        with state.time_compile_function():
             self.compile_function(state, kwargs)
 
     def rebuild(self, state):
@@ -109,7 +114,7 @@ class _HandledFunctionState(object):
     def update_network(self, network):
         # FIXME load old network
         self.network = network
-        if not self.network.is_built():
+        if not self.network.is_built:
             self.network.build()
 
     def compile_function(self, kwargs):
@@ -120,17 +125,23 @@ class _HandledFunctionState(object):
 
     @contextlib.contextmanager
     def time_build(self):
-        # TODO
+        # TODO add to total (keep state)
+        start_time = time.time()
         yield
+        total_time = time.time() - start_time
+        print("Building took %fs" % total_time)
 
     @contextlib.contextmanager
     def time_compile_function(self):
-        # TODO
+        # TODO add to total (keep state)
+        start_time = time.time()
         yield
+        total_time = time.time() - start_time
+        print("Compiling took %fs" % total_time)
 
     @contextlib.contextmanager
     def time_call(self):
-        # TODO
+        # TODO add to total (keep state)
         yield
 
 
@@ -142,15 +153,14 @@ class _HandledFunction(object):
 
     def __init__(self, network, handlers, inputs, outputs=None, **kwargs):
         self.network = network
-        self.handlers = handlers
+        self.handlers = handlers + [FinalHandler()]
 
         self.state = _HandledFunctionState()
-        self.final_handler = FinalHandler()
 
-        for outer, inner in zip(handlers, handlers[1:] + [self.final_handler]):
+        for outer, inner in zip(self.handlers, self.handlers[1:]):
             outer.set_inner(inner)
 
-        self.outermost = handlers[0]
+        self.outermost = self.handlers[0]
         self.outermost.initial_build(self.state,
                                      self.network,
                                      inputs=inputs,

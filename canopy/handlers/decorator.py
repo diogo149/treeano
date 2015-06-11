@@ -1,10 +1,10 @@
 from .base import NetworkHandlerImpl
 
 
-class FunctionHandler(NetworkHandlerImpl):
+class CallHandler(NetworkHandlerImpl):
 
     """
-    handler that wraps functions and doesn't mutate the network
+    handler that wraps function calls and doesn't mutate the network
     """
 
     def __init__(self, fn):
@@ -15,12 +15,12 @@ class FunctionHandler(NetworkHandlerImpl):
         def inner(*args, **kwargs):
             return self._inner_handler(state, *args, **kwargs)
 
-        res = self.fn(*args, **kwargs)
+        res = self.fn(inner, *args, **kwargs)
         return res
 
 
-def function_handler(fn):
+def call_handler(fn):
     """
     decorator for handlers which simply apply a function
     """
-    return FunctionHandler(fn)
+    return CallHandler(fn)
