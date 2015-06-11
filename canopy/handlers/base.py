@@ -82,8 +82,17 @@ class NetworkHandlerImpl(NetworkHandlerAPI):
         return kwargs
 
     def __call__(self, state, *args, **kwargs):
-        res = self._inner_handler(state, *args, **kwargs)
-        return res
+        """
+        by default, redirect to NetworkHandlerAPI.call for a simpler API
+        """
+
+        def inner(*args, **kwargs):
+            return self._inner_handler(state, *args, **kwargs)
+
+        return self.call(inner, *args, **kwargs)
+
+    def call(self, fn, *args, **kwargs):
+        return fn(*args, **kwargs)
 
 
 class FinalHandler(NetworkHandlerImpl):

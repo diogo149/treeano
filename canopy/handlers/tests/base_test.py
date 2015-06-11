@@ -19,16 +19,19 @@ def test_handled_function():
 
 
 def test_call_handler1():
-    # TODO move to decorator_test
-    @canopy.handlers.call_handler
-    def x_equals_3(fn, x, *args, **kwargs):
-        if x == 3:
-            return fn(*args, **kwargs)
-        else:
-            assert False
+    class x_equals_3(canopy.handlers.NetworkHandlerImpl):
+
+        def call(self, fn, x, *args, **kwargs):
+            if x == 3:
+                return fn(*args, **kwargs)
+            else:
+                assert False
 
     network = tn.InputNode("i", shape=()).build()
-    fn = canopy.handlers.handled_function(network, [x_equals_3], ["i"], ["i"])
+    fn = canopy.handlers.handled_function(network,
+                                          [x_equals_3()],
+                                          ["i"],
+                                          ["i"])
     y = np.array(3, dtype=fX)
     np.testing.assert_equal(y, fn(3, y)[0])
 
@@ -40,26 +43,29 @@ def test_call_handler1():
 
 
 def test_call_handler2():
-    # TODO move to decorator_test
-    @canopy.handlers.call_handler
-    def x_equals_3(fn, x, *args, **kwargs):
-        if x == 3:
-            return fn(*args, **kwargs)
-        else:
-            assert False
+    class x_equals_3(canopy.handlers.NetworkHandlerImpl):
 
-    def plus_n(n):
-        @canopy.handlers.call_handler
-        def inner(fn, *args, **kwargs):
+        def call(self, fn, x, *args, **kwargs):
+            if x == 3:
+                return fn(*args, **kwargs)
+            else:
+                assert False
+
+    class plus_n(canopy.handlers.NetworkHandlerImpl):
+
+        def __init__(self, n):
+            self.n = n
+
+        def call(self, fn, *args, **kwargs):
             res = fn(*args, **kwargs)
-            res[0] += n
+            res[0] += self.n
             return res
 
-        return inner
-
     network = tn.InputNode("i", shape=()).build()
-    fn = canopy.handlers.handled_function(network, [plus_n(42),
-                                                    x_equals_3], ["i"], ["i"])
+    fn = canopy.handlers.handled_function(network,
+                                          [plus_n(42), x_equals_3()],
+                                          ["i"],
+                                          ["i"])
     y = np.array(3, dtype=fX)
     np.testing.assert_equal(y + 42, fn(3, y)[0])
 
@@ -68,3 +74,76 @@ def test_call_handler2():
         fn(2, y)
 
     tmp()
+
+
+def test_call_handler3():
+    class x_equals_3(canopy.handlers.NetworkHandlerImpl):
+
+        def call(self, fn, x, *args, **kwargs):
+            if x == 3:
+                return fn(*args, **kwargs)
+            else:
+                assert False
+
+    network = tn.InputNode("i", shape=()).build()
+    fn = canopy.handlers.handled_function(network,
+                                          [x_equals_3(), x_equals_3()],
+                                          ["i"],
+                                          ["i"])
+    y = np.array(3, dtype=fX)
+    np.testing.assert_equal(y, fn(3, 3, y)[0])
+
+    @nt.raises(AssertionError)
+    def tmp():
+        fn(2, y)
+
+    tmp()
+
+
+def test_build_handler1():
+    class network_identity(canopy.handlers.NetworkHandlerImpl):
+
+        def transform_network(self, network):
+            return network
+
+    network = tn.InputNode("i", shape=()).build()
+    fn = canopy.handlers.handled_function(network,
+                                          [network_identity()],
+                                          ["i"],
+                                          ["i"])
+    x = np.array(3, dtype=fX)
+    np.testing.assert_equal(x, fn(x)[0])
+
+
+def test_build_handler2():
+    class new_network(canopy.handlers.NetworkHandlerImpl):
+
+        def transform_network(self, network):
+            return tn.InputNode("new_node", shape=()).build()
+
+    network = tn.InputNode("i", shape=()).build()
+    fn = canopy.handlers.handled_function(network,
+                                          [new_network()],
+                                          ["new_node"],
+                                          ["new_node"])
+    x = np.array(3, dtype=fX)
+    np.testing.assert_equal(x, fn(x)[0])
+
+
+def test_build_handler3():
+    class add_42(canopy.handlers.NetworkHandlerImpl):
+
+        def transform_network(self, network):
+            return tn.SequentialNode(
+                "seq",
+                [network.root_node,
+                 tn.toy.AddConstantNode("ac", value=42)]
+            ).build()
+
+    network = tn.InputNode("i", shape=()).build()
+    fn = canopy.handlers.handled_function(network,
+                                          [add_42()],
+                                          ["i"],
+                                          ["ac"])
+    x = np.array(3, dtype=fX)
+    np.testing.assert_equal(x + 42, fn(x)[0])
