@@ -675,6 +675,8 @@
     - take in the arguments for a function
       - and possibly change it
       - eg. mode
+- have hyperparameter precedence favor closer to the node over more specific hyperparameter name
+  - eg. if conv layer defines strides, but hyperparamnode defines conv_strides, use conv's hyperparameter
 * assumptions
 - shared variables (eg. parameter tensors) will have a fixed size
 - nodes are in a directed acyclic graph
@@ -799,6 +801,7 @@
   - problems:
     - should every unit with weights have the exact same set of hyperparameters? (shared_initializations, initializations, inits)
     - how do we specify precedence? (eg. preallocated initializations first)
+    - how to create hyperparameters with fallbacks
   - should it be treated like any other hyperparameter?
     - pros:
       - allows custom initializations
@@ -991,8 +994,6 @@
     - eg. "dense#dense1"
   - maybe?
 - allow theano var for inputnode to be a parameter to be passed in
-- have hyperparameter precedence favor closer to the node over more specific hyperparameter name
-  - eg. if conv layer defines strides, but hyperparamnode defines conv_strides, use conv's hyperparameter
 - add check in compute_output phase to make sure network doesn't return additional inputs
   - rationale: they do not get recorded in the node's "inputs"
     - thus makes it harder to compute shape

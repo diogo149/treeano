@@ -229,10 +229,11 @@ class RelativeNetwork(object):
         "foo". if that isn't found, it searches for a hyperparameter named
         "bar", and if that isn't found returns 42
         """
-        # lookthrough hyperparameters of all ancestors
+        # look through hyperparameters of all ancestors
         ancestors = list(self.graph.architecture_ancestors(self._name))
-        for hyperparameter_key in hyperparameter_keys:
-            for node in [self._node] + ancestors:
+        # prefer closer nodes over more specific queries
+        for node in [self._node] + ancestors:
+            for hyperparameter_key in hyperparameter_keys:
                 try:
                     value = node.get_hyperparameter(self, hyperparameter_key)
                 except MissingHyperparameter:
