@@ -25,7 +25,7 @@ def test_add_bias_node_serialization():
     tn.check_serialization(tn.AddBiasNode("a"))
     tn.check_serialization(tn.AddBiasNode(
         "a",
-        inits=[],
+        shared_initializations=[],
         # need to make broadcastable a list because json (de)serialization
         # converts tuples to lists
         broadcastable=[True, False, True]))

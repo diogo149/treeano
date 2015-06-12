@@ -22,10 +22,12 @@ def test_constant_init():
                     hyperparameter_name)
 
         def compute_output(self, network):
+            inits = network.find_hyperparameter(["shared_initializations"])
             network.create_variable(
                 "default",
                 is_shared=True,
                 shape=(1, 2, 3),
+                shared_initializations=inits,
             )
 
     network = DummyNode("dummy").build()

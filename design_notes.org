@@ -638,6 +638,43 @@
     - tile node - behaves like theano.tensor.tile
     - need to manually give the batch size
       - ie. can't be determined automatically
+- training loop
+  - what interface?
+    - needs
+      - data
+      - training function
+      - after training handler
+        - this could be combined into the training function
+    - simply:
+      - for thing in gen: fn(thing)
+      - fn can be wrapped by arbitrary handlers
+  - handler state should be hierarchical
+    - eg. wrappers = [stop_after(seconds=100), handle_every(5, some_other_wrapper), ...]
+      - here some_other_wrapper needs state under handle_every
+    - so that inner state can be serialized
+  - training_loop_from_network
+- handled function
+  - should it take in a built network or the raw nodes?
+    - pros of built network
+      - can pass in initialized state as well
+    - pros of raw nodes
+      - more time efficient
+        - eg. don't need to calculate derivatives
+    - conclusion: take in a network that may or may not be built
+      - to get the benefits of both
+  - it should take in an inner_handler, and be built up recursively
+    - that way it can serialize it's internal state and load it up
+  - would one want 2 functions from the same network?
+    - no, this is a handled function
+- handlers
+  - each handler needs:
+    - to be able to add/access it's own state
+    - add/access all state of children
+    - take in an network
+      - and possibly change it
+    - take in the arguments for a function
+      - and possibly change it
+      - eg. mode
 * assumptions
 - shared variables (eg. parameter tensors) will have a fixed size
 - nodes are in a directed acyclic graph
@@ -753,9 +790,64 @@
   - should it even be an option?
 - should shared variables contain metadata on which axes are their input axes and which are their output axes
 ** v2
+- have network building take in hyperparameters
+- think about how to do preallocated init
 - add adam state to network
 - test mnist vs lasagne - should have same performance
+** handlers
+- initializations as a hyperparameter
+  - problems:
+    - should every unit with weights have the exact same set of hyperparameters? (shared_initializations, initializations, inits)
+    - how do we specify precedence? (eg. preallocated initializations first)
+  - should it be treated like any other hyperparameter?
+    - pros:
+      - allows custom initializations
+        - eg. bias_inits, weight_inits, conv_inits
+    - cons
+      - complexity is pushed to every unit that has weights (eg. hyperparameters)
+- BIG PROBLEM:
+  - sharing shared variables
+    - create to_shared_dict(Network)
+- tests:
+  - serializing and recovering inner handlers
+- when saving network state, need to make sure to save rng state too
+- build
+  - run in different process (w/ different GPU)
+  - stopping conditions
+    - time
+    - # iterations
+  - batching / chunking
+  - logging
+  - validation every x iterations
+  - padding
+    - eg. minibatch
+  - passing extra input to the network (curriculum learning)
+  - taking extra output (monitoring)
+    - saving in a map?
+    - printing stats
+  - saving model
+  - polyak averaging
+  - validation
+    - assert shape of numpy array is same as that of the input variable
+  - pre/post processing input/output
+  - convert map input to list
+    - eg. function({"a": var, "b": var}, {"c": var, "d": var})
+      - takes in a map
+      - returns a map
+    - use cases:
+      - monitoring (to get a value out)
+      - hyperparameter annealing
+  - compile with nan detection mode
+    - http://deeplearning.net/software/theano/tutorial/debug_faq.html
+      - search for detect_nan
+      - filter out str(node).startswith("GpuAllocEmpty(")
+      - try to see if output[0] can be called as arg to np.isnan
+        - cannot convert PyCObject
 ** RNNs
+- create transform to apply non-stateful nodes like in scan, but instead use batch dim
+  - eg. to apply dense to a sequence, reshape it so that batch + time are folded together
+- test if nested scans works
+  - eg. if can theano.clone
 - goals: have recurrent net working as fast as if done in pure theano w/ strict=True
 - time whether having lots of little scans or 1 big scan is better
 - test if computing extra outputs slows scan down, even if they aren't used
@@ -831,6 +923,7 @@
 - figure out how to make recurrent node's not require batch size
   - would be cool to have symbolic shapes work
 ** misc
+- time network.build
 - parameterize weight layers out of linear mapping / bias
 - more information when querying
   - will allow for more advanced filtering in the future
@@ -854,20 +947,7 @@
       - in general, it seems like a good thing to allow more complex queries
         - eg. maybe when calling weight initializations, you might want to query based on type of unit
           - eg. to initialize recurrent states to something near identity
-- canopy.transformations.
-  - remove_dropout
-    - replaces dropout with identity
-  - remove_node
-    - replaces node with single child
-  - remove_subtree
-    - replaces node with identity
-  - remove_parent
-    - replaces parent with node
-  - something to transform nodes of one type to another
-    - eg. dropout to gaussianfastdropout
-  - replace_node
-    - replace node with a new node
-    - eg. replace input node with some shared variable container (StateNode?) for optimizing input wrt parameters as a visualiztion
+    - use a set_hyperparameter function
 - new parameter tags:
   - updates_state
     - rationale: might want to reset it
@@ -1058,6 +1138,7 @@
 ** code quality
 - consistent importing
   - treeano.nodes as tn
+- create function to test initialization strategies (just that they do not break)
 - PYTHONPATH=~/repos/treeano:$PYTHONPATH sniffer
 - potential issue: sharing variables between networks when test_value's are enabled
   - if one network uses the same variables, but with different shapes, the test_value's might break
@@ -1121,32 +1202,6 @@
   - https://github.com/rakeshvar/rnn_ctc/blob/master/ctc.py
   - https://github.com/shawntan/rnn-experiment/blob/master/CTC.ipynb
 ** canopy
-- training loop
-  - what interface?
-    - needs
-      - data
-      - training function
-      - after training handler
-        - this could be combined into the training function
-    - simply:
-      - for thing in gen: fn(thing)
-      - fn can be wrapped by arbitrary handlers
-        - eg. stopping conditions
-  - handler state should be hierarchical
-    - eg. wrappers = [stop_after(seconds=100), wrap_every(5, some_other_wrapper), ...]
-      - here some_other_wrapper needs state under wrap_every
-  - should the training loop be aware of "batch"es? or can it be abstracted away into chunks
-    - separate questions
-      - should batches be exposed to the user?
-        - yes, may be useful for debugging
-      - should batches be exposed to the training loop?
-        - maybe not
-  - training_loop_from_network
-- for each hook, document:
-  - when it occurs
-    - eg. on compile, after each batch, after each chunk, etc.
-- problem: how to have decomplected monitoring
-  - want to monitor completely different weights in the same way
 - treeano should not have hooks
   - there should be a clean separation of mapping from parameterization to theano variable and all the extra (modular) logic
 - canopy
@@ -1154,18 +1209,6 @@
   - handles non-theano modularity
   - nice reference
     - the only layer above this is the emergent layer (your code)
-- add auto-chunking of variables
-  - maybe
-- function wrappers
-  - assert shape of numpy array is same as that of the input variable
-  - padding w/ 0s for minibatch dim (to match input variable)
-  - chunking numpy arrays
-  - compile with nan detection mode
-    - http://deeplearning.net/software/theano/tutorial/debug_faq.html
-      - search for detect_nan
-      - filter out str(node).startswith("GpuAllocEmpty(")
-      - try to see if output[0] can be called as arg to np.isnan
-        - cannot convert PyCObject
 - workflows / hooks
   - training
   - distillation
@@ -1178,7 +1221,6 @@
   - dynamically changing network during training to things that should be easy in canopy
     - eg. adding additional losses
   - test on validation set every x chunks
-  - making a gif of pixelwise loss / heatmap / attention over time
   - visualization
     - print filters
     - find most similar inputs to input
@@ -1203,6 +1245,7 @@
     - saving learning curves
     - post-training report
       - eg. examples which are the most wrong
+    - making a gif of pixelwise loss / heatmap / attention over time
   - monitoring
     - printing out certain values
       - eg. loss
@@ -1211,10 +1254,10 @@
       - eg. nan's or inf's
       - eg. magnitude of gradient/weight matrix too high
     - relationships between variables
+    - logging batch normalization mean/variance updates
+    - logging how close rolling BN mean/variance is to actual mean/variance
   - AUC / accuracy logging
   - saving model
-  - logging batch normalization mean/variance updates
-  - logging how close rolling BN mean/variance is to actual mean/variance
   - hyperparameter optimization
   - active learning
   - restarting training from a certain point
@@ -1293,22 +1336,22 @@
 - how to save state part-way through training
 - seems like a very reasonable assumption that training might involve arbitrary python code execution
   - eg. with deep q learning, might have to simulate a game
-- consider hooks
-  - implement like clojure handler wrappers?
-    - ability to edit givens, updates, etc.
-  - would allow alternative workflows
-    - eg.
-      - curriculum learning
-      - adding preprocessing to a model
-      - saving plots
-      - saving model
-  - which hooks?
-    - creation of a function
-    - training each batch
-    - training each chunk
-  - question: are hooks local or global
 - live plotting/monitoring
   - other tools (blocks / opendeep) use bokeh
 - visualization
   - http://deeplearning.net/tutorial/utilities.html
     - code to plot images/filters
+- canopy.transformations.
+  - remove_dropout
+    - replaces dropout with identity
+  - remove_node
+    - replaces node with single child
+  - remove_subtree
+    - replaces node with identity
+  - remove_parent
+    - replaces parent with node
+  - something to transform nodes of one type to another
+    - eg. dropout to gaussianfastdropout
+  - replace_node
+    - replace node with a new node
+    - eg. replace input node with some shared variable container (StateNode?) for optimizing input wrt parameters as a visualiztion

@@ -13,9 +13,17 @@ class DenseNode(core.NodeImpl):
     node wrapping lasagne's DenseLayer
     """
 
-    hyperparameter_names = ("dense_num_units", "num_units")
+    hyperparameter_names = ("shared_initializations",
+                            "initializations",
+                            "inits",
+                            "dense_num_units",
+                            "num_units")
 
     def compute_output(self, network, in_var):
+        inits = network.find_hyperparameter(["shared_initializations",
+                                             "initializations",
+                                             "inits"],
+                                            None)
         num_units = network.find_hyperparameter(["dense_num_units",
                                                  "num_units"])
         num_inputs = int(np.prod(in_var.shape[1:]))
@@ -23,12 +31,14 @@ class DenseNode(core.NodeImpl):
             "W",
             shape=(num_inputs, num_units),
             is_shared=True,
+            shared_initializations=inits,
             tags=["parameter", "weight"]
         )
         b = network.create_variable(
             "b",
             shape=(num_units,),
             is_shared=True,
+            shared_initializations=inits,
             tags=["parameter", "bias"]
         )
         input_layer = lasagne.layers.InputLayer(

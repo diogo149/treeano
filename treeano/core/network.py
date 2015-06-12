@@ -283,11 +283,6 @@ class RelativeNetwork(object):
         assert name not in self._state['original_variables']
         # FIXME have a defined name separator
         new_name = "%s:%s" % (self._name, name)
-        # prepare initialization strategies
-        if kwargs.get("shared_initializations") is None:
-            inits = self.find_hyperparameter(["shared_initializations"],
-                                             default_value=[])
-            kwargs["shared_initializations"] = inits
         # same metadata about the network
         kwargs["relative_network"] = self
         # create the variable
