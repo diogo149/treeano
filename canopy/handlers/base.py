@@ -120,8 +120,10 @@ class FinalHandler(NetworkHandlerImpl):
 
 class _HandledFunctionState(object):
 
+    def __init__(self, initial_network):
+        self.initial_network = initial_network
+
     def update_network(self, network):
-        # FIXME load old network
         self.network = network
         if not self.network.is_built:
             self.network.build()
@@ -164,7 +166,7 @@ class _HandledFunction(object):
         self.network = network
         self.handlers = handlers + [FinalHandler()]
 
-        self.state = _HandledFunctionState()
+        self.state = _HandledFunctionState(network)
 
         for outer, inner in zip(self.handlers, self.handlers[1:]):
             outer.set_inner(inner)
