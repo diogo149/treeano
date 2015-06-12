@@ -232,16 +232,35 @@ class RelativeNetwork(object):
         example:
         >>> network.find_hyperparameter(["foo", "bar", "choo"], 42)
 
-        the network first search all ancestors for a hyperparamter named
-        "foo". if that isn't found, it searches for a hyperparameter named
-        "bar", and if that isn't found returns 42
+        the network first looks at override_hyperparameters, then searches the
+        current node for hyperparameters named "foo", "bar", or "choo" in that
+        order, then looks at the ancestor of the current node, repeating until
+        out of nodes. if no ancestor has a hyperparameter for one of the keys
+        42 is returned
+        """
+        # return first valid hyperparameter
+        for val in self.find_hyperparameters(hyperparameter_keys,
+                                             default_value):
+            return val
+        else:
+            # otherwise, raise an exception
+            raise MissingHyperparameter(dict(
+                hyperparameter_keys=hyperparameter_keys,
+            ))
+
+    def find_hyperparameters(self,
+                             hyperparameter_keys,
+                             default_value=NoDefaultValue):
+        """
+        returns generator of all hyperparameters for the given keys
+        in the order of precedence
         """
         # use override_hyperparameters
         # ---
         # this has highest precedence
         for hyperparameter_key in hyperparameter_keys:
-            if hyperparameter_key in self.default_hyperparameters:
-                return self.override_hyperparameters[hyperparameter_key]
+            if hyperparameter_key in self.override_hyperparameters:
+                yield self.override_hyperparameters[hyperparameter_key]
         # look through hyperparameters of all ancestors
         ancestors = list(self.graph.architecture_ancestors(self._name))
         # prefer closer nodes over more specific queries
@@ -252,21 +271,16 @@ class RelativeNetwork(object):
                 except MissingHyperparameter:
                     pass
                 else:
-                    return value
+                    yield value
         # try returning the given default value, if any
         if default_value is not NoDefaultValue:
-            return default_value
-        else:
-            # try global default hyperparameters
-            # ---
-            # this has lowest precedence
-            for hyperparameter_key in hyperparameter_keys:
-                if hyperparameter_key in self.default_hyperparameters:
-                    return self.default_hyperparameters[hyperparameter_key]
-            # otherwise, raise an exception
-            raise MissingHyperparameter(dict(
-                hyperparameter_keys=hyperparameter_keys,
-            ))
+            yield default_value
+        # try global default hyperparameters
+        # ---
+        # this has lowest precedence
+        for hyperparameter_key in hyperparameter_keys:
+            if hyperparameter_key in self.default_hyperparameters:
+                yield self.default_hyperparameters[hyperparameter_key]
 
     def find_variables_in_subtree(self, tag_filters):
         """
