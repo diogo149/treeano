@@ -14,7 +14,7 @@ def test_constant_init():
         input_keys = ()
 
         def get_hyperparameter(self, network, hyperparameter_name):
-            if hyperparameter_name == "shared_initializations":
+            if hyperparameter_name == "inits":
                 return [treeano.inits.ConstantInit(1)]
             else:
                 return super(DummyNode, self).get_hyperparameter(
@@ -22,12 +22,12 @@ def test_constant_init():
                     hyperparameter_name)
 
         def compute_output(self, network):
-            inits = network.find_hyperparameter(["shared_initializations"])
+            inits = network.find_hyperparameter(["inits"])
             network.create_variable(
                 "default",
                 is_shared=True,
                 shape=(1, 2, 3),
-                shared_initializations=inits,
+                inits=inits,
             )
 
     network = DummyNode("dummy").build()

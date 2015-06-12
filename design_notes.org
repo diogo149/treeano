@@ -805,6 +805,17 @@
         - eg. bias_inits, weight_inits, conv_inits
     - cons
       - complexity is pushed to every unit that has weights (eg. hyperparameters)
+    - conclusion:
+      - yes
+        - very little downside, nice upside
+- PreallocatedInitializationNode
+  - sets hyperparameters:
+    - inits
+    - preallocated_initialization
+  - rationale for setting both:
+    - if no initialization scheme is given, then it uses the former
+    - if another initialization scheme is given within the network, that scheme still has the choice of finding a preallocated_initialization hyperparameter and prioritizing that
+    - this allows no hard-coded preference to preallocation in the core code
 - BIG PROBLEM:
   - sharing shared variables
     - create to_shared_dict(Network)
@@ -1024,14 +1035,6 @@
   - using a stateful class and a hyperparameternode is very wrong
     - just a hack
   - want to represent the parameters of the initialization as hyperparameters and have them be clone-able/inspect-able
-- PreallocatedInitializationNode
-  - sets hyperparameters:
-    - shared_initializations
-    - preallocated_initialization
-  - rationale for setting both:
-    - if no initialization scheme is given, then it uses the former
-    - if another initialization scheme is given within the network, that scheme still has the choice of finding a preallocated_initialization hyperparameter and prioritizing that
-    - this allows no hard-coded preference to preallocation in the core code
 - wrap lasagne
   - update code
   - initialization

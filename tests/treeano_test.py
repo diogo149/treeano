@@ -130,7 +130,7 @@ def test_dense_node():
         "d",
         sequential,
         num_units=14,
-        shared_initializations=[treeano.inits.ConstantInit(1)])
+        inits=[treeano.inits.ConstantInit(1)])
     network = hp_node.build()
     fn = network.function(["a"], ["d"])
     x = np.random.randn(3, 4, 5).astype(floatX)
@@ -153,7 +153,7 @@ def test_fully_connected_and_relu_node():
         "d",
         sequential,
         num_units=14,
-        shared_initializations=[treeano.inits.ConstantInit(1)])
+        inits=[treeano.inits.ConstantInit(1)])
     network = hp_node.build()
     fn = network.function(["a"], ["d"])
     x = np.random.randn(3, 4, 5).astype(floatX)
@@ -175,7 +175,7 @@ def test_glorot_uniform_initialization():
     hp_node = HyperparameterNode("d",
                                  sequential,
                                  num_units=1000,
-                                 shared_initializations=[GlorotUniformInit()])
+                                 inits=[GlorotUniformInit()])
     network = hp_node.build()
     fc_node = network["b"]
     W_value = fc_node.get_variable("W").value

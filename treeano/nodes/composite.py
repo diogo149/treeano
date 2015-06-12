@@ -52,8 +52,6 @@ class DenseNode(core.WrapperNodeImpl):
     # that it's init_state is called
     children_container = core.NoneChildrenContainer
     hyperparameter_names = ("num_units",
-                            "shared_initializations",
-                            "initializations",
                             "inits")
 
     def architecture_children(self):
@@ -81,8 +79,6 @@ class DenseCombineNode(core.WrapperNodeImpl):
     """
 
     hyperparameter_names = ("num_units",
-                            "shared_initializations",
-                            "initializations",
                             "inits")
 
     def architecture_children(self):

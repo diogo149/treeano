@@ -31,7 +31,7 @@ class VariableWrapper(object):
                  tags=None,
                  ndim=None,
                  variable=None,
-                 shared_initializations=None,
+                 inits=None,
                  relative_network=None):
         self.name = name
         self.shape_ = shape
@@ -41,7 +41,7 @@ class VariableWrapper(object):
         self.tags_ = tags
         self.ndim_ = ndim
         self.variable_ = variable
-        self.shared_initializations = shared_initializations
+        self.inits = inits
         # relative_network is provided so that variables can auto-compute
         # their shape
         self.relative_network = relative_network
@@ -146,10 +146,10 @@ class VariableWrapper(object):
         if self.variable_ is None:
             if self.is_shared:
                 # find appropriate initialization scheme
-                shared_initializations = self.shared_initializations
-                if shared_initializations is None:
-                    shared_initializations = []
-                for initialization in shared_initializations:
+                inits = self.inits
+                if inits is None:
+                    inits = []
+                for initialization in inits:
                     if initialization.predicate(self):
                         break
                 else:

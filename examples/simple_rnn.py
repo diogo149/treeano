@@ -42,7 +42,7 @@ model = tn.HyperparameterNode(
              tn.DenseNode("fc", num_units=1)),
          tn.SigmoidNode("preds"),
          ]),
-    shared_initializations=[treeano.inits.NormalWeightInit(0.01)],
+    inits=[treeano.inits.NormalWeightInit(0.01)],
     scan_axis=0
 )
 

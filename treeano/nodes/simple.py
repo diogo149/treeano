@@ -150,15 +150,13 @@ class AddBiasNode(core.NodeImpl):
     over, or as a tuple of booleans
     """
 
-    hyperparameter_names = ("shared_initializations",
-                            "initializations",
+    hyperparameter_names = ("bias_inits",
                             "inits",
                             "broadcastable_axes",
                             "broadcastable",)
 
     def compute_output(self, network, in_var):
-        inits = network.find_hyperparameter(["shared_initializations",
-                                             "initializations",
+        inits = network.find_hyperparameter(["bias_inits",
                                              "inits"],
                                             None)
         # gather hyperparameters
@@ -190,7 +188,7 @@ class AddBiasNode(core.NodeImpl):
             is_shared=True,
             shape=shape,
             tags={"parameter", "bias"},
-            shared_initializations=inits,
+            inits=inits,
         )
         b_var = b.variable
         # not calling patternbroadcast if not broadcastable, because it seems
@@ -213,14 +211,12 @@ class LinearMappingNode(core.NodeImpl):
     (a dot product with a parameter)
     """
 
-    hyperparameter_names = ("shared_initializations",
-                            "initializations",
+    hyperparameter_names = ("linear_mapping_inits",
                             "inits",
                             "output_dim")
 
     def compute_output(self, network, in_var):
-        inits = network.find_hyperparameter(["shared_initializations",
-                                             "initializations",
+        inits = network.find_hyperparameter(["linear_mapping_inits",
                                              "inits"],
                                             None)
         output_dim = network.find_hyperparameter(["output_dim"])
@@ -231,7 +227,7 @@ class LinearMappingNode(core.NodeImpl):
             is_shared=True,
             shape=weight_shape,
             tags={"parameter", "weight"},
-            shared_initializations=inits,
+            inits=inits,
         )
         network.create_variable(
             name="default",
