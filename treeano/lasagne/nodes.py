@@ -81,7 +81,7 @@ class SGDNode(core.Wrapper1NodeImpl):
         cost_reference = network.find_hyperparameter(["cost_reference",
                                                       "reference"])
         cost = network[cost_reference].get_variable("default").variable
-        parameters = network.find_variables_in_subtree(["parameter"])
+        parameters = network.find_vws_in_subtree(tags=["parameter"])
         learning_rate = network.find_hyperparameter(["sgd_learning_rate",
                                                      "learning_rate"])
         updates = lasagne.updates.sgd(cost,

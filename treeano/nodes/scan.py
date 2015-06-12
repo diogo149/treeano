@@ -157,7 +157,7 @@ class ScanNode(core.Wrapper1NodeImpl):
         # NOTE: having  variables from nested scans is desired here, because
         # we want to transform the output into a version with a sequence
         # dimension
-        original_outputs = network.find_variables_in_subtree({"output"})
+        original_outputs = network.find_vws_in_subtree(tags={"output"})
         # set all_outputs to a copy of original_outputs
         all_outputs = list(original_outputs)
         # in case the element-wise output of the scan is not tagged as an

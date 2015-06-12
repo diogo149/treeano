@@ -834,6 +834,7 @@
     - whether or not to send input to children
   - should it even be an option?
 - should shared variables contain metadata on which axes are their input axes and which are their output axes
+  - useful for initialization
 ** v2
 - TODO
   - use override_hyperparameters
@@ -1165,6 +1166,9 @@
 ** code quality
 - consistent importing
   - treeano.nodes as tn
+- consistent naming of VariableWrapper as vw
+  - rename variable in network.py to vw
+    - eg. find_variables_in_subtree to find_vws_in_subtree
 - test serializing and recovering inner handlers
 - create function to test initialization strategies (just that they do not break)
 - PYTHONPATH=~/repos/treeano:$PYTHONPATH sniffer

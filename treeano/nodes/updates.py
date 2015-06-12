@@ -26,7 +26,7 @@ class UpdateScaleNode(core.Wrapper1NodeImpl):
         # to scale state updates)
         scale_factor = network.find_hyperparameter(["update_scale_factor",
                                                     "scale_factor"])
-        parameters = network.find_variables_in_subtree(["parameter"])
+        parameters = network.find_vws_in_subtree(tags=["parameter"])
         for parameter in parameters:
             update_deltas[parameter.variable] *= scale_factor
 
@@ -71,7 +71,7 @@ class StandardUpdatesNode(six.with_metaclass(abc.ABCMeta,
         # NOTE: only computing for parameters in subtree, not in cost
         subtree = self._children["subtree"].children
         subtree_network = network[subtree.name]
-        parameters = subtree_network.find_variables_in_subtree(["parameter"])
+        parameters = subtree_network.find_vws_in_subtree(tags=["parameter"])
 
         # calculate cost
         cost = self._children["cost"].children

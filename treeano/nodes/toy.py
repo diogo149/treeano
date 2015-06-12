@@ -54,5 +54,5 @@ class ConstantUpdaterNode(core.Wrapper1NodeImpl):
 
     def new_update_deltas(self, network):
         value = network.find_hyperparameter(["value"])
-        parameters = network.find_variables_in_subtree(["parameter"])
+        parameters = network.find_vws_in_subtree(tags=["parameter"])
         return core.UpdateDeltas({p.variable: value for p in parameters})

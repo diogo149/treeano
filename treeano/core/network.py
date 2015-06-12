@@ -282,16 +282,23 @@ class RelativeNetwork(object):
             if hyperparameter_key in self.default_hyperparameters:
                 yield self.default_hyperparameters[hyperparameter_key]
 
-    def find_variables_in_subtree(self, tag_filters):
+    def find_vws_in_subtree(self, tags=None, is_shared=None):
         """
-        return variables matching all of the given tags
+        return variable wrappers matching all of the given tags
         """
-        tag_filters = set(tag_filters)
-        return [variable
-                for name in self.graph.architecture_subtree_names(self._name)
-                for variable in self[name]._state["current_variables"].values()
-                # only keep variables where all filters match
-                if len(tag_filters - variable.tags) == 0]
+        remaining_vws = [
+            variable
+            for name in self.graph.architecture_subtree_names(self._name)
+            for variable in self[name]._state["current_variables"].values()]
+        if tags is not None:
+            tags = set(tags)
+            # only keep variables where all tags match
+            remaining_vws = filter(lambda v: len(tags - v.tags) == 0,
+                                   remaining_vws)
+        if is_shared is not None:
+            remaining_vws = filter(lambda v: v.is_shared == is_shared,
+                                   remaining_vws)
+        return remaining_vws
 
     def find_nodes_in_subtree(self, cls):
         """
