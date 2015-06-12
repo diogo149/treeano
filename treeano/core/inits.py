@@ -1,16 +1,13 @@
 from __future__ import division, absolute_import
 from __future__ import print_function, unicode_literals
 
-import abc
-
-import six
 import numpy as np
 import theano
 
 # ############################### base classes ###############################
 
 
-class SharedInit(six.with_metaclass(abc.ABCMeta, object)):
+class SharedInit(object):
 
     """
     interface for initialization schemes of shared variables
@@ -36,12 +33,12 @@ class SharedInit(six.with_metaclass(abc.ABCMeta, object)):
         variable = theano.shared(**kwargs)
         return variable
 
-    @abc.abstractmethod
     def initialize_value(self, var):
         """
         creates appropriately initialized value for the given
         VariableWrapper
         """
+        raise NotImplementedError
 
 
 class WeightInit(SharedInit):

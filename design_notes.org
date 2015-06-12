@@ -837,13 +837,14 @@
   - useful for initialization
 ** v2
 - TODO
-  - use override_hyperparameters
-  - make find_hyperparameters
-  - use find_hyperparmaters for inits
-  - create to_shared_dict(Network)
-  - create model transformations
-  - fix handlers.nodes + test
-  - mnist w/o dropout
+  - [X] use override_hyperparameters
+  - [X] make find_hyperparameters
+  - [X] use find_hyperparmaters for inits
+  - [X] create to_shared_dict(Network)
+  - [X] test to_shared_dict
+  - [ ] create model transformations
+  - [ ] fix handlers.nodes + test
+  - [ ] mnist w/o dropout
 - add adam state to network
 - test mnist vs lasagne - should have same performance
 ** canopy.handlers
