@@ -5,7 +5,9 @@ from .. import core
 
 class GlorotUniformInit(core.WeightInit):
 
-    # FIXME add parameters to constructor (eg. initialization_gain)
+    def __init__(self, gain=1.0):
+        self.gain = gain
 
     def initialize_value(self, var):
-        return lasagne.init.GlorotUniform().sample(var.shape).astype(var.dtype)
+        init = lasagne.init.GlorotUniform(gain=self.gain)
+        return init.sample(var.shape).astype(var.dtype)
