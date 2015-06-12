@@ -1,3 +1,4 @@
+import toolz
 import numpy as np
 import lasagne
 
@@ -18,8 +19,9 @@ class DenseNode(core.NodeImpl):
                             "num_units")
 
     def compute_output(self, network, in_var):
-        inits = network.find_hyperparameter(["inits"],
-                                            None)
+        inits = list(toolz.concat(network.find_hyperparameters(
+            ["inits"],
+            [])))
         num_units = network.find_hyperparameter(["dense_num_units",
                                                  "num_units"])
         num_inputs = int(np.prod(in_var.shape[1:]))
