@@ -1,4 +1,4 @@
-* general
+* treeano - general
 - architecture as data
   - the architecture of a single model should at every point be serializable and deserializable to the same model
 - parameterization should be recursive
@@ -638,43 +638,6 @@
     - tile node - behaves like theano.tensor.tile
     - need to manually give the batch size
       - ie. can't be determined automatically
-- training loop
-  - what interface?
-    - needs
-      - data
-      - training function
-      - after training handler
-        - this could be combined into the training function
-    - simply:
-      - for thing in gen: fn(thing)
-      - fn can be wrapped by arbitrary handlers
-  - handler state should be hierarchical
-    - eg. wrappers = [stop_after(seconds=100), handle_every(5, some_other_wrapper), ...]
-      - here some_other_wrapper needs state under handle_every
-    - so that inner state can be serialized
-  - training_loop_from_network
-- handled function
-  - should it take in a built network or the raw nodes?
-    - pros of built network
-      - can pass in initialized state as well
-    - pros of raw nodes
-      - more time efficient
-        - eg. don't need to calculate derivatives
-    - conclusion: take in a network that may or may not be built
-      - to get the benefits of both
-  - it should take in an inner_handler, and be built up recursively
-    - that way it can serialize it's internal state and load it up
-  - would one want 2 functions from the same network?
-    - no, this is a handled function
-- handlers
-  - each handler needs:
-    - to be able to add/access it's own state
-    - add/access all state of children
-    - take in an network
-      - and possibly change it
-    - take in the arguments for a function
-      - and possibly change it
-      - eg. mode
 - have hyperparameter precedence favor closer to the node over more specific hyperparameter name
   - eg. if conv layer defines strides, but hyperparamnode defines conv_strides, use conv's hyperparameter
 - initializations as a hyperparameter
@@ -712,6 +675,51 @@
       - conclusion:
         - yes
           - very little downside, nice upside
+* canopy - general
+- treeano should not have hooks
+  - there should be a clean separation of mapping from parameterization to theano variable and all the extra (modular) logic
+- canopy
+  - layer on top of treeano
+  - handles non-theano modularity
+  - nice reference
+    - the only layer above this is the emergent layer (your code)
+- training loop
+  - what interface?
+    - needs
+      - data
+      - training function
+      - after training handler
+        - this could be combined into the training function
+    - simply:
+      - for thing in gen: fn(thing)
+      - fn can be wrapped by arbitrary handlers
+  - handler state should be hierarchical
+    - eg. wrappers = [stop_after(seconds=100), handle_every(5, some_other_wrapper), ...]
+      - here some_other_wrapper needs state under handle_every
+    - so that inner state can be serialized
+  - training_loop_from_network
+- handled function
+  - should it take in a built network or the raw nodes?
+    - pros of built network
+      - can pass in initialized state as well
+    - pros of raw nodes
+      - more time efficient
+        - eg. don't need to calculate derivatives
+    - conclusion: take in a network that may or may not be built
+      - to get the benefits of both
+  - it should take in an inner_handler, and be built up recursively
+    - that way it can serialize it's internal state and load it up
+  - would one want 2 functions from the same network?
+    - no, this is a handled function
+- handlers
+  - each handler needs:
+    - to be able to add/access it's own state
+    - add/access all state of children
+    - take in an network
+      - and possibly change it
+    - take in the arguments for a function
+      - and possibly change it
+      - eg. mode
 * assumptions
 - shared variables (eg. parameter tensors) will have a fixed size
 - nodes are in a directed acyclic graph
@@ -1222,13 +1230,6 @@
   - https://github.com/rakeshvar/rnn_ctc/blob/master/ctc.py
   - https://github.com/shawntan/rnn-experiment/blob/master/CTC.ipynb
 ** canopy
-- treeano should not have hooks
-  - there should be a clean separation of mapping from parameterization to theano variable and all the extra (modular) logic
-- canopy
-  - layer on top of treeano
-  - handles non-theano modularity
-  - nice reference
-    - the only layer above this is the emergent layer (your code)
 - workflows / hooks
   - training
   - distillation
@@ -1278,7 +1279,7 @@
     - logging how close rolling BN mean/variance is to actual mean/variance
   - AUC / accuracy logging
   - saving model
-  - hyperparameter optimization
+  - hyperparameter optimization (hyperopt)
   - active learning
   - restarting training from a certain point
     - issue: dataset state won't be kept
@@ -1328,6 +1329,10 @@
   - data augmentation
   - test time augmentation
   - ensembling
+    - bagging
+    - boosting
+      - gradient boosting
+      - adaboost
   - dynamic curriculum learning
     - saving mistaken examples for replaying
     - with metric learning

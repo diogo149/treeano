@@ -17,14 +17,21 @@ class Network(object):
     contains the state of multiple nodes
     """
 
-    def __init__(self, root_node):
+    def __init__(self,
+                 root_node,
+                 override_hyperparameters=None,
+                 default_hyperparameters=None):
+        if override_hyperparameters is None:
+            override_hyperparameters = dict()
+        if default_hyperparameters is None:
+            default_hyperparameters = dict(
+                batch_axis=0,
+            )
         self.root_node = root_node
         self.node_state = {}
         self.update_deltas = UpdateDeltas()
-        # parameterize me if ever there is a need
-        self.default_hyperparameters = dict(
-            batch_axis=0,
-        )
+        self.override_hyperparameters = override_hyperparameters
+        self.default_hyperparameters = default_hyperparameters
 
     @property
     def is_built(self):
@@ -229,6 +236,12 @@ class RelativeNetwork(object):
         "foo". if that isn't found, it searches for a hyperparameter named
         "bar", and if that isn't found returns 42
         """
+        # use override_hyperparameters
+        # ---
+        # this has highest precedence
+        for hyperparameter_key in hyperparameter_keys:
+            if hyperparameter_key in self.default_hyperparameters:
+                return self.override_hyperparameters[hyperparameter_key]
         # look through hyperparameters of all ancestors
         ancestors = list(self.graph.architecture_ancestors(self._name))
         # prefer closer nodes over more specific queries
