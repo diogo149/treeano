@@ -3,6 +3,11 @@ from . import base
 
 class CallAfterEvery(base.NetworkHandlerImpl):
 
+    """
+    handler that calls a callback with the result of a function every few
+    calls
+    """
+
     def __init__(self, frequency, callback):
         self.frequency = frequency
         self.callback = callback

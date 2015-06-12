@@ -677,6 +677,41 @@
       - eg. mode
 - have hyperparameter precedence favor closer to the node over more specific hyperparameter name
   - eg. if conv layer defines strides, but hyperparamnode defines conv_strides, use conv's hyperparameter
+- initializations as a hyperparameter
+  - problems:
+    - should every unit with weights have the exact same set of hyperparameters? (shared_initializations, initializations, inits)
+      - solution: yes for "inits"
+        - that way units can have custom hyperparameters too
+    - how do we specify precedence? (eg. preallocated initializations first)
+      - options:
+        - pre_inits hyperparameter which is applied first
+          - pros
+            - general, can apply to any kind of init
+          - cons
+            - need same logic everywhere
+        - have logic for favoring PreallocatedInit's
+          - cons
+            - less elegant
+        - create network-wide hyperparameter overrides with highest priority
+          - pros
+            - might be useful for other hyperparameters
+          - cons
+            - how do we do this right?
+              - already have similar logic for default_hyperparameters
+      - solution:
+        - network-wide overrides
+    - how to create hyperparameters with fallbacks?
+      - eg. inits is a weight initialization, but up the tree there is a bias initialization
+      - solution: create find_hyperparameters to generalize find_hyperparameter and flatten all together
+    - should it be treated like any other hyperparameter?
+      - pros:
+        - allows custom initializations
+          - eg. bias_inits, weight_inits, conv_inits
+      - cons
+        - complexity is pushed to every unit that has weights (eg. hyperparameters)
+      - conclusion:
+        - yes
+          - very little downside, nice upside
 * assumptions
 - shared variables (eg. parameter tensors) will have a fixed size
 - nodes are in a directed acyclic graph
@@ -792,39 +827,17 @@
   - should it even be an option?
 - should shared variables contain metadata on which axes are their input axes and which are their output axes
 ** v2
-- have network building take in hyperparameters
-- think about how to do preallocated init
+- TODO
+  - use override_hyperparameters
+  - make find_hyperparameters
+  - use find_hyperparmaters for inits
+  - create to_shared_dict(Network)
+  - create model transformations
+  - fix handlers.nodes + test
+  - mnist w/o dropout
 - add adam state to network
 - test mnist vs lasagne - should have same performance
-** handlers
-- initializations as a hyperparameter
-  - problems:
-    - should every unit with weights have the exact same set of hyperparameters? (shared_initializations, initializations, inits)
-    - how do we specify precedence? (eg. preallocated initializations first)
-    - how to create hyperparameters with fallbacks
-  - should it be treated like any other hyperparameter?
-    - pros:
-      - allows custom initializations
-        - eg. bias_inits, weight_inits, conv_inits
-    - cons
-      - complexity is pushed to every unit that has weights (eg. hyperparameters)
-    - conclusion:
-      - yes
-        - very little downside, nice upside
-- PreallocatedInitializationNode
-  - sets hyperparameters:
-    - inits
-    - preallocated_initialization
-  - rationale for setting both:
-    - if no initialization scheme is given, then it uses the former
-    - if another initialization scheme is given within the network, that scheme still has the choice of finding a preallocated_initialization hyperparameter and prioritizing that
-    - this allows no hard-coded preference to preallocation in the core code
-- BIG PROBLEM:
-  - sharing shared variables
-    - create to_shared_dict(Network)
-- tests:
-  - serializing and recovering inner handlers
-- when saving network state, need to make sure to save rng state too
+** canopy.handlers
 - build
   - run in different process (w/ different GPU)
   - stopping conditions
@@ -937,6 +950,8 @@
 - figure out how to make recurrent node's not require batch size
   - would be cool to have symbolic shapes work
 ** misc
+- should rng state be global or part of the network?
+  - when saving network state, need to make sure to save rng state too
 - time network.build
 - parameterize weight layers out of linear mapping / bias
 - more information when querying
@@ -1142,6 +1157,7 @@
 ** code quality
 - consistent importing
   - treeano.nodes as tn
+- test serializing and recovering inner handlers
 - create function to test initialization strategies (just that they do not break)
 - PYTHONPATH=~/repos/treeano:$PYTHONPATH sniffer
 - potential issue: sharing variables between networks when test_value's are enabled
