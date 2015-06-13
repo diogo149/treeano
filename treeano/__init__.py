@@ -14,5 +14,6 @@ from core import (UpdateDeltas,
                   VariableWrapper,
                   register_node,
                   NodeImpl,
+                  Network,
                   WrapperNodeImpl,
                   Wrapper1NodeImpl)

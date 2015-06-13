@@ -113,12 +113,14 @@ class Network(object):
         """
         returns a network relative to a single node
         """
+        assert self.is_built
         return RelativeNetwork(self, node)
 
     def __getitem__(self, node_name):
         """
         sugar for accessing nodes in a graph
         """
+        assert self.is_built
         node = self.graph.name_to_node[node_name]
         return self.relative_network(node)
 
@@ -135,6 +137,7 @@ class Network(object):
         example:
         network.function(["input_node"], ["fc_node", "loss", ("conv1", "W")])
         """
+        assert self.is_built
         if outputs is None:
             outputs = []
         assert isinstance(inputs, list)
