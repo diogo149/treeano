@@ -45,7 +45,7 @@ def test_input_function_combine_node():
                 [tn.InputNode("in2", shape=(3, 4, 5)),
                  tn.SendToNode("stn2", reference="fcn", to_key="a")]),
             tn.InputFunctionCombineNode("fcn", combine_fn=combine_fn)
-        ]).build()
+        ]).network()
         return network.function(["in1", "in2"], ["fcn"])
     x = np.random.randn(3, 4, 5).astype(fX)
     y = np.random.randn(3, 4, 5).astype(fX)
@@ -78,7 +78,7 @@ def test_concatenate_node():
              tn.InputNode("i2", shape=s2),
              tn.InputNode("i3", shape=s3)],
             axis=axis,
-        ).build()
+        ).network()
         fn = network.function(["i1", "i2", "i3"], ["concat"])
         i1 = np.random.rand(*replace_nones(s1)).astype(fX)
         i2 = np.random.rand(*replace_nones(s2)).astype(fX)
@@ -97,7 +97,7 @@ def test_concatenate_node_wrong_shape():
              tn.InputNode("i2", shape=s2),
              tn.InputNode("i3", shape=s3)],
             axis=axis,
-        ).build()
+        ).network().build()
 
     for args in [[100] + [(3, 2, 4)] * 3,
                  [0, (3, 2, 4), (3, 2, 4), (3, 3, 4)],
@@ -113,7 +113,7 @@ def test_elementwise_sum_node():
             [tn.InputNode("i1", shape=s),
              tn.InputNode("i2", shape=s),
              tn.InputNode("i3", shape=s)],
-        ).build()
+        ).network()
         fn = network.function(["i1", "i2", "i3"], ["es"])
         i1 = np.array(np.random.rand(*s), dtype=fX)
         i2 = np.array(np.random.rand(*s), dtype=fX)
@@ -141,7 +141,7 @@ def test_input_elementwise_sum_node():
                  "seq3",
                  [tn.InputNode("i3", shape=s),
                   tn.SendToNode("st3", reference="ies", to_key="in3")])]
-        ).build()
+        ).network()
         fn = network.function(["i1", "i2", "i3"], ["ies"])
         i1 = np.array(np.random.rand(*s), dtype=fX)
         i2 = np.array(np.random.rand(*s), dtype=fX)

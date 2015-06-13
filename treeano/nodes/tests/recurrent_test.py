@@ -27,7 +27,7 @@ def test_simple_recurrent_node():
                                              batch_size=4,
                                              num_units=35,
                                              scan_axis=0)]
-    ).build()
+    ).network()
     fn = network.function(["in"], ["n"])
     x = np.random.rand(3, 4, 5).astype(fX)
     res = fn(x)[0]

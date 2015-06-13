@@ -30,7 +30,7 @@ def test_constant_init():
                 inits=inits,
             )
 
-    network = DummyNode("dummy").build()
+    network = DummyNode("dummy").network()
     fn = network.function([], ["dummy"])
     np.testing.assert_allclose(fn()[0],
                                np.ones((1, 2, 3)).astype(fX),

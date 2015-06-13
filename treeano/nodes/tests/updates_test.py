@@ -23,7 +23,7 @@ def test_update_scale_node():
             nodes.DenseNode("fc", num_units=5)
         ]),
         value=5,
-    ).build()
+    ).network()
     ud = network.update_deltas
     assert ud[network["fc_linear"].get_variable("weight").variable] == 5
 
@@ -38,7 +38,7 @@ def test_update_scale_node():
                 scale_factor=-2)
         ]),
         value=5,
-    ).build()
+    ).network()
     ud = network.update_deltas
     assert ud[network["fc_linear"].get_variable("weight").variable] == -10
 

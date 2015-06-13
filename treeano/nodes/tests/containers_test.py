@@ -21,6 +21,6 @@ def test_container_node_raises():
         "s",
         [tn.ContainerNode("c", []),
          tn.IdentityNode("i")
-         ]).build()
+         ]).network()
     fn = network.function([], ["i"])
     fn()

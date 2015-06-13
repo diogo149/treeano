@@ -18,7 +18,7 @@ def test_tile_node():
         "n",
         [nodes.InputNode("in", shape=(3, 4, 5)),
          nodes.TileNode("t", reps=(2, 3, 4))]
-    ).build()
+    ).network()
     fn = network.function(["in"], ["n"])
     x = np.random.rand(3, 4, 5).astype(fX)
     res = fn(x)[0]

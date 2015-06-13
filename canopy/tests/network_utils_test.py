@@ -18,7 +18,7 @@ def test_to_shared_dict():
              "lm",
              output_dim=15,
              inits=[treeano.inits.ConstantInit(42.42)])]
-    ).build()
+    ).network()
     sd = canopy.network_utils.to_shared_dict(network)
     nt.assert_equal(sd.keys(), ["lm:weight"])
     np.testing.assert_equal(sd.values()[0].get_value(),
@@ -33,7 +33,7 @@ def test_to_preallocated_init1():
              "lm",
              output_dim=15,
              inits=[treeano.inits.NormalWeightInit(15.0)])]
-    ).build()
+    ).network()
     inits = [canopy.network_utils.to_preallocated_init(network1)]
     network2 = tn.SequentialNode(
         "seq",
@@ -42,7 +42,7 @@ def test_to_preallocated_init1():
              "lm",
              output_dim=15,
              inits=inits)]
-    ).build()
+    ).network()
 
     w1 = canopy.network_utils.to_shared_dict(network1).values()[0]
     w2 = canopy.network_utils.to_shared_dict(network2).values()[0]
@@ -68,7 +68,7 @@ def test_to_preallocated_init2():
                  output_dim=15,
                  inits=[treeano.inits.NormalWeightInit(15.0)])]),
         value=-0.1,
-    ).build()
+    ).network()
     inits = [canopy.network_utils.to_preallocated_init(network1)]
     network2 = tn.toy.ConstantUpdaterNode(
         "cun",
@@ -80,7 +80,7 @@ def test_to_preallocated_init2():
                  output_dim=15,
                  inits=inits)]),
         value=0.4,
-    ).build()
+    ).network()
 
     fn1 = network1.function(["i"], ["lm"])
     fn2 = network2.function(["i"], ["lm"])

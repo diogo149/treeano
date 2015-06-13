@@ -24,7 +24,7 @@ def test_basic_scan():
             treeano.nodes.InputNode("input", shape=(3, 2, 1)),
             ScanNode("scan", x2Node("x2"))
         ],
-    ).build()
+    ).network()
     fn = network.function(["input"], ["scan"])
     np.testing.assert_allclose(fn(np.ones((3, 2, 1)).astype(floatX))[0],
                                2 * np.ones((3, 2, 1)))

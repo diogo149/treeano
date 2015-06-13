@@ -836,7 +836,13 @@
 - should shared variables contain metadata on which axes are their input axes and which are their output axes
   - useful for initialization
 ** v2
-- think about: how to compose together function handlers (eg. in training loop)
+- attaching handlers to networks instead of functions
+  - rationale:
+    - composing together function handlers
+      - eg. some assigned in training loop, some assigned outside
+    - sharing handler state
+      - eg. shared variable for chunking
+    - serializing networks with preprpocessing
 - add adam state to network
 - copy node function
   - maybe?

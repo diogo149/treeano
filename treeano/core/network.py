@@ -456,12 +456,3 @@ class RelativeNetwork(object):
             if to_key is not None:
                 edges[to_key] = edge_from
         return edges
-
-
-def build_network(root_node):
-    # FIXME delete this
-    import warnings
-    warnings.warn("build_network is deprecated - please do not use")
-    network = Network(root_node)
-    network.build()
-    return network

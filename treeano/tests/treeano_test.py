@@ -25,7 +25,7 @@ floatX = theano.config.floatX
 
 def test_identity_network():
     input_node = InputNode("foo", shape=(3, 4, 5))
-    network = input_node.build()
+    network = input_node.network()
     fn = network.function(["foo"], ["foo"])
     x = np.random.rand(3, 4, 5).astype(floatX)
     assert np.allclose(fn(x), x)
@@ -37,7 +37,7 @@ def test_sequential_identity_network():
         IdentityNode("bar"),
     ]
     sequential = SequentialNode("choo", nodes)
-    network = sequential.build()
+    network = sequential.network()
     fn1 = network.function(["foo"], ["foo"])
     fn2 = network.function(["foo"], ["bar"])
     fn3 = network.function(["foo"], ["choo"])
@@ -53,7 +53,7 @@ def test_nested_sequential_network():
         current_node = SequentialNode("sequential" + name,
                                       [current_node,
                                        IdentityNode("identity" + name)])
-    network = current_node.build()
+    network = current_node.network()
     fn = network.function(["foo"], ["sequential9"])
     x = np.random.rand(3, 4, 5).astype(floatX)
     assert np.allclose(fn(x), x)
@@ -87,7 +87,7 @@ def test_toy_updater_node():
                 network.get_variable("default").variable: 42
             })
 
-    network = ToyUpdaterNode("a").build()
+    network = ToyUpdaterNode("a").network()
     fn1 = network.function([], ["a"])
     init_value = fn1()
     fn2 = network.function([], ["a"], include_updates=True)
@@ -112,7 +112,7 @@ def test_toy_updater_node():
 def test_hyperparameter_node():
     input_node = InputNode("a", shape=(3, 4, 5))
     hp_node = HyperparameterNode("b", input_node, foo=3, bar=2)
-    network = hp_node.build()
+    network = hp_node.network()
     assert network["b"].find_hyperparameter(["foo"]) == 3
     assert network["a"].find_hyperparameter(["foo"]) == 3
     assert network["a"].find_hyperparameter(["choo", "foo"]) == 3
@@ -131,7 +131,7 @@ def test_dense_node():
         sequential,
         num_units=14,
         inits=[treeano.inits.ConstantInit(1)])
-    network = hp_node.build()
+    network = hp_node.network()
     fn = network.function(["a"], ["d"])
     x = np.random.randn(3, 4, 5).astype(floatX)
     res = np.dot(x.reshape(3, 20), np.ones((20, 14))) + np.ones(14)
@@ -154,7 +154,7 @@ def test_fully_connected_and_relu_node():
         sequential,
         num_units=14,
         inits=[treeano.inits.ConstantInit(1)])
-    network = hp_node.build()
+    network = hp_node.network()
     fn = network.function(["a"], ["d"])
     x = np.random.randn(3, 4, 5).astype(floatX)
     res = np.dot(x.reshape(3, 20), np.ones((20, 14))) + np.ones(14)
@@ -176,7 +176,7 @@ def test_glorot_uniform_initialization():
                                  sequential,
                                  num_units=1000,
                                  inits=[GlorotUniformInit()])
-    network = hp_node.build()
+    network = hp_node.network()
     fc_node = network["b"]
     W_value = fc_node.get_variable("W").value
     b_value = fc_node.get_variable("b").value

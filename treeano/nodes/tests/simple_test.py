@@ -45,7 +45,7 @@ def test_reference_node():
         tn.InputNode("input1", shape=(3, 4, 5)),
         tn.InputNode("input2", shape=(5, 4, 3)),
         tn.ReferenceNode("ref", reference="input1"),
-    ]).build()
+    ]).network()
 
     fn = network.function(["input1"], ["ref"])
     x = np.random.randn(3, 4, 5).astype(fX)
@@ -65,7 +65,7 @@ def test_send_to_node():
             "s3",
             [tn.SendToNode("stn3", reference="i")]),
         tn.IdentityNode("i"),
-    ]).build()
+    ]).network()
 
     fn = network.function(["in"], ["i"])
     x = np.random.randn(3, 4, 5).astype(fX)
@@ -87,7 +87,7 @@ def test_network_doesnt_mutate():
         tn.IdentityNode("i"),
     ])
     original_dict = copy.deepcopy(root_node.__dict__)
-    root_node.build()
+    root_node.network().build()
     nt.assert_equal(original_dict,
                     root_node.__dict__)
 
@@ -106,7 +106,7 @@ def test_node_with_generated_children_can_serialize():
             [tn.SendToNode("stn3", reference="i")]),
         tn.IdentityNode("i"),
     ])
-    root_node.build()
+    root_node.network().build()
     root2 = treeano.core.node_from_data(treeano.core.node_to_data(root_node))
     nt.assert_equal(root_node, root2)
 
@@ -118,7 +118,7 @@ def test_add_bias_node_broadcastable():
             (tn.AddBiasNode("b", broadcastable=broadcastable)
              if broadcastable is not None
              else tn.AddBiasNode("b"))
-        ]).build()["b"].get_variable("bias").shape
+        ]).network()["b"].get_variable("bias").shape
 
     nt.assert_equal((1, 4, 5),
                     get_bias_shape(None))
@@ -133,7 +133,7 @@ def test_add_bias_node_broadcastable_incorrect_size1():
     tn.SequentialNode("s", [
         tn.InputNode("in", shape=(3, 4, 5)),
         tn.AddBiasNode("b", broadcastable=(True, False))
-    ]).build()
+    ]).network().build()
 
 
 @nt.raises(AssertionError)
@@ -141,14 +141,14 @@ def test_add_bias_node_broadcastable_incorrect_size2():
     tn.SequentialNode("s", [
         tn.InputNode("in", shape=(3, 4, 5)),
         tn.AddBiasNode("b", broadcastable=(True, False, True, False))
-    ]).build()
+    ]).network().build()
 
 
 def test_add_bias_node():
     network = tn.SequentialNode("s", [
         tn.InputNode("in", shape=(3, 4, 5)),
         tn.AddBiasNode("b", broadcastable_axes=())
-    ]).build()
+    ]).network()
     bias_var = network["b"].get_variable("bias")
     fn = network.function(["in"], ["s"])
     x = np.random.randn(3, 4, 5).astype(fX)
@@ -166,7 +166,7 @@ def test_linear_mapping_node_shape():
         network = tn.SequentialNode("s", [
             tn.InputNode("in", shape=(3, 4, 5)),
             tn.LinearMappingNode("linear", output_dim=output_dim),
-        ]).build()
+        ]).network()
         weight_shape = network["linear"].get_variable("weight").shape
         output_shape = network["s"].get_variable("default").shape
         return weight_shape, output_shape
@@ -180,7 +180,7 @@ def test_linear_mapping_node():
     network = tn.SequentialNode("s", [
         tn.InputNode("in", shape=(3, 4, 5)),
         tn.LinearMappingNode("linear", output_dim=6),
-    ]).build()
+    ]).network()
     weight_var = network["linear"].get_variable("weight")
     fn = network.function(["in"], ["s"])
     x = np.random.randn(3, 4, 5).astype(fX)
@@ -197,7 +197,7 @@ def test_apply_node():
     network = tn.SequentialNode("s", [
         tn.InputNode("in", shape=(3, 4, 5)),
         tn.ApplyNode("a", fn=T.sum, shape_fn=lambda x: ()),
-    ]).build()
+    ]).network()
     fn = network.function(["in"], ["s"])
     x = np.random.randn(3, 4, 5).astype(fX)
     np.testing.assert_allclose(fn(x)[0],

@@ -26,7 +26,7 @@ def test_dense_node():
          tn.DenseNode("fc1", num_units=6),
          tn.DenseNode("fc2", num_units=7),
          tn.DenseNode("fc3", num_units=8)]
-    ).build()
+    ).network()
     x = np.random.randn(3, 4, 5).astype(fX)
     fn = network.function(["in"], ["fc3"])
     res = fn(x)[0]
@@ -40,7 +40,7 @@ def test_dense_combine_node():
          tn.DenseCombineNode("fc1", [tn.IdentityNode("i1")], num_units=6),
          tn.DenseCombineNode("fc2", [tn.IdentityNode("i2")], num_units=7),
          tn.DenseCombineNode("fc3", [tn.IdentityNode("i3")], num_units=8)]
-    ).build()
+    ).network()
     x = np.random.randn(3, 4, 5).astype(fX)
     fn = network.function(["in"], ["fc3"])
     res = fn(x)[0]
@@ -60,7 +60,7 @@ def test_dense_node_and_dense_combine_node1():
              tn.DenseNode("fc3", num_units=8)]
         ),
         inits=[treeano.inits.ConstantInit(1)]
-    ).build()
+    ).network()
     network2 = tn.HyperparameterNode(
         "hp",
         tn.SequentialNode(
@@ -71,7 +71,7 @@ def test_dense_node_and_dense_combine_node1():
              tn.DenseCombineNode("fc3", [tn.IdentityNode("i3")], num_units=8)]
         ),
         inits=[treeano.inits.ConstantInit(1)]
-    ).build()
+    ).network()
     x = np.random.randn(3, 4, 5).astype(fX)
     fn1 = network1.function(["in"], ["fc3"])
     fn2 = network2.function(["in"], ["fc3"])
@@ -91,7 +91,7 @@ def test_dense_node_and_dense_combine_node2():
              tn.toy.MultiplyConstantNode("mul", value=2)]
         ),
         inits=[treeano.inits.ConstantInit(1)]
-    ).build()
+    ).network()
     network1 = tn.HyperparameterNode(
         "hp",
         tn.SequentialNode(
@@ -103,7 +103,7 @@ def test_dense_node_and_dense_combine_node2():
                   tn.DenseNode("dense2", num_units=6)])]
         ),
         inits=[treeano.inits.ConstantInit(1)]
-    ).build()
+    ).network()
     network2 = tn.HyperparameterNode(
         "hp",
         tn.SequentialNode(
@@ -117,7 +117,7 @@ def test_dense_node_and_dense_combine_node2():
              tn.AddBiasNode("bias")]
         ),
         inits=[treeano.inits.ConstantInit(1)]
-    ).build()
+    ).network()
     x = np.random.randn(3, 4, 5).astype(fX)
     fn0 = network0.function(["in"], ["hp"])
     fn1 = network1.function(["in"], ["hp"])
@@ -140,7 +140,7 @@ def test_dense_combine_node_uses_children():
                  num_units=6)]
         ),
         inits=[treeano.inits.ConstantInit(1)]
-    ).build()
+    ).network()
     network2 = tn.HyperparameterNode(
         "hp",
         tn.SequentialNode(
@@ -153,7 +153,7 @@ def test_dense_combine_node_uses_children():
                  num_units=6)]
         ),
         inits=[treeano.inits.ConstantInit(1)]
-    ).build()
+    ).network()
     x = np.random.randn(3, 4, 5).astype(fX)
     fn1 = network1.function(["in"], ["hp"])
     fn2 = network2.function(["in"], ["hp"])
