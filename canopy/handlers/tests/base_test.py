@@ -12,7 +12,7 @@ fX = theano.config.floatX
 
 
 def test_handled_function():
-    network = tn.InputNode("i", shape=()).build()
+    network = tn.InputNode("i", shape=()).network()
     fn = canopy.handlers.handled_function(network, [], ["i"], ["i"])
     x = np.array(3, dtype=fX)
     np.testing.assert_equal(x, fn(x)[0])
@@ -27,7 +27,7 @@ def test_call_handler1():
             else:
                 assert False
 
-    network = tn.InputNode("i", shape=()).build()
+    network = tn.InputNode("i", shape=()).network()
     fn = canopy.handlers.handled_function(network,
                                           [x_equals_3()],
                                           ["i"],
@@ -61,7 +61,7 @@ def test_call_handler2():
             res[0] += self.n
             return res
 
-    network = tn.InputNode("i", shape=()).build()
+    network = tn.InputNode("i", shape=()).network()
     fn = canopy.handlers.handled_function(network,
                                           [plus_n(42), x_equals_3()],
                                           ["i"],
@@ -85,7 +85,7 @@ def test_call_handler3():
             else:
                 assert False
 
-    network = tn.InputNode("i", shape=()).build()
+    network = tn.InputNode("i", shape=()).network()
     fn = canopy.handlers.handled_function(network,
                                           [x_equals_3(), x_equals_3()],
                                           ["i"],
@@ -106,7 +106,7 @@ def test_build_handler1():
         def transform_network(self, network):
             return network
 
-    network = tn.InputNode("i", shape=()).build()
+    network = tn.InputNode("i", shape=()).network()
     fn = canopy.handlers.handled_function(network,
                                           [network_identity()],
                                           ["i"],
@@ -119,9 +119,9 @@ def test_build_handler2():
     class new_network(canopy.handlers.NetworkHandlerImpl):
 
         def transform_network(self, network):
-            return tn.InputNode("new_node", shape=()).build()
+            return tn.InputNode("new_node", shape=()).network()
 
-    network = tn.InputNode("i", shape=()).build()
+    network = tn.InputNode("i", shape=()).network()
     fn = canopy.handlers.handled_function(network,
                                           [new_network()],
                                           ["new_node"],
@@ -138,9 +138,9 @@ def test_build_handler3():
                 "seq",
                 [network.root_node,
                  tn.toy.AddConstantNode("ac", value=42)]
-            ).build()
+            ).network()
 
-    network = tn.InputNode("i", shape=()).build()
+    network = tn.InputNode("i", shape=()).network()
     fn = canopy.handlers.handled_function(network,
                                           [add_42()],
                                           ["i"],

@@ -65,7 +65,7 @@ with_updates = tn.HyperparameterNode(
          )}),
     loss_function=treeano.utils.categorical_crossentropy_i32,
 )
-network = with_updates.build()
+network = with_updates.network()
 
 train_fn = network.function(["x", "y"], ["cost"], include_updates=True)
 # TODO remove dropout for valid_fn

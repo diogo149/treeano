@@ -59,7 +59,7 @@ with_updates = tn.HyperparameterNode(
     learning_rate=0.1,
     loss_function=treeano.utils.squared_error,
 )
-network = with_updates.build()
+network = with_updates.network()
 
 train_fn = network.function(["x", "y"], ["cost"], include_updates=True)
 valid_fn = network.function(["x"], ["model"])
