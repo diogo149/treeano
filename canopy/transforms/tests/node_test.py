@@ -32,3 +32,27 @@ def test_remove_dropout():
 
     fails()
     np.testing.assert_equal(x, fn2(x)[0])
+
+
+def test_replace_node():
+    network1 = tn.SequentialNode(
+        "seq",
+        [tn.InputNode("i", shape=(3, 4, 5)),
+         tn.DropoutNode("do", dropout_probability=0.5)]).build()
+    network2 = canopy.transforms.replace_node(network1,
+                                              {"do": tn.IdentityNode("do")})
+    network2.build()
+
+    assert "DropoutNode" in str(network1.root_node)
+    assert "DropoutNode" not in str(network2.root_node)
+
+    fn1 = network1.function(["i"], ["do"])
+    fn2 = network2.function(["i"], ["do"])
+    x = np.random.randn(3, 4, 5).astype(fX)
+
+    @nt.raises(AssertionError)
+    def fails():
+        np.testing.assert_equal(x, fn1(x)[0])
+
+    fails()
+    np.testing.assert_equal(x, fn2(x)[0])

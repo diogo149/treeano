@@ -19,3 +19,18 @@ def remove_dropout(network, **kwargs):
             return node
 
     return fns.transform_root_node_postwalk(network, inner, **kwargs)
+
+
+def replace_node(network, name_to_node, **kwargs):
+    """
+    name_to_node:
+    map from name of the node to replace, to the new node
+    """
+
+    def inner(node):
+        if node.name in name_to_node:
+            return name_to_node[node.name]
+        else:
+            return node
+
+    return fns.transform_root_node_postwalk(network, inner, **kwargs)
