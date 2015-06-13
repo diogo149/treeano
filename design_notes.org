@@ -846,10 +846,21 @@
   - [ ] fix handlers.nodes + test
   - [ ] mnist w/o dropout
 - add adam state to network
+- copy node function
+  - maybe?
+  - input: new name
+  - output: copy of node with new name
+  - problem: subtree will have name collisions
+  - use cases
+    - duplicating the same node over and over
 - test mnist vs lasagne - should have same performance
 ** canopy.handlers
 - build
   - run in different process (w/ different GPU)
+    - https://groups.google.com/forum/#!msg/theano-users/niQ8j_TNoqM/Y5_1ETIc3WUJ
+    - use below to manually set gpu (before that, shared variables are created in the CPU):
+      import theano.sandbox.cuda
+      theano.sandbox.cuda.use(theano.config.device)
   - stopping conditions
     - time
     - # iterations
@@ -1095,6 +1106,8 @@
       - eg. $NODE:$VAR
     - TODO: also have a defined child name separator
       - eg. dense_bias, dense_linear
+- save previous n layer outputs using shared variables
+  - eg. https://github.com/tariqdaouda/Mariana/blob/master/Mariana/layers.py
 - make sure all intermediate variables are named
   - for ease of debugging
 - ability to instrument debugging in only a subtree

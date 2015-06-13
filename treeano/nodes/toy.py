@@ -44,6 +44,7 @@ class MultiplyConstantNode(core.NodeImpl):
         )
 
 
+@core.register_node("constant_updater")
 class ConstantUpdaterNode(core.Wrapper1NodeImpl):
 
     """
