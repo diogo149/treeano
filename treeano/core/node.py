@@ -2,7 +2,7 @@ import abc
 
 import six
 
-from .network import build_network
+from .network import build_network, Network
 
 
 class NodeAPI(six.with_metaclass(abc.ABCMeta, object)):
@@ -115,6 +115,9 @@ class NodeAPI(six.with_metaclass(abc.ABCMeta, object)):
     # ------------------------------------------------------------
     # utilities that are not part of the core API but nice to have
     # ------------------------------------------------------------
+
+    def network(self, *args, **kwargs):
+        return Network(self, *args, **kwargs)
 
     def build(self):
         return build_network(self)

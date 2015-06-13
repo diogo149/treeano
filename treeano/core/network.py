@@ -41,7 +41,14 @@ class Network(object):
         """
         initialize network state
         """
-        assert not self.is_built
+        # make building idempotent
+        # ---
+        # this allows building to be lazy. this way, if we don't have to
+        # do all the work until it is needed
+        # example use case: sequentially applying several transforms to a
+        # network
+        if self.is_built:
+            return
         self.graph = TreeanoGraph(self.root_node)
         # set node state for each node to be empty
         # ---
@@ -113,14 +120,14 @@ class Network(object):
         """
         returns a network relative to a single node
         """
-        assert self.is_built
+        self.build()
         return RelativeNetwork(self, node)
 
     def __getitem__(self, node_name):
         """
         sugar for accessing nodes in a graph
         """
-        assert self.is_built
+        self.build()
         node = self.graph.name_to_node[node_name]
         return self.relative_network(node)
 
@@ -137,7 +144,7 @@ class Network(object):
         example:
         network.function(["input_node"], ["fc_node", "loss", ("conv1", "W")])
         """
-        assert self.is_built
+        self.build()
         if outputs is None:
             outputs = []
         assert isinstance(inputs, list)
@@ -452,6 +459,9 @@ class RelativeNetwork(object):
 
 
 def build_network(root_node):
+    # FIXME delete this
+    import warnings
+    warnings.warn("build_network is deprecated - please do not use")
     network = Network(root_node)
     network.build()
     return network
