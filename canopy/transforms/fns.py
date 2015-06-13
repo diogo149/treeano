@@ -4,10 +4,10 @@ from .. import network_utils
 from .. import walk_utils
 
 
-def transform_root_node(network, fn, priority="post_override"):
+def network_to_kwargs(network, priority="post_override"):
     """
-    takes in a function that manipulates a node tree and returns a transformed
-    network
+    converts a network into kwargs that could be used for constructing
+    the same network while sharing shared variables
 
     priority:
     one of:
@@ -24,12 +24,9 @@ def transform_root_node(network, fn, priority="post_override"):
                         "post_override",
                         "pre_default",
                         "post_default"}
-
     root_node = network.root_node
     override_hyperparameters = network.override_hyperparameters
     default_hyperparameters = network.default_hyperparameters
-
-    new_root_node = fn(root_node)
 
     if network.is_built:
         if priority.endswith("override"):
@@ -50,11 +47,21 @@ def transform_root_node(network, fn, priority="post_override"):
             # priority starts with post
             inits.append(preallocated_init)
 
-    return treeano.Network(
-        root_node=new_root_node,
+    return dict(
+        root_node=root_node,
         override_hyperparameters=override_hyperparameters,
         default_hyperparameters=default_hyperparameters,
     )
+
+
+def transform_root_node(network, fn, **kwargs):
+    """
+    takes in a function that manipulates a node tree and returns a transformed
+    network
+    """
+    network_kwargs = network_to_kwargs(network, **kwargs)
+    network_kwargs["root_node"] = fn(network_kwargs["root_node"])
+    return treeano.Network(**network_kwargs)
 
 
 def transform_node_data(network, fn, **kwargs):
@@ -86,6 +93,7 @@ def transform_root_node_postwalk(network, fn, **kwargs):
             return obj
 
     def inner(root_node):
+        # TODO use more efficient walk function
         return walk_utils.walk(root_node, postwalk_fn=postwalk_fn)
 
     return transform_root_node(network, inner, **kwargs)

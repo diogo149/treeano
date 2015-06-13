@@ -9,6 +9,7 @@ import theano
 import theano.tensor as T
 import treeano
 import treeano.nodes as tn
+import canopy
 
 fX = theano.config.floatX
 
@@ -66,10 +67,20 @@ with_updates = tn.HyperparameterNode(
     loss_function=treeano.utils.categorical_crossentropy_i32,
 )
 network = with_updates.network()
+network.build()  # build eagerly to share weights
 
 train_fn = network.function(["x", "y"], ["cost"], include_updates=True)
-# TODO remove dropout for valid_fn
-valid_fn = network.function(["x", "y"], ["cost", "preds"])
+
+# different ways of disabling dropout
+if False:
+    network_no_dropout = canopy.transforms.remove_dropout(network)
+    valid_fn = network_no_dropout.function(["x", "y"], ["cost", "preds"])
+else:
+    valid_fn = canopy.handled_function(
+        network,
+        [canopy.handlers.override_hyperparameters(dropout_probability=0)],
+        ["x", "y"],
+        ["cost", "preds"])
 
 
 # ################################# training #################################

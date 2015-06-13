@@ -17,6 +17,7 @@ from simple import (ReferenceNode,
                     HyperparameterNode,
                     InputNode,
                     IdentityNode,
+                    ConstantNode,
                     AddBiasNode,
                     LinearMappingNode,
                     ApplyNode)

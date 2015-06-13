@@ -1,3 +1,4 @@
+import toolz
 import treeano
 
 from . import base
@@ -33,12 +34,13 @@ class OverrideHyperparameters(base.NetworkHandlerImpl):
         self.hyperparameters = kwargs
 
     def transform_network(self, network):
-        new_override_hyperparameters = dict(network.override_hyperparameters)
-        new_override_hyperparameters.update(self.hyperparameters)
-        return treeano.Network(
-            network.root_node,
-            override_hyperparameters=new_override_hyperparameters,
-            default_hyperparameters=network.default_hyperparameters,
-        )
+        def update_fn(override_hyperparameters):
+            return toolz.merge(override_hyperparameters,
+                               self.hyperparameters)
+
+        kwargs = toolz.update_in(transforms.fns.network_to_kwargs(network),
+                                 ["override_hyperparameters"],
+                                 update_fn)
+        return treeano.Network(**kwargs)
 
 override_hyperparameters = OverrideHyperparameters

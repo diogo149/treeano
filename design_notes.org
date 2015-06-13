@@ -836,16 +836,7 @@
 - should shared variables contain metadata on which axes are their input axes and which are their output axes
   - useful for initialization
 ** v2
-- TODO
-  - [X] use override_hyperparameters
-  - [X] make find_hyperparameters
-  - [X] use find_hyperparmaters for inits
-  - [X] create to_shared_dict(Network)
-  - [X] test to_shared_dict
-  - [X] create utils for model transformations
-  - [X] create model transformations
-  - [ ] fix handlers.nodes + test
-  - [ ] mnist w/o dropout
+- think about: how to compose together function handlers (eg. in training loop)
 - add adam state to network
 - copy node function
   - maybe?
@@ -1173,13 +1164,6 @@
       - you show how to get the complex result, not the complex result on its own
       - readable
   - ie. AddDropoutBeforeDenseNode
-- create graph transformations
-  - eg.
-    - substitution
-      - eg. replace ReLU -> PReLU / leaky ReLU
-        - use an update-in operation on the architecture as data that does a tree walk
-      - to substitute in only a subtree
-    - adding different initialization
 ** code quality
 - consistent importing
   - treeano.nodes as tn
