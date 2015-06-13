@@ -842,9 +842,24 @@
   - [X] use find_hyperparmaters for inits
   - [X] create to_shared_dict(Network)
   - [X] test to_shared_dict
+  - [ ] create utils for model transformations
   - [ ] create model transformations
   - [ ] fix handlers.nodes + test
   - [ ] mnist w/o dropout
+- canopy.transformations.
+  - remove_dropout
+    - replaces dropout with identity
+  - remove_node
+    - replaces node with single child
+  - remove_subtree
+    - replaces node with identity
+  - remove_parent
+    - replaces parent with node
+  - something to transform nodes of one type to another
+    - eg. dropout to gaussianfastdropout
+  - replace_node
+    - replace node with a new node
+    - eg. replace input node with some shared variable container (StateNode?) for optimizing input wrt parameters as a visualiztion
 - add adam state to network
 - copy node function
   - maybe?
@@ -1384,17 +1399,3 @@
 - visualization
   - http://deeplearning.net/tutorial/utilities.html
     - code to plot images/filters
-- canopy.transformations.
-  - remove_dropout
-    - replaces dropout with identity
-  - remove_node
-    - replaces node with single child
-  - remove_subtree
-    - replaces node with identity
-  - remove_parent
-    - replaces parent with node
-  - something to transform nodes of one type to another
-    - eg. dropout to gaussianfastdropout
-  - replace_node
-    - replace node with a new node
-    - eg. replace input node with some shared variable container (StateNode?) for optimizing input wrt parameters as a visualiztion

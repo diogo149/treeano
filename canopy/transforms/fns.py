@@ -79,7 +79,9 @@ def transform_root_node_postwalk(network, fn, **kwargs):
     """
     def postwalk_fn(obj):
         if isinstance(obj, treeano.core.NodeAPI):
-            return fn(obj)
+            res = fn(obj)
+            assert isinstance(res, treeano.core.NodeAPI)
+            return res
         else:
             return obj
 

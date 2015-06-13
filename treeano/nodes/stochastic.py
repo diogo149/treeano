@@ -9,6 +9,7 @@ from .. import utils
 floatX = theano.config.floatX
 
 
+@core.register_node("dropout")
 class DropoutNode(core.NodeImpl):
 
     """
