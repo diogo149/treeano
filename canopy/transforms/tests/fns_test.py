@@ -22,11 +22,12 @@ def test_transform_root_node():
                  output_dim=15,
                  inits=[treeano.inits.NormalWeightInit(15.0)])]),
         value=-0.1,
-    ).build()
+    ).network()
+    # perform build eagerly to initialize weights
+    network1.build()
 
     network2 = canopy.transforms.transform_root_node(network1,
                                                      fn=lambda x: x)
-    network2.build()
 
     fn1 = network1.function(["i"], ["lm"])
     fn2 = network2.function(["i"], ["lm"])
@@ -51,7 +52,7 @@ def test_transform_root_node_postwalk():
                  output_dim=15,
                  inits=[treeano.inits.NormalWeightInit(15.0)])]),
         value=-0.1,
-    ).build()
+    ).network()
 
     def log_name(node):
         all_names.append(node.name)
@@ -84,7 +85,7 @@ def test_transform_root_node_postwalk():
 
 
 def test_transform_node_data_postwalk():
-    network1 = tn.InputNode("i", shape=(3, 4, 5)).build()
+    network1 = tn.InputNode("i", shape=(3, 4, 5)).network()
 
     def change_it_up(obj):
         if obj == (3, 4, 5):
@@ -96,7 +97,6 @@ def test_transform_node_data_postwalk():
 
     network2 = canopy.transforms.transform_node_data_postwalk(network1,
                                                               change_it_up)
-    network2.build()
     x = np.random.randn(6, 7, 8).astype(fX)
     fn = network2.function(["foo"], ["foo"])
     np.testing.assert_equal(x, fn(x)[0])

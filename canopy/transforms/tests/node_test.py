@@ -15,9 +15,8 @@ def test_remove_dropout():
     network1 = tn.SequentialNode(
         "seq",
         [tn.InputNode("i", shape=(3, 4, 5)),
-         tn.DropoutNode("do", dropout_probability=0.5)]).build()
+         tn.DropoutNode("do", dropout_probability=0.5)]).network()
     network2 = canopy.transforms.remove_dropout(network1)
-    network2.build()
 
     assert "DropoutNode" in str(network1.root_node)
     assert "DropoutNode" not in str(network2.root_node)
@@ -38,10 +37,9 @@ def test_replace_node():
     network1 = tn.SequentialNode(
         "seq",
         [tn.InputNode("i", shape=(3, 4, 5)),
-         tn.DropoutNode("do", dropout_probability=0.5)]).build()
+         tn.DropoutNode("do", dropout_probability=0.5)]).network()
     network2 = canopy.transforms.replace_node(network1,
                                               {"do": tn.IdentityNode("do")})
-    network2.build()
 
     assert "DropoutNode" in str(network1.root_node)
     assert "DropoutNode" not in str(network2.root_node)

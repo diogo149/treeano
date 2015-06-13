@@ -17,7 +17,7 @@ def test_call_after_every():
     def save_val(x):
         vals.append(x)
 
-    network = tn.InputNode("i", shape=()).build()
+    network = tn.InputNode("i", shape=()).network()
     fn = canopy.handlers.handled_function(
         network,
         [canopy.handlers.call_after_every(3, save_val)],

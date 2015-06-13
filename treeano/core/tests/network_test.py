@@ -11,11 +11,10 @@ def test_find_hyperparameters():
     mid_foo = FooNode("mid", [last_foo], a=2, c=3)
     top_foo = FooNode("top", [mid_foo], a=4, b=5, c=6)
 
-    network = core.Network(
-        top_foo,
+    network = top_foo.network(
         default_hyperparameters={"a": 7, "b": 8, "c": 9},
-        override_hyperparameters={"a": 10, "b": 11, "c": 12})
-    network.build()
+        override_hyperparameters={"a": 10, "b": 11, "c": 12}
+    )
 
     nt.assert_equal([10, 11, 12, 1, 2, 3, 4, 5, 6, 13, 7, 8, 9],
                     list(network["last"].find_hyperparameters(["a", "b", "c"],
