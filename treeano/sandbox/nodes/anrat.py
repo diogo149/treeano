@@ -126,6 +126,7 @@ class ANRATNode(treeano.WrapperNodeImpl):
             [])))
         # setting initial lambda to 5 instead of 10, because 10 is too large
         # for the default parameters
+        # TODO might also want to add clipping to cap the value of lambda
         initial_lambda = network.find_hyperparameter(["anrat_initial_lambda"],
                                                      5)
         if ANRAT_USE_LOG_LAMBDA:
