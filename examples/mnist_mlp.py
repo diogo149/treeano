@@ -48,7 +48,7 @@ model = tn.HyperparameterNode(
          tn.ReLUNode("relu2"),
          tn.DropoutNode("do2"),
          tn.DenseNode("fc3"),
-         tn.SoftmaxNode("preds"),
+         tn.SoftmaxNode("pred"),
          ]),
     num_units=512,
     dropout_probability=0.5,
@@ -61,7 +61,7 @@ with_updates = tn.HyperparameterNode(
         "adam",
         {"subtree": model,
          "cost": tn.PredictionCostNode("cost", {
-             "preds": tn.ReferenceNode("preds_ref", reference="model"),
+             "pred": tn.ReferenceNode("pred_ref", reference="model"),
              "target": tn.InputNode("y", shape=(None,), dtype="int32")},
          )}),
     loss_function=treeano.utils.categorical_crossentropy_i32,
@@ -74,13 +74,13 @@ train_fn = network.function(["x", "y"], ["cost"], include_updates=True)
 # different ways of disabling dropout
 if False:
     network_no_dropout = canopy.transforms.remove_dropout(network)
-    valid_fn = network_no_dropout.function(["x", "y"], ["cost", "preds"])
+    valid_fn = network_no_dropout.function(["x", "y"], ["cost", "pred"])
 else:
     valid_fn = canopy.handled_function(
         network,
         [canopy.handlers.override_hyperparameters(dropout_probability=0)],
         ["x", "y"],
-        ["cost", "preds"])
+        ["cost", "pred"])
 
 
 # ################################# training #################################

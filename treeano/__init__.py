@@ -1,5 +1,6 @@
 __all__ = """
 lasagne
+sandbox
 visualization
 """.split()
 

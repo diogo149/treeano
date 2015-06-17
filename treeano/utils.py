@@ -23,8 +23,8 @@ def first(f, *args):
     return f
 
 
-def squared_error(preds, target):
-    return (preds - target) ** 2
+def squared_error(pred, target):
+    return (pred - target) ** 2
 
 
 def categorical_crossentropy_i32(pred, target):

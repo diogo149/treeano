@@ -824,8 +824,10 @@
 * TODOs
 ** annoyances
 - writing recurrent nets using scannode is much worse than writing in theano
+- having an explicit batch dimension seems to cause quit a bit of complexity
 - hyperparameternode's seem unnecessary
   - maybe we should be able to add hyperparameters anywhere in the tree
+- having everything with "Node" at the end is unneccessary
 ** decisions to make
 - hyperparameters that affect initialization
   - eg. reading in in_axes and out_axes from the network
@@ -836,6 +838,18 @@
 - should shared variables contain metadata on which axes are their input axes and which are their output axes
   - useful for initialization
 ** v2
+- high priority
+  - batch normalization
+  - conv
+  - pooling
+  - chunking
+    - add flag for caching
+      - cache=None or "hash" or "id"
+        - hash caches on numpy array hash
+        - id caches on exact array
+      - optimization to make datasets that fit in memory fast
+    - flag for random order of minibatches
+- add adam state to network
 - attaching handlers to networks instead of functions
   - rationale:
     - composing together function handlers
@@ -843,15 +857,24 @@
     - sharing handler state
       - eg. shared variable for chunking
     - serializing networks with preprpocessing
-- add adam state to network
-- copy node function
-  - maybe?
-  - input: new name
-  - output: copy of node with new name
-  - problem: subtree will have name collisions
-  - use cases
-    - duplicating the same node over and over
-- test mnist vs lasagne - should have same performance
+  - make handled network class
+    - override .function
+      - call handled_function
+    - add .wrap_handlers
+      - returns new network
+    - add .wrap_handler
+    - add .get_handlers
+      - to get all handlers out
+    - get .get_base_network
+      - return the original network
+- issue: serialization of handlers
+  - what if handlers have theano variables as state? that may break when serializing
+    - solution: need to implement getstate/setstate
+  - how to properly deserialize handlers for handled networks
+    - ie.
+      - handlers are normally shared across multiple locations
+        - eg. multiple handled networks, multiple handled functions
+      - except when serializing/deserializing
 ** canopy.handlers
 - build
   - run in different process (w/ different GPU)
@@ -1131,7 +1154,6 @@
 - learning rate decay node
   - represents learning rate parameter as theano var w/ updates
 - demos
-  - vanilla mnist
   - fully connected layer mnist with num_hidden, activation specified once
   - separate conv layers from FC layers
     - different dropout and L2 for conv
@@ -1192,32 +1214,6 @@
 - testing
   - add serialization tests for all nodes
 - copy downhill.test.util tests for optimizers
-** future
-- make python3 compatible
-- use metaclass for registering classes for serialization
-- look into drawing:
-  - https://github.com/Lasagne/Lasagne/issues/174
-    - https://github.com/ebenolson/Lasagne/blob/master/examples/draw_net.py
-- javascript interface to expand nodes
-  - more expanded = more low-level
-- parallelism for running gpu networks on a different process
-  - theano error (with forking after a cuda context is created)
-    - https://groups.google.com/forum/#!topic/theano-users/Pu4YKlZKwm4
-    - solution:
-      - start an additional thread initially to run all cuda stuff
-        - https://gist.github.com/albertz/4177e40d41cb7f9f7c68
-        - advantage:
-          - can use multiple GPUs
-- think about:
-  - recursive NN
-  - RNN
-    - beam search
-    - bidirectional
-    - nested recurrence
-      - eg. scan in scan (like a non-fixed size ReNet)
-    - attentional models
-      - look into attentional interfaces
-        - https://github.com/bartvm/blocks/blob/master/blocks/bricks/attention.py
 ** other libs / snippets of code that may be useful
 - nodes for data augmentation
   - eg. https://groups.google.com/forum/#!topic/lasagne-users/kRlgOrGQOH4
@@ -1377,3 +1373,31 @@
 - visualization
   - http://deeplearning.net/tutorial/utilities.html
     - code to plot images/filters
+** possible issues
+- when freezing training state, dataset state won't be frozen
+** future
+- make python3 compatible
+- use metaclass for registering classes for serialization
+- look into drawing:
+  - https://github.com/Lasagne/Lasagne/issues/174
+    - https://github.com/ebenolson/Lasagne/blob/master/examples/draw_net.py
+- javascript interface to expand nodes
+  - more expanded = more low-level
+- parallelism for running gpu networks on a different process
+  - theano error (with forking after a cuda context is created)
+    - https://groups.google.com/forum/#!topic/theano-users/Pu4YKlZKwm4
+    - solution:
+      - start an additional thread initially to run all cuda stuff
+        - https://gist.github.com/albertz/4177e40d41cb7f9f7c68
+        - advantage:
+          - can use multiple GPUs
+- think about:
+  - recursive NN
+  - RNN
+    - beam search
+    - bidirectional
+    - nested recurrence
+      - eg. scan in scan (like a non-fixed size ReNet)
+    - attentional models
+      - look into attentional interfaces
+        - https://github.com/bartvm/blocks/blob/master/blocks/bricks/attention.py

@@ -40,17 +40,17 @@ class ElementwisePredictionCostNode(core.WrapperNodeImpl):
     """
 
     children_container = core.DictChildrenContainerSchema(
-        preds=core.ChildContainer,
+        pred=core.ChildContainer,
         target=core.ChildContainer,
     )
     hyperparameter_names = ("loss_function",)
-    input_keys = ("preds_output", "target_output")
+    input_keys = ("pred_output", "target_output")
 
     def init_state(self, network):
         """
-        by default, forward input to both preds and target
+        by default, forward input to both pred and target
         """
-        for child_name in ["preds", "target"]:
+        for child_name in ["pred", "target"]:
             node = self._children[child_name].children
             # forward input
             network.forward_input_to(node.name)
@@ -58,12 +58,12 @@ class ElementwisePredictionCostNode(core.WrapperNodeImpl):
             network.take_output_from(node.name,
                                      to_key="%s_output" % child_name)
 
-    def compute_output(self, network, preds, target):
+    def compute_output(self, network, pred, target):
         loss_function = network.find_hyperparameter(["loss_function"])
         network.create_variable(
             "default",
-            variable=loss_function(preds.variable, target.variable),
-            shape=preds.shape,
+            variable=loss_function(pred.variable, target.variable),
+            shape=pred.shape,
             tags={"output"}
         )
 

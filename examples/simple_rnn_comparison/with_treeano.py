@@ -40,7 +40,7 @@ model = tn.HyperparameterNode(
          tn.scan.ScanNode(
              "scan",
              tn.DenseNode("fc", num_units=1)),
-         tn.SigmoidNode("preds"),
+         tn.SigmoidNode("pred"),
          ]),
     inits=[treeano.inits.NormalWeightInit(0.01)],
     batch_axis=None,
@@ -53,7 +53,7 @@ with_updates = tn.HyperparameterNode(
         "adam",
         {"subtree": model,
          "cost": tn.PredictionCostNode("cost", {
-             "preds": tn.ReferenceNode("preds_ref", reference="model"),
+             "pred": tn.ReferenceNode("pred_ref", reference="model"),
              "target": tn.InputNode("y", shape=(None, 1))},
          )}),
     learning_rate=0.1,
@@ -79,5 +79,5 @@ for i in range(N_TRAIN):
 print("total_time: %s" % (time.time() - st))
 
 inputs, outputs = binary_toy_data(lag=LAG, length=LENGTH)
-preds = valid_fn(inputs.reshape(-1, 1))[0].flatten()
-print(np.round(preds) == outputs)
+pred = valid_fn(inputs.reshape(-1, 1))[0].flatten()
+print(np.round(pred) == outputs)

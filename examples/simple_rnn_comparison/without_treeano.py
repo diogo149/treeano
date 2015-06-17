@@ -67,5 +67,5 @@ for i in range(N_TRAIN):
 print "total_time: %s" % (time.time() - st)
 
 inputs, outputs = binary_toy_data(lag=LAG, length=LENGTH)
-preds = valid_fn(inputs.reshape(-1, 1)).flatten()
-print(np.round(preds) == outputs)
+pred = valid_fn(inputs.reshape(-1, 1)).flatten()
+print(np.round(pred) == outputs)
