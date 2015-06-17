@@ -828,6 +828,13 @@
 - hyperparameternode's seem unnecessary
   - maybe we should be able to add hyperparameters anywhere in the tree
 - having everything with "Node" at the end is unneccessary
+- all nodes with shared state need to make sure that they get inits from the network
+  - also requires the same concat line every time
+    #+BEGIN_SRC python
+      inits = list(toolz.concat(network.find_hyperparameters(
+          ["inits"],
+          [])))
+    #+END_SRC
 ** decisions to make
 - hyperparameters that affect initialization
   - eg. reading in in_axes and out_axes from the network

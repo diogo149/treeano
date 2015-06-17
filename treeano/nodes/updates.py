@@ -68,10 +68,16 @@ class StandardUpdatesNode(six.with_metaclass(abc.ABCMeta,
     def new_update_deltas(self, network):
         # compute parameters
         # ---
-        # NOTE: only computing for parameters in subtree, not in cost
-        subtree = self._children["subtree"].children
-        subtree_network = network[subtree.name]
-        parameters = subtree_network.find_vws_in_subtree(tags=["parameter"])
+        if False:
+            # only computing for parameters in subtree, not in cost
+            subtree = self._children["subtree"].children
+            parameters_network = network[subtree.name]
+        else:
+            # computing for parameters in "subtree" AND "cost"
+            # ---
+            # example use case: ANRAT - a cost function with parameters
+            parameters_network = network
+        parameters = parameters_network.find_vws_in_subtree(tags=["parameter"])
 
         # calculate cost
         cost = self._children["cost"].children
