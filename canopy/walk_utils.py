@@ -113,8 +113,7 @@ def collection_walk(obj,
 
     def perform_walk(obj):
         if id(obj) in parent_ids:
-            raise CyclicWalkException(
-                "Cannot walk recursive structures")
+            raise CyclicWalkException("Cannot walk recursive structures")
 
         # add id to list of parent ids, to watch for cycles
         parent_ids.add(id(obj))
