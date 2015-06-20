@@ -23,6 +23,16 @@ def first(f, *args):
     return f
 
 
+def stable_softmax(x):
+    """
+    numerical stabilization to avoid f32 overflow
+    http://deeplearning.net/software/theano/library/tensor/nnet/nnet.html#tensor.nnet.softmax
+    """
+    e_x = T.exp(x - x.max(axis=1, keepdims=True))
+    out = e_x / e_x.sum(axis=1, keepdims=True)
+    return out
+
+
 def squared_error(pred, target):
     return (pred - target) ** 2
 

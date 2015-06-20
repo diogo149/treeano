@@ -5,6 +5,15 @@ import theano.tensor as T
 
 import treeano
 
+fX = theano.config.floatX
+
+
+def test_stable_softmax():
+    x = theano.shared(np.random.randn(50, 50).astype(fX))
+    s1 = T.nnet.softmax(x).eval()
+    s2 = treeano.utils.stable_softmax(x).eval()
+    np.testing.assert_equal(s1, s2)
+
 
 def _clone_test_case(clone_fn):
     x = T.matrix("x")
