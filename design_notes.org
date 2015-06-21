@@ -847,7 +847,6 @@
   - useful for initialization
 ** v2
 - high priority
-  - batch normalization
   - conv
   - pooling
   - chunking

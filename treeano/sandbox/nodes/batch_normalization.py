@@ -94,11 +94,11 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
         parameter_axes = find_axes(
             positive_keys=["parameter_axes"],
             negative_keys=["non_parameter_axes"])
-        parameter_broadcastable = [idx not in parameter_axes
-                                   for idx in range(in_vw.ndim)]
-        parameter_shape = [1 if b else s
-                           for b, s in zip(parameter_broadcastable,
-                                           in_vw.shape)]
+        parameter_broadcastable = tuple([idx not in parameter_axes
+                                         for idx in range(in_vw.ndim)])
+        parameter_shape = tuple([1 if b else s
+                                 for b, s in zip(parameter_broadcastable,
+                                                 in_vw.shape)])
         # axes to normalize over - ie. subtract the mean across these axes
         normalization_axes = find_axes(
             positive_keys=["normalization_axes"],
