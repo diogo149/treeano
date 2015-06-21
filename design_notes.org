@@ -1054,8 +1054,6 @@
   - save hp as shared state
   - plug in an annealing algorithm
 - add testing files in examples/ to test cases
-- add more initializations
-  - https://github.com/Lasagne/Lasagne/blob/master/lasagne/init.py
 - have children container verify every element is of type NodeAPI
 - rename UpdateScaleNode to MultiplyUpdatesNode
 - rename ChildrenContainer.children
@@ -1090,7 +1088,6 @@
 - make sure shapes can handle None's for polymorphism
 - use assertions for outputs that should not be used
 - grep for FIXME's
-  - separate out lasagne initializations from initializations
 - try dropout network w/ train / test
   - hyperparameter: have default of enable_dropout be deterministic
 - function to wrap lasagne layer boilerplate

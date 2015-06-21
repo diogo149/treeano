@@ -117,7 +117,7 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
         gamma_inits = list(toolz.concat(network.find_hyperparameters(
             ["gamma_inits",
              "inits"],
-            # FIXME uniform init between 0.95 and 1.05
+            # TODO uniform init between 0.95 and 1.05
             [treeano.inits.ConstantInit(1.0)])))
         beta_inits = list(toolz.concat(network.find_hyperparameters(
             ["beta_inits",
