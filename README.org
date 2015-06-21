@@ -6,7 +6,8 @@ This is currently a work in progress!
 - Do you want to create novel architectures? Use [[https://github.com/Lasagne/Lasagne][Lasagne]].
 - Do you want to create novel architectures that are inelegant to do in Lasagne? Use [[https://github.com/Lasagne/Lasagne][Lasagne]].
 - Have you created these novel architectures that are inelegent to do in Lasagne? If you can live with it, keep using [[https://github.com/Lasagne/Lasagne][Lasagne]].
-- Otherwise, maybe this is a good fit. (:
+- Are they inelegent because they are recurrent? Try [[https://github.com/mila-udem/blocks][blocks]].
+- Still not satisfied? Maybe this is a good fit. (:
 * Dependencies
 - required
   - numpy
@@ -15,7 +16,7 @@ This is currently a work in progress!
   - six
   - toolz
 - optional
-  - lasagne
+  - lasagne (recommended - for conv/pooling layers)
   - pydot
   - pygraphviz
   - scikit-learn (for the examples)
