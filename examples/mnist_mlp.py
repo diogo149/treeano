@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import
 from __future__ import print_function, unicode_literals
 
+import time
 import numpy as np
 import sklearn.datasets
 import sklearn.cross_validation
@@ -69,9 +70,12 @@ with_updates = tn.HyperparameterNode(
 network = with_updates.network()
 network.build()  # build eagerly to share weights
 
+
+BATCH_SIZE = 500
 train_fn = canopy.handled_function(
     network,
-    [canopy.handlers.chunk_variables(batch_size=100, variables=["x", "y"])],
+    [canopy.handlers.chunk_variables(batch_size=BATCH_SIZE,
+                                     variables=["x", "y"])],
     ["x", "y"],
     ["cost"],
     include_updates=True)
@@ -79,7 +83,8 @@ train_fn = canopy.handled_function(
 valid_fn = canopy.handled_function(
     network,
     [canopy.handlers.override_hyperparameters(dropout_probability=0),
-     canopy.handlers.chunk_variables(batch_size=100, variables=["x", "y"])],
+     canopy.handlers.chunk_variables(batch_size=BATCH_SIZE,
+                                     variables=["x", "y"])],
     ["x", "y"],
     ["cost", "pred"])
 
@@ -88,13 +93,14 @@ valid_fn = canopy.handled_function(
 
 print("Starting training...")
 
-num_epochs = 25
-batch_size = 100
-for epoch_num in range(num_epochs):
+NUM_EPOCHS = 25
+for epoch_num in range(NUM_EPOCHS):
+    start_time = time.time()
     train_loss, = train_fn(X_train, y_train)
     valid_loss, probabilities = valid_fn(X_valid, y_valid)
     predicted_classes = np.argmax(probabilities, axis=1)
     # calculate accuracy for this epoch
     accuracy = sklearn.metrics.accuracy_score(y_valid, predicted_classes)
-    print("Epoch: %d, train_loss=%f, valid_loss=%f, valid_accuracy=%f"
-          % (epoch_num + 1, train_loss, valid_loss, accuracy))
+    total_time = time.time() - start_time
+    print("Epoch: %d, train_loss=%f, valid_loss=%f, accuracy=%f, time=%fs"
+          % (epoch_num + 1, train_loss, valid_loss, accuracy, total_time))
