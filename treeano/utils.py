@@ -1,3 +1,4 @@
+import numpy as np
 import theano
 import theano.tensor as T
 
@@ -66,3 +67,10 @@ def deep_clone(output, replace, **kwargs):
         assert hasattr(v, "default_update")
         v.default_update = update
     return cloned_output
+
+
+def shared_empty(ndim, dtype, name=None):
+    """
+    create shared variable with placeholder data
+    """
+    return theano.shared(np.zeros([1] * ndim, dtype=dtype), name=name)

@@ -131,11 +131,33 @@ class Network(object):
         node = self.graph.name_to_node[node_name]
         return self.relative_network(node)
 
+    def network_variable(self, query):
+        """
+        converts node names into their corresponding theano variables,
+        with optional keys of which of the node's outputs to use
+
+        eg.
+        network.network_variable("input")
+        network.network_variable(("fc1", "W"))
+        network.network_variable(var)  # no-op
+        """
+        if isinstance(query, types.StringTypes):
+            node_name = query
+            from_key = "default"
+        elif isinstance(query, tuple):
+            node_name, from_key = query
+        else:
+            # this should be a theano variable
+            return query
+
+        return self[node_name].get_variable(from_key).variable
+
     def function(self,
                  inputs,
                  outputs=None,
                  include_updates=False,
                  updates=None,
+                 givens=None,
                  **kwargs):
         """
         wrapper around theano.function that allows reference node outputs
@@ -161,29 +183,21 @@ class Network(object):
             # convert into format expected by theano.function
             updates = all_deltas.to_updates()
 
-        def transform(item):
-            """
-            converts node names into their corresponding theano variables,
-            with optional keys of which of the node's outputs to use
-            """
-            if isinstance(item, types.StringTypes):
-                node_name = item
-                from_key = "default"
-            elif isinstance(item, tuple):
-                node_name, from_key = item
-            else:
-                # this should be a theano variable, because it is passed
-                # into theano.function
-                return item
+        transformed_inputs = map(self.network_variable, inputs)
+        transformed_outputs = map(self.network_variable, outputs)
 
-            return self[node_name].get_variable(from_key).variable
-
-        transformed_inputs = map(transform, inputs)
-        transformed_outputs = map(transform, outputs)
-
+        if givens is None:
+            tmp_givens = []
+        elif isinstance(givens, dict):
+            tmp_givens = list(givens.items())
+        elif isinstance(givens, (list, tuple)):
+            tmp_givens = list(givens)
+        transformed_givens = [(self.network_variable(k), v)
+                              for k, v in tmp_givens]
         fn = theano.function(inputs=transformed_inputs,
                              outputs=transformed_outputs,
                              updates=updates,
+                             givens=transformed_givens,
                              **kwargs)
         return fn
 

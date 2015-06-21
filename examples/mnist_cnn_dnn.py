@@ -77,18 +77,19 @@ with_updates = tn.HyperparameterNode(
 network = with_updates.network()
 network.build()  # build eagerly to share weights
 
-train_fn = network.function(["x", "y"], ["cost"], include_updates=True)
+train_fn = canopy.handled_function(
+    network,
+    [canopy.handlers.chunk_variables(batch_size=100, variables=["x", "y"])],
+    ["x", "y"],
+    ["cost"],
+    include_updates=True)
 
-# different ways of disabling dropout
-if False:
-    network_no_dropout = canopy.transforms.remove_dropout(network)
-    valid_fn = network_no_dropout.function(["x", "y"], ["cost", "pred"])
-else:
-    valid_fn = canopy.handled_function(
-        network,
-        [canopy.handlers.override_hyperparameters(dropout_probability=0)],
-        ["x", "y"],
-        ["cost", "pred"])
+valid_fn = canopy.handled_function(
+    network,
+    [canopy.handlers.override_hyperparameters(dropout_probability=0),
+     canopy.handlers.chunk_variables(batch_size=100, variables=["x", "y"])],
+    ["x", "y"],
+    ["cost", "pred"])
 
 
 # ################################# training #################################
@@ -98,40 +99,10 @@ print("Starting training...")
 num_epochs = 25
 batch_size = 100
 for epoch_num in range(num_epochs):
-    # iterate over training minibatches and update the weights
-    num_batches_train = int(np.ceil(len(X_train) / batch_size))
-    train_losses = []
-    for batch_num in range(num_batches_train):
-        batch_slice = slice(batch_size * batch_num,
-                            batch_size * (batch_num + 1))
-        X_batch = X_train[batch_slice]
-        y_batch = y_train[batch_slice]
-
-        loss, = train_fn(X_batch, y_batch)
-        train_losses.append(loss)
-    # aggregate training losses for each minibatch into scalar
-    train_loss = np.mean(train_losses)
-
-    # calculate validation loss
-    num_batches_valid = int(np.ceil(len(X_valid) / batch_size))
-    valid_losses = []
-    list_of_probabilities_batch = []
-    for batch_num in range(num_batches_valid):
-        batch_slice = slice(batch_size * batch_num,
-                            batch_size * (batch_num + 1))
-        X_batch = X_valid[batch_slice]
-        y_batch = y_valid[batch_slice]
-
-        loss, probabilities_batch = valid_fn(X_batch, y_batch)
-        valid_losses.append(loss)
-        list_of_probabilities_batch.append(probabilities_batch)
-    valid_loss = np.mean(valid_losses)
-    # concatenate probabilities for each batch into a matrix
-    probabilities = np.concatenate(list_of_probabilities_batch)
-    # calculate classes from the probabilities
+    train_loss, = train_fn(X_train, y_train)
+    valid_loss, probabilities = valid_fn(X_valid, y_valid)
     predicted_classes = np.argmax(probabilities, axis=1)
     # calculate accuracy for this epoch
     accuracy = sklearn.metrics.accuracy_score(y_valid, predicted_classes)
-
     print("Epoch: %d, train_loss=%f, valid_loss=%f, valid_accuracy=%f"
           % (epoch_num + 1, train_loss, valid_loss, accuracy))

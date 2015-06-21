@@ -36,7 +36,7 @@ class NetworkHandlerAPI(six.with_metaclass(abc.ABCMeta, object)):
 
     def _compile_function_from_input(self, state):
         # optionally change args/kwargs
-        kwargs = self.transform_compile_function_kwargs(**self._kwargs)
+        kwargs = self.transform_compile_function_kwargs(state, **self._kwargs)
         # make sure kwargs are not just a mutated version
         assert kwargs is not self._kwargs
         # recurse inward
@@ -61,7 +61,7 @@ class NetworkHandlerAPI(six.with_metaclass(abc.ABCMeta, object)):
         pass
 
     @abc.abstractmethod
-    def transform_compile_function_kwargs(self, **kwargs):
+    def transform_compile_function_kwargs(self, state, **kwargs):
         pass
 
     @abc.abstractmethod
@@ -78,7 +78,7 @@ class NetworkHandlerImpl(NetworkHandlerAPI):
     def transform_network(self, network):
         return network
 
-    def transform_compile_function_kwargs(self, **kwargs):
+    def transform_compile_function_kwargs(self, state, **kwargs):
         return kwargs
 
     def __call__(self, state, *args, **kwargs):

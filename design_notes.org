@@ -893,6 +893,7 @@
       - except when serializing/deserializing
 ** canopy.handlers
 - build
+  - batching / chunking
   - run in different process (w/ different GPU)
     - https://groups.google.com/forum/#!msg/theano-users/niQ8j_TNoqM/Y5_1ETIc3WUJ
     - use below to manually set gpu (before that, shared variables are created in the CPU):
@@ -901,7 +902,6 @@
   - stopping conditions
     - time
     - # iterations
-  - batching / chunking
   - logging
   - validation every x iterations
   - padding
