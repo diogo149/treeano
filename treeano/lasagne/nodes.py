@@ -7,6 +7,39 @@ from .. import core
 from .. import nodes
 
 
+def wrap_lasagne_node(network, in_vw, param_kwargs, constructor, kwargs):
+    """
+    param_kwargs:
+    dict from param name to map of keyword arguments for constructing
+    (eg. inits, tags, etc.)
+    """
+    l_in = lasagne.layers.InputLayer(
+        in_var=in_vw.variable,
+        shape=in_vw.shape)
+    l_out = constructor(l_in, **kwargs)
+    output = lasagne.layers.get_output(l_out)
+    output_shape = lasagne.layers.get_output_shape(l_out)
+    params = lasagne.layers.get_all_params(l_out)
+    to_replace = {}
+    for param in params:
+        name = param.name
+        assert name in param_kwargs
+        vw = network.create_variable(
+            name=name,
+            is_shared=True,
+            shape=param.get_value().shape,
+            **param_kwargs[name]
+        )
+        to_replace[param] = vw.variable
+    new_output, = utils.deep_clone([output], to_replace)
+    network.create_variable(
+        name="default",
+        variable=new_output,
+        shape=output_shape,
+        tags={"output"},
+    )
+
+
 @core.register_node("lasagne_dense")
 class DenseNode(core.NodeImpl):
 
