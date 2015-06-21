@@ -34,12 +34,10 @@ model = tn.HyperparameterNode(
          tn.DenseNode("fc1"),
          bn.BatchNormalizationNode("bn1"),
          tn.ReLUNode("relu1"),
-         tn.DropoutNode("do1"),
          tn.DenseNode("fc2"),
          bn.BatchNormalizationNode("bn2"),
          tn.ReLUNode("relu2"),
-         tn.DropoutNode("do2"),
-         tn.DenseNode("fc3"),
+         tn.DenseNode("fc3", num_units=10),
          bn.BatchNormalizationNode("bn3"),
          tn.SoftmaxNode("pred"),
          ]),
@@ -64,7 +62,6 @@ network.build()  # build eagerly to share weights
 
 train_fn = network.function(["x", "y"], ["cost"], include_updates=True)
 
-# different ways of disabling dropout
 valid_fn = canopy.handled_function(
     network,
     [canopy.handlers.override_hyperparameters(dropout_probability=0,

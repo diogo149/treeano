@@ -47,7 +47,7 @@ model = tn.HyperparameterNode(
          tn.DenseNode("fc2"),
          tn.ReLUNode("relu2"),
          tn.DropoutNode("do2"),
-         tn.DenseNode("fc3"),
+         tn.DenseNode("fc3", num_units=10),
          tn.SoftmaxNode("pred"),
          ]),
     num_units=512,
