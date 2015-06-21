@@ -26,18 +26,6 @@ X_train, X_valid, y_train, y_valid = sklearn.cross_validation.train_test_split(
     X, y, random_state=42)
 
 # ############################## prepare model ##############################
-# architecture:
-# - fully connected 512 units
-# - ReLU
-# - 50% dropout
-# - fully connected 512 units
-# - ReLU
-# - 50% dropout
-# - fully connected 10 units
-# - softmax
-
-# - the batch size can be provided as `None` to make the network
-#   work for multiple different batch sizes
 model = tn.HyperparameterNode(
     "model",
     tn.SequentialNode(
