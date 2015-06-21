@@ -5,7 +5,7 @@ import numpy as np
 import theano
 import theano.tensor as T
 
-from .initialization import ZeroInit
+from .inits import ZeroInit
 
 ENABLE_TEST_VALUE = theano.config.compute_test_value != "off"
 
