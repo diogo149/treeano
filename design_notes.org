@@ -727,6 +727,7 @@
 - initialization schemes can work in a topologically sorted order
   - eg. not from output to input
   - not necessarily true, but a simplifying assumption
+- shared variables are either a "parameter" (ie. backproped to optimize) or "state" (ie. not backproped)
 - shared variables (eg. parameter tensors) are owned by a single node in the computation graph, and that node is responsible for their updates
 - node names are strings
 - all nodes will have a default output
@@ -920,6 +921,8 @@
       - try to see if output[0] can be called as arg to np.isnan
         - cannot convert PyCObject
 ** RNNs
+- some nodes will be broken with ScanNode
+  - ie. batch normalization updates
 - create transform to apply non-stateful nodes like in scan, but instead use batch dim
   - eg. to apply dense to a sequence, reshape it so that batch + time are folded together
 - test if nested scans works
@@ -999,11 +1002,15 @@
 - figure out how to make recurrent node's not require batch size
   - would be cool to have symbolic shapes work
 ** misc
-- replace .build() with .network()
-  - because building is not lazy
-- should rng state be global or part of the network?
-  - when saving network state, need to make sure to save rng state too
-- time network.build
+- figure out how to handle random state
+  - should rng state be global, part of the network, state of a node?
+    - should not be global
+      - this is a memory leak since the srng object saves the state_updates
+  - where to put the serialized state?
+    - problems:
+      - shared variables are not named
+        - can name them
+        - ie. wrapper function: network.rng.binomial(name="blah", ...)
 - parameterize weight layers out of linear mapping / bias
 - more information when querying
   - will allow for more advanced filtering in the future
@@ -1281,6 +1288,7 @@
     - post-training report
       - eg. examples which are the most wrong
     - making a gif of pixelwise loss / heatmap / attention over time
+    - http://cs231n.github.io/understanding-cnn/
   - monitoring
     - printing out certain values
       - eg. loss

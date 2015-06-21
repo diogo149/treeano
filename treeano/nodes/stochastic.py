@@ -2,11 +2,13 @@ import warnings
 
 import theano
 import theano.tensor as T
+from theano.sandbox.rng_mrg import MRG_RandomStreams
 
 from .. import core
 from .. import utils
 
 floatX = theano.config.floatX
+srng = MRG_RandomStreams()
 
 
 @core.register_node("dropout")
@@ -41,9 +43,9 @@ class DropoutNode(core.NodeImpl):
                 warnings.warn("using symbolic shape for dropout mask, "
                               "which can be an issue with theano.clone")
                 mask_shape = in_vw.variable.shape
-            mask = rescale_factor * utils.srng.binomial(mask_shape,
-                                                        p=p,
-                                                        dtype=floatX)
+            mask = rescale_factor * srng.binomial(mask_shape,
+                                                  p=p,
+                                                  dtype=floatX)
             network.create_variable(
                 "default",
                 variable=in_vw.variable * mask,

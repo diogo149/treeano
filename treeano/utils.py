@@ -1,11 +1,7 @@
 import theano
 import theano.tensor as T
-from theano.sandbox.rng_mrg import MRG_RandomStreams as RandomStreams
 
 fX = theano.config.floatX
-
-# create shared random state to access
-srng = RandomStreams()
 
 
 def all_equal(seq):

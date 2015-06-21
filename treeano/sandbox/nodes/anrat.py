@@ -135,7 +135,7 @@ class ANRATNode(treeano.WrapperNodeImpl):
             name="lambda",
             is_shared=True,
             shape=(),
-            tags={"parameter", "weight"},  # TODO is this a weight?
+            tags={"parameter"},
             inits=inits + [treeano.inits.ConstantInit(initial_lambda)],
         )
 

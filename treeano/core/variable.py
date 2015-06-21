@@ -86,9 +86,6 @@ class VariableWrapper(object):
         if self.is_shared:
             # exactly one of parameter and state should be set
             assert ("parameter" in tags) != ("state" in tags)
-            if "parameter" in tags:
-                # exactly one of weight and bias should be set
-                assert ("weight" in tags) != ("bias" in tags)
             # the only valid tags for shared are the following:
             assert len(tags - {"weight", "bias", "parameter", "state"}) == 0
         else:
