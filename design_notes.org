@@ -858,8 +858,6 @@
   - useful for initialization
 ** v2
 - high priority
-  - conv
-  - pooling
   - chunking
     - add flag for caching
       - cache=None or "hash" or "id"

@@ -181,3 +181,80 @@ class MaxPool2DNode(core.NodeImpl):
                                                           False),
             )
         )
+
+
+@core.register_node("lasagne_conv2d_dnn")
+class Conv2DDNNNode(core.NodeImpl):
+
+    """
+    node wrapping lasagne's Conv2DDNNLayer
+    """
+
+    hyperparameter_names = ("inits",
+                            "num_filters",
+                            "filter_size",
+                            "conv_stride",
+                            "stride",
+                            "border_mode",
+                            "untie_biases",
+                            "flip_filters",)
+
+    def compute_output(self, network, in_vw):
+        import lasagne.layers.dnn
+        inits = list(toolz.concat(network.find_hyperparameters(
+            ["inits"],
+            [])))
+        wrap_lasagne_node(
+            network=network,
+            in_vw=in_vw,
+            param_kwargs=dict(
+                W=dict(tags={"parameter", "weight"},
+                       inits=inits),
+                b=dict(tags={"parameter", "bias"},
+                       inits=inits)
+            ),
+            constructor=lasagne.layers.dnn.Conv2DDNNLayer,
+            kwargs=dict(
+                num_filters=network.find_hyperparameter(["num_filters"]),
+                filter_size=network.find_hyperparameter(["filter_size"]),
+                stride=network.find_hyperparameter(["conv_stride",
+                                                    "stride"],
+                                                   (1, 1)),
+                border_mode=network.find_hyperparameter(["border_mode"],
+                                                        "valid"),
+                untie_biases=network.find_hyperparameter(["untie_biases"],
+                                                         False),
+                flip_filters=network.find_hyperparameter(["flip_filters"],
+                                                         False),
+                nonlinearity=lasagne.nonlinearities.identity,
+            )
+        )
+
+
+@core.register_node("lasagne_maxpool2d_dnn")
+class MaxPool2DDNNNode(core.NodeImpl):
+
+    """
+    node wrapping lasagne's MaxPool2DDNNLayer
+    """
+
+    hyperparameter_names = ("pool_size",
+                            "pool_stride",
+                            "stride",
+                            "pad")
+
+    def compute_output(self, network, in_vw):
+        import lasagne.layers.dnn
+        wrap_lasagne_node(
+            network=network,
+            in_vw=in_vw,
+            param_kwargs={},
+            constructor=lasagne.layers.dnn.MaxPool2DDNNLayer,
+            kwargs=dict(
+                pool_size=network.find_hyperparameter(["pool_size"]),
+                stride=network.find_hyperparameter(["pool_stride",
+                                                    "stride"],
+                                                   None),
+                pad=network.find_hyperparameter(["pad"], (0, 0)),
+            )
+        )
