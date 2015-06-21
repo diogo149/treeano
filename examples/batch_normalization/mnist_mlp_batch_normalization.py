@@ -80,7 +80,7 @@ train_fn = network.function(["x", "y"], ["cost"], include_updates=True)
 valid_fn = canopy.handled_function(
     network,
     [canopy.handlers.override_hyperparameters(dropout_probability=0,
-                                              use_moving_stats=True)],
+                                              bn_use_moving_stats=True)],
     ["x", "y"],
     ["cost", "pred"])
 

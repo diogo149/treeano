@@ -22,6 +22,7 @@ DEFAULT_USE_LOG_MOVING_VAR = True
 @treeano.register_node("advanced_batch_normalization")
 class AdvancedBatchNormalizationNode(treeano.NodeImpl):
 
+    # TODO prefix hyperparameters with bn_
     hyperparameter_names = (
         # weight of moving mean/variance put on new minibatches
         "alpha",
@@ -30,9 +31,9 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
         "beta_inits",
         "inits",
         # whether or not moving stats should be used to calculate output
-        "use_moving_stats",
+        "bn_use_moving_stats",
         # whether or not moving mean/var should be updated
-        "update_moving_stats",
+        "bn_update_moving_stats",
         # which axes should have their own independent parameters
         # only one of parameter_axes and non_parameter_axes should be set
         "parameter_axes",
@@ -205,9 +206,9 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
         # calculate output
         # ----------------
 
-        use_moving_stats = network.find_hyperparameter(["use_moving_stats"],
-                                                       False)
-        if use_moving_stats:
+        bn_use_moving_stats = network.find_hyperparameter(
+            ["bn_use_moving_stats"], False)
+        if bn_use_moving_stats:
             effective_mean = T.patternbroadcast(moving_mean.variable,
                                                 stats_broadcastable)
             effective_var = T.patternbroadcast(
@@ -234,7 +235,7 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
         )
 
     def new_update_deltas(self, network):
-        if not network.find_hyperparameter(["update_moving_stats"], True):
+        if not network.find_hyperparameter(["bn_update_moving_stats"], True):
             return super(AdvancedBatchNormalizationNode,
                          self).new_update_deltas(network)
 
