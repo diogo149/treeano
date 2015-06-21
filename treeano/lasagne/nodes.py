@@ -6,6 +6,8 @@ from .. import utils
 from .. import core
 from .. import nodes
 
+# ############################ utils for wrapping ############################
+
 
 def wrap_lasagne_node(network, in_vw, param_kwargs, constructor, kwargs):
     """
@@ -40,6 +42,28 @@ def wrap_lasagne_node(network, in_vw, param_kwargs, constructor, kwargs):
         shape=output_shape,
         tags={"output"},
     )
+
+
+class LasagneUpdatesNode(nodes.StandardUpdatesNode):
+
+    """
+    node that wraps lasagne update functions
+    """
+
+    hyperparameter_names = ("cost_reference",
+                            "reference",
+                            "sgd_learning_rate",
+                            "learning_rate")
+
+    def _new_update_deltas(self, network, parameters, grads):
+        parameter_variables = [p.variable for p in parameters]
+        updates = self._lasagne_updates(network, parameter_variables, grads)
+        return core.UpdateDeltas.from_updates(updates)
+
+    def _lasagne_updates(self, network, parameter_variables, grads):
+        raise NotImplementedError
+
+# ################################## nodes ##################################
 
 
 @core.register_node("lasagne_dense")
@@ -81,31 +105,46 @@ def ReLUNode(name):
                            fn=lasagne.nonlinearities.rectify,
                            shape_fn=utils.identity)
 
+# ################################# updates #################################
+
 
 @core.register_node("lasagne_sgd")
-class SGDNode(core.Wrapper1NodeImpl):
+class SGDNode(LasagneUpdatesNode):
 
     """
     node that provides updates via SGD
     """
 
-    hyperparameter_names = ("cost_reference",
-                            "reference",
-                            "sgd_learning_rate",
+    hyperparameter_names = ("sgd_learning_rate",
                             "learning_rate")
 
-    def new_update_deltas(self, network):
-        cost_reference = network.find_hyperparameter(["cost_reference",
-                                                      "reference"])
-        cost = network[cost_reference].get_variable("default").variable
-        parameters = network.find_vws_in_subtree(tags=["parameter"])
+    def _lasagne_updates(self, network, parameter_variables, grads):
         learning_rate = network.find_hyperparameter(["sgd_learning_rate",
                                                      "learning_rate"])
-        updates = lasagne.updates.sgd(cost,
-                                      [parameter.variable
-                                       for parameter in parameters],
-                                      learning_rate)
-        return core.UpdateDeltas.from_updates(updates)
+        return lasagne.updates.sgd(grads,
+                                   parameter_variables,
+                                   learning_rate=learning_rate)
+
+
+@core.register_node("lasagne_nesterov_momentum")
+class NesterovMomentumNode(LasagneUpdatesNode):
+
+    """
+    node that provides updates via SGD
+    """
+
+    hyperparameter_names = ("learning_rate",
+                            "momentum")
+
+    def _lasagne_updates(self, network, parameter_variables, grads):
+        learning_rate = network.find_hyperparameter(["learning_rate"])
+        momentum = network.find_hyperparameter(["momentum"], 0.9)
+        return lasagne.updates.nesterov_momentum(grads,
+                                                 parameter_variables,
+                                                 learning_rate=learning_rate,
+                                                 momentum=momentum)
+
+# ############################### convolutions ###############################
 
 
 @core.register_node("lasagne_conv2d")
@@ -148,37 +187,6 @@ class Conv2DNode(core.NodeImpl):
                 untie_biases=network.find_hyperparameter(["untie_biases"],
                                                          False),
                 nonlinearity=lasagne.nonlinearities.identity,
-            )
-        )
-
-
-@core.register_node("lasagne_maxpool2d")
-class MaxPool2DNode(core.NodeImpl):
-
-    """
-    node wrapping lasagne's MaxPool2DLayer
-    """
-
-    hyperparameter_names = ("pool_size",
-                            "pool_stride",
-                            "stride",
-                            "pad",
-                            "ignore_border")
-
-    def compute_output(self, network, in_vw):
-        wrap_lasagne_node(
-            network=network,
-            in_vw=in_vw,
-            param_kwargs={},
-            constructor=lasagne.layers.MaxPool2DLayer,
-            kwargs=dict(
-                pool_size=network.find_hyperparameter(["pool_size"]),
-                stride=network.find_hyperparameter(["pool_stride",
-                                                    "stride"],
-                                                   None),
-                pad=network.find_hyperparameter(["pad"], (0, 0)),
-                ignore_border=network.find_hyperparameter(["ignore_border"],
-                                                          False),
             )
         )
 
@@ -227,6 +235,40 @@ class Conv2DDNNNode(core.NodeImpl):
                 flip_filters=network.find_hyperparameter(["flip_filters"],
                                                          False),
                 nonlinearity=lasagne.nonlinearities.identity,
+            )
+        )
+
+
+# ############################### downsampling ###############################
+
+
+@core.register_node("lasagne_maxpool2d")
+class MaxPool2DNode(core.NodeImpl):
+
+    """
+    node wrapping lasagne's MaxPool2DLayer
+    """
+
+    hyperparameter_names = ("pool_size",
+                            "pool_stride",
+                            "stride",
+                            "pad",
+                            "ignore_border")
+
+    def compute_output(self, network, in_vw):
+        wrap_lasagne_node(
+            network=network,
+            in_vw=in_vw,
+            param_kwargs={},
+            constructor=lasagne.layers.MaxPool2DLayer,
+            kwargs=dict(
+                pool_size=network.find_hyperparameter(["pool_size"]),
+                stride=network.find_hyperparameter(["pool_stride",
+                                                    "stride"],
+                                                   None),
+                pad=network.find_hyperparameter(["pad"], (0, 0)),
+                ignore_border=network.find_hyperparameter(["ignore_border"],
+                                                          False),
             )
         )
 
