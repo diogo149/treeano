@@ -14,7 +14,7 @@ def wrap_lasagne_node(network, in_vw, param_kwargs, constructor, kwargs):
     (eg. inits, tags, etc.)
     """
     l_in = lasagne.layers.InputLayer(
-        in_var=in_vw.variable,
+        input_var=in_vw.variable,
         shape=in_vw.shape)
     l_out = constructor(l_in, **kwargs)
     output = lasagne.layers.get_output(l_out)
@@ -24,6 +24,8 @@ def wrap_lasagne_node(network, in_vw, param_kwargs, constructor, kwargs):
     for param in params:
         name = param.name
         assert name in param_kwargs
+        assert "tags" in param_kwargs[name]
+        assert "inits" in param_kwargs[name]
         vw = network.create_variable(
             name=name,
             is_shared=True,
@@ -51,44 +53,26 @@ class DenseNode(core.NodeImpl):
                             "dense_num_units",
                             "num_units")
 
-    def compute_output(self, network, in_var):
+    def compute_output(self, network, in_vw):
         inits = list(toolz.concat(network.find_hyperparameters(
             ["inits"],
             [])))
         num_units = network.find_hyperparameter(["dense_num_units",
                                                  "num_units"])
-        num_inputs = int(np.prod(in_var.shape[1:]))
-        W = network.create_variable(
-            "W",
-            shape=(num_inputs, num_units),
-            is_shared=True,
-            inits=inits,
-            tags=["parameter", "weight"]
-        )
-        b = network.create_variable(
-            "b",
-            shape=(num_units,),
-            is_shared=True,
-            inits=inits,
-            tags=["parameter", "bias"]
-        )
-        input_layer = lasagne.layers.InputLayer(
-            in_var.shape
-        )
-        dense_layer = lasagne.layers.DenseLayer(
-            incoming=input_layer,
-            num_units=num_units,
-            W=W.variable,
-            b=b.variable,
-            nonlinearity=lasagne.nonlinearities.identity,
-        )
-        out_variable = dense_layer.get_output_for(in_var.variable)
-        out_shape = dense_layer.get_output_shape_for(in_var.shape)
-        network.create_variable(
-            "default",
-            variable=out_variable,
-            shape=out_shape,
-            tags={"output"}
+        wrap_lasagne_node(
+            network=network,
+            in_vw=in_vw,
+            param_kwargs=dict(
+                W=dict(tags={"parameter", "weight"},
+                       inits=inits),
+                b=dict(tags={"parameter", "bias"},
+                       inits=inits)
+            ),
+            constructor=lasagne.layers.DenseLayer,
+            kwargs=dict(
+                num_units=num_units,
+                nonlinearity=lasagne.nonlinearities.identity,
+            )
         )
 
 

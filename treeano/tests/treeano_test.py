@@ -1,6 +1,5 @@
 """
-TODO try to move these tests to the appropriate locations, and don't use
-the lasagne wrapped classes
+TODO try to move these tests to the appropriate locations
 """
 
 from __future__ import division, absolute_import
@@ -12,22 +11,19 @@ import theano
 import treeano
 import treeano.lasagne
 from treeano import UpdateDeltas
-from treeano.lasagne.inits import GlorotUniformInit
 from treeano.nodes import (InputNode,
                            SequentialNode,
                            IdentityNode,
                            HyperparameterNode)
-from treeano.lasagne.nodes import (DenseNode,
-                                   ReLUNode)
 
-floatX = theano.config.floatX
+fX = theano.config.floatX
 
 
 def test_identity_network():
     input_node = InputNode("foo", shape=(3, 4, 5))
     network = input_node.network()
     fn = network.function(["foo"], ["foo"])
-    x = np.random.rand(3, 4, 5).astype(floatX)
+    x = np.random.rand(3, 4, 5).astype(fX)
     assert np.allclose(fn(x), x)
 
 
@@ -41,7 +37,7 @@ def test_sequential_identity_network():
     fn1 = network.function(["foo"], ["foo"])
     fn2 = network.function(["foo"], ["bar"])
     fn3 = network.function(["foo"], ["choo"])
-    x = np.random.rand(3, 4, 5).astype(floatX)
+    x = np.random.rand(3, 4, 5).astype(fX)
     assert np.allclose(fn1(x), x)
     assert np.allclose(fn2(x), x)
     assert np.allclose(fn3(x), x)
@@ -55,7 +51,7 @@ def test_nested_sequential_network():
                                        IdentityNode("identity" + name)])
     network = current_node.network()
     fn = network.function(["foo"], ["sequential9"])
-    x = np.random.rand(3, 4, 5).astype(floatX)
+    x = np.random.rand(3, 4, 5).astype(fX)
     assert np.allclose(fn(x), x)
 
 
@@ -79,7 +75,7 @@ def test_toy_updater_node():
             )
             init_value = np.arange(
                 np.prod(shape)
-            ).reshape(*shape).astype(floatX)
+            ).reshape(*shape).astype(fX)
             state.value = init_value
 
         def new_update_deltas(self, network):
@@ -117,76 +113,3 @@ def test_hyperparameter_node():
     assert network["a"].find_hyperparameter(["foo"]) == 3
     assert network["a"].find_hyperparameter(["choo", "foo"]) == 3
     assert network["a"].find_hyperparameter(["choo"], 32) == 32
-
-
-def test_dense_node():
-    np.random.seed(42)
-    nodes = [
-        InputNode("a", shape=(3, 4, 5)),
-        DenseNode("b"),
-    ]
-    sequential = SequentialNode("c", nodes)
-    hp_node = HyperparameterNode(
-        "d",
-        sequential,
-        num_units=14,
-        inits=[treeano.inits.ConstantInit(1)])
-    network = hp_node.network()
-    fn = network.function(["a"], ["d"])
-    x = np.random.randn(3, 4, 5).astype(floatX)
-    res = np.dot(x.reshape(3, 20), np.ones((20, 14))) + np.ones(14)
-    np.testing.assert_allclose(fn(x)[0],
-                               res,
-                               rtol=1e-5,
-                               atol=1e-8)
-
-
-def test_fully_connected_and_relu_node():
-    np.random.seed(42)
-    nodes = [
-        InputNode("a", shape=(3, 4, 5)),
-        DenseNode("b"),
-        ReLUNode("e"),
-    ]
-    sequential = SequentialNode("c", nodes)
-    hp_node = HyperparameterNode(
-        "d",
-        sequential,
-        num_units=14,
-        inits=[treeano.inits.ConstantInit(1)])
-    network = hp_node.network()
-    fn = network.function(["a"], ["d"])
-    x = np.random.randn(3, 4, 5).astype(floatX)
-    res = np.dot(x.reshape(3, 20), np.ones((20, 14))) + np.ones(14)
-    np.testing.assert_allclose(fn(x)[0],
-                               np.clip(res, 0, np.inf),
-                               rtol=1e-5,
-                               atol=1e-8)
-
-
-def test_glorot_uniform_initialization():
-    np.random.seed(42)
-    nodes = [
-        InputNode("a", shape=(3, 4, 5)),
-        DenseNode("b"),
-        ReLUNode("e"),
-    ]
-    sequential = SequentialNode("c", nodes)
-    hp_node = HyperparameterNode("d",
-                                 sequential,
-                                 num_units=1000,
-                                 inits=[GlorotUniformInit()])
-    network = hp_node.network()
-    fc_node = network["b"]
-    W_value = fc_node.get_variable("W").value
-    b_value = fc_node.get_variable("b").value
-    np.testing.assert_allclose(0,
-                               W_value.mean(),
-                               atol=1e-2)
-    np.testing.assert_allclose(np.sqrt(2.0 / (20 + 1000)),
-                               W_value.std(),
-                               atol=1e-2)
-    np.testing.assert_allclose(np.zeros(1000),
-                               b_value,
-                               rtol=1e-5,
-                               atol=1e-8)
