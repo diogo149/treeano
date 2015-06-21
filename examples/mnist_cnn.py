@@ -23,7 +23,7 @@ mnist = sklearn.datasets.fetch_mldata('MNIST original')
 X = mnist['data'].reshape(-1, 1, 28, 28).astype(fX) / 255.0
 y = mnist['target'].astype("int32")
 X_train, X_valid, y_train, y_valid = sklearn.cross_validation.train_test_split(
-    X, y, random_state=42, train_size=50000, test_size=10000)
+    X, y, random_state=42)
 
 # ############################## prepare model ##############################
 # architecture:
