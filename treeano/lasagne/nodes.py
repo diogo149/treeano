@@ -106,3 +106,78 @@ class SGDNode(core.Wrapper1NodeImpl):
                                        for parameter in parameters],
                                       learning_rate)
         return core.UpdateDeltas.from_updates(updates)
+
+
+@core.register_node("lasagne_conv2d")
+class Conv2DNode(core.NodeImpl):
+
+    """
+    node wrapping lasagne's Conv2DLayer
+    """
+
+    hyperparameter_names = ("inits",
+                            "num_filters",
+                            "filter_size",
+                            "conv_stride",
+                            "stride",
+                            "border_mode",
+                            "untie_biases")
+
+    def compute_output(self, network, in_vw):
+        inits = list(toolz.concat(network.find_hyperparameters(
+            ["inits"],
+            [])))
+        wrap_lasagne_node(
+            network=network,
+            in_vw=in_vw,
+            param_kwargs=dict(
+                W=dict(tags={"parameter", "weight"},
+                       inits=inits),
+                b=dict(tags={"parameter", "bias"},
+                       inits=inits)
+            ),
+            constructor=lasagne.layers.Conv2DLayer,
+            kwargs=dict(
+                num_filters=network.find_hyperparameter(["num_filters"]),
+                filter_size=network.find_hyperparameter(["filter_size"]),
+                stride=network.find_hyperparameter(["conv_stride",
+                                                    "stride"],
+                                                   (1, 1)),
+                border_mode=network.find_hyperparameter(["border_mode"],
+                                                        "valid"),
+                untie_biases=network.find_hyperparameter(["untie_biases"],
+                                                         False),
+                nonlinearity=lasagne.nonlinearities.identity,
+            )
+        )
+
+
+@core.register_node("lasagne_maxpool2d")
+class MaxPool2DNode(core.NodeImpl):
+
+    """
+    node wrapping lasagne's MaxPool2DLayer
+    """
+
+    hyperparameter_names = ("pool_size",
+                            "pool_stride",
+                            "stride",
+                            "pad",
+                            "ignore_border")
+
+    def compute_output(self, network, in_vw):
+        wrap_lasagne_node(
+            network=network,
+            in_vw=in_vw,
+            param_kwargs={},
+            constructor=lasagne.layers.MaxPool2DLayer,
+            kwargs=dict(
+                pool_size=network.find_hyperparameter(["pool_size"]),
+                stride=network.find_hyperparameter(["pool_stride",
+                                                    "stride"],
+                                                   None),
+                pad=network.find_hyperparameter(["pad"], (0, 0)),
+                ignore_border=network.find_hyperparameter(["ignore_border"],
+                                                          False),
+            )
+        )

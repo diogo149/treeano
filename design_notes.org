@@ -675,6 +675,17 @@
       - conclusion:
         - yes
           - very little downside, nice upside
+- should we wrap lasagne's convolutions or make our own?
+  - make our own pros
+    - easier to extend
+  - wrap lasagne
+    - they're really good
+      - probably won't change anything
+    - not hard to switch over in the future
+    - less code = better
+  - conclusion:
+    - wrap lasagne in the short-term
+    - eventually make out own
 * canopy - general
 - treeano should not have hooks
   - there should be a clean separation of mapping from parameterization to theano variable and all the extra (modular) logic
@@ -1037,6 +1048,8 @@
 - new parameter tags:
   - updates_state
     - rationale: might want to reset it
+    - internal state of update algorithms
+    - eg. learning rate, momentum, etc.
 - updates composability
   - can compose together: momentum, nesterov momentum, etc.
 - SubnetworkNode
@@ -1072,10 +1085,6 @@
 - think about how to specify if a node owns a weight
   - perhaps if nodes that used parameters had ParameterNode's, it would be easy to have a drop in replacement as a reference to a parameter elsewhere in the network
 - change terminology to not refer to variable wrappers as variables
-- composite nodes
-  - sequentialhyperparameternode
-  - DenseNode = As2DNode + LinearMappingNode + BiasNode
-  - LinearMappingNode = ParameterNode + DotNode
 - relativenetwork
   - add __repr__
   - add .W .b syntax shortcut for accessing state
