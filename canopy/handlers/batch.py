@@ -24,7 +24,9 @@ class ChunkVariables(base.NetworkHandlerImpl):
     cache:
     how to cache inputs for transfer to the GPU
     possible values: "id", "hash"
-    use case: datasets that fit in memory can be much more efficient
+    use case: datasets that fit in memory can be much more efficient because
+    we don't need to send it to the GPU repeatedly
+    TODO implement
     """
 
     def __init__(self,
@@ -40,6 +42,7 @@ class ChunkVariables(base.NetworkHandlerImpl):
         elif scalar_merge == "identity":
             scalar_merge = treeano.utils.identity
         self.scalar_merge = scalar_merge
+        # TODO use
         self.cache = cache
 
     def transform_compile_function_kwargs(self, state, **kwargs):
@@ -96,10 +99,7 @@ class ChunkVariables(base.NetworkHandlerImpl):
                     assert len(arg) == chunk_size
                 # error if chunk size not a multiple of batch size
                 assert (chunk_size % self.batch_size) == 0
-                # FIXME cache properly
-                if not hasattr(self, "foo"):
-                    shared.set_value(arg)
-        self.foo = "bar"
+                shared.set_value(arg)
         assert chunk_size is not None
 
         # call function multiple times

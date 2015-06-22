@@ -857,14 +857,22 @@
 - should shared variables contain metadata on which axes are their input axes and which are their output axes
   - useful for initialization
 ** v2
-- high priority
-  - chunking
-    - add flag for caching
-      - cache=None or "hash" or "id"
-        - hash caches on numpy array hash
-        - id caches on exact array
-      - optimization to make datasets that fit in memory fast
-    - flag for random order of minibatches
+- should "weight" inits be linear weight inits
+- canopy.handlers.monitor
+  - ms / chunk
+  - ms / observation
+  - callbacks for saving:
+    - MSE
+    - accuracy
+    - precision
+    - recall
+    - AUC
+- misc canopy
+  - training time limit
+  - training epoch limit
+  - creating training curves
+  - saving models every x iterations
+  - saving first / best / last model
 - add adam state to network
 - attaching handlers to networks instead of functions
   - rationale:
@@ -906,6 +914,7 @@
   - validation every x iterations
   - padding
     - eg. minibatch
+    - in handlers.batch
   - passing extra input to the network (curriculum learning)
   - taking extra output (monitoring)
     - saving in a map?
@@ -928,6 +937,13 @@
       - filter out str(node).startswith("GpuAllocEmpty(")
       - try to see if output[0] can be called as arg to np.isnan
         - cannot convert PyCObject
+  - chunking
+    - add flag for caching
+      - cache=None or "hash" or "id"
+        - hash caches on numpy array hash
+        - id caches on exact array
+      - optimization to make datasets that fit in memory fast
+    - flag for random order of minibatches
 ** RNNs
 - some nodes will be broken with ScanNode
   - ie. batch normalization updates
