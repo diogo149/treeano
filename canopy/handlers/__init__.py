@@ -12,4 +12,5 @@ from conditional import (call_after_every)
 from nodes import (with_hyperparameters,
                    override_hyperparameters)
 from batch import (chunk_variables)
-from monitor import (time_call)
+from monitor import (time_call,
+                     time_per_row)
