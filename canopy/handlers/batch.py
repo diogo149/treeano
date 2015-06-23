@@ -89,6 +89,7 @@ class ChunkVariables(base.NetworkHandlerImpl):
         # set shared variables, and keep the non-chunked variables
         new_args = []
         chunk_size = None
+        # TODO time transferring data to GPU
         for arg, shared in zip(args, self.shared_list_):
             if shared is None:
                 new_args.append(arg)
