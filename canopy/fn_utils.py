@@ -1,7 +1,7 @@
 import time
 
 
-def evaluate_until(fn, gen, max_iters=None, max_seconds=None):
+def evaluate_until(fn, gen, max_iters=None, max_seconds=None, callback=None):
     """
     evaluates a function on the output of a data generator until a given
     stopping condition
@@ -12,4 +12,6 @@ def evaluate_until(fn, gen, max_iters=None, max_seconds=None):
             break
         if max_seconds is not None and max_seconds >= time.time() - start_time:
             break
-        fn(data)
+        res = fn(data)
+        if callback is not None:
+            callback(res)
