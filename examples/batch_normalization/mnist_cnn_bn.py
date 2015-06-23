@@ -45,6 +45,7 @@ model = tn.HyperparameterNode(
          tl.MaxPool2DNode("mp2"),
          tn.DenseNode("fc1"),
          bn.BatchNormalizationNode("bn3"),
+         tn.ReLUNode("relu3"),
          tn.DenseNode("fc2", num_units=10),
          bn.BatchNormalizationNode("bn4"),
          tn.SoftmaxNode("pred"),

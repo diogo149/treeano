@@ -21,7 +21,7 @@ def evaluate_until(fn,
     for i, data in enumerate(gen):
         if max_iters is not None and i >= max_iters:
             break
-        if max_seconds is not None and max_seconds >= time.time() - start_time:
+        if max_seconds is not None and time.time() - start_time >= max_seconds:
             break
         res = fn(data)
         if callback is not None:

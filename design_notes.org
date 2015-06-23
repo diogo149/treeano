@@ -914,28 +914,22 @@
 - should shared variables contain metadata on which axes are their input axes and which are their output axes
   - useful for initialization
 ** v2
-- serialization
-  - [X] to_value_dict
-  - [X] to_value_dict test
-  - [X] load value dict
-  - [X] load value dict test
-  - [ ] separate serialization of values and node
-  - [ ] serialization tests
+- misc canopy
+  - creating training curves
+  - saving models every x iterations
+  - saving first / best / last model
 - ability to merge output of multiple calls
   - take functionality from chunk_variables
   - use case:
     - merging results of multiple training/validation chunks
 - add flag in chunk_variables to free memory afterwards
+- add timing to data generation
 - generalize handled function state timing to take in a string
   - call_multiple function
   - rationale:
     - can reuse logic
     - there might be other things to time
       - eg. sending data to GPU
-- misc canopy
-  - creating training curves
-  - saving models every x iterations
-  - saving first / best / last model
 - should "weight" inits be linear weight inits
 - add adam state to network
 - issue: serialization of handlers
