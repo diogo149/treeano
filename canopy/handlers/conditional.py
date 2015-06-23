@@ -17,6 +17,7 @@ class CallAfterEvery(base.NetworkHandlerImpl):
         res = fn(*args, **kwargs)
         self.count += 1
         if (self.count % self.iters) == 0:
+            # WARNING: dict may be mutated here
             self.callback(res)
         return res
 
