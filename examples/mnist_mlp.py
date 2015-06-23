@@ -23,6 +23,8 @@ X = mnist['data'].astype(fX) / 255.0
 y = mnist['target'].astype("int32")
 X_train, X_valid, y_train, y_valid = sklearn.cross_validation.train_test_split(
     X, y, random_state=42)
+in_train = {"x": X_train, "y": y_train}
+in_valid = {"x": X_valid, "y": y_valid}
 
 # ############################## prepare model ##############################
 # architecture:
@@ -72,21 +74,21 @@ network.build()  # build eagerly to share weights
 
 
 BATCH_SIZE = 500
-train_fn = canopy.handled_function(
+train_fn = canopy.handled_fn(
     network,
     [canopy.handlers.chunk_variables(batch_size=BATCH_SIZE,
                                      variables=["x", "y"])],
-    ["x", "y"],
-    ["cost"],
+    {"x": "x", "y": "y"},
+    {"cost": "cost"},
     include_updates=True)
 
-valid_fn = canopy.handled_function(
+valid_fn = canopy.handled_fn(
     network,
     [canopy.handlers.override_hyperparameters(dropout_probability=0),
      canopy.handlers.chunk_variables(batch_size=BATCH_SIZE,
                                      variables=["x", "y"])],
-    ["x", "y"],
-    ["cost", "pred"])
+    {"x": "x", "y": "y"},
+    {"cost": "cost", "pred": "pred"})
 
 
 # ################################# training #################################
@@ -96,8 +98,9 @@ print("Starting training...")
 NUM_EPOCHS = 25
 for epoch_num in range(NUM_EPOCHS):
     start_time = time.time()
-    train_loss, = train_fn(X_train, y_train)
-    valid_loss, probabilities = valid_fn(X_valid, y_valid)
+    train_loss = train_fn(in_train)["cost"]
+    valid_out = valid_fn(in_valid)
+    valid_loss, probabilities = valid_out["cost"], valid_out["pred"]
     predicted_classes = np.argmax(probabilities, axis=1)
     # calculate accuracy for this epoch
     accuracy = sklearn.metrics.accuracy_score(y_valid, predicted_classes)

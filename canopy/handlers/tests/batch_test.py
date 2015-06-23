@@ -20,20 +20,17 @@ def test_chunk_variables():
                       shape_fn=(lambda s: s))]
     ).network()
 
-    fn1 = canopy.handlers.handled_function(
-        network,
-        [],
-        ["i"],
-        ["seq"]
-    )
-    np.testing.assert_equal(fn1(np.zeros((18, 2), dtype=fX)),
-                            [np.ones((18, 2), dtype=fX) * 18])
+    fn1 = canopy.handlers.handled_fn(network,
+                                     [],
+                                     {"x": "i"},
+                                     {"out": "seq"})
+    np.testing.assert_equal(fn1({"x": np.zeros((18, 2), dtype=fX)})["out"],
+                            np.ones((18, 2), dtype=fX) * 18)
 
-    fn2 = canopy.handlers.handled_function(
+    fn2 = canopy.handlers.handled_fn(
         network,
         [canopy.handlers.chunk_variables(3, ["i"])],
-        ["i"],
-        ["seq"]
-    )
-    np.testing.assert_equal(fn2(np.zeros((18, 2), dtype=fX)),
-                            [np.ones((18, 2), dtype=fX) * 3])
+        {"x": "i"},
+        {"out": "seq"})
+    np.testing.assert_equal(fn2({"x": np.zeros((18, 2), dtype=fX)})["out"],
+                            np.ones((18, 2), dtype=fX) * 3)

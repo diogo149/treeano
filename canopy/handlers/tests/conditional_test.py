@@ -14,17 +14,17 @@ fX = theano.config.floatX
 def test_call_after_every():
     vals = []
 
-    def save_val(x):
-        vals.append(x)
+    def save_val(in_dict):
+        vals.append(in_dict["out"])
 
     network = tn.InputNode("i", shape=()).network()
-    fn = canopy.handlers.handled_function(
+    fn = canopy.handlers.handled_fn(
         network,
         [canopy.handlers.call_after_every(3, save_val)],
-        ["i"],
-        ["i"])
+        {"x": "i"},
+        {"out": "i"})
     for i in range(100):
-        fn(i)
+        fn({"x": i})
 
     np.testing.assert_equal(np.arange(start=2, stop=100, step=3, dtype=fX),
                             np.array(vals).ravel())

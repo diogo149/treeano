@@ -731,6 +731,45 @@
     - take in the arguments for a function
       - and possibly change it
       - eg. mode
+- should handled functions always take in and output a dict?
+  - should the input be kwargs instead?
+    - pros
+      - simpler syntax
+      - easy to convert input dict to kwargs (eg. **indict)
+    - cons
+      - can't have additional kwargs
+        - will theano functions ever need this? possibly not
+        - handlers might use kwargs
+      - requires string keys
+      - using kwargs involves making lots of copies
+        - probably doesn't matter
+    - can just have kwargs_to_dict or dict_to_kwargs handler
+  - pros for dict input/output
+    - makes it easier to output additional fields
+      - eg. monitoring
+    - makes it easier to have handlers that depend on the output of other handlers
+      - eg. AUC handler that takes validation handler into account
+    - easier to take in maps as input
+    - allows for default keys for certain things
+      - eg. "output", "loss"
+  - cons
+    - more boilerplate for the simple case
+    - will break existing handlers that do any sort of input/output manipulation
+    - introduces issues of colliding kwargs
+    - may be harder to debug when something goes wrong with theano.function
+  - conclusion:
+    - really need to pick one a stick to it
+      - to allow for input/output manipulation composability
+    - output should be a dict
+      - because it enables many complex use cases
+        - eg. monitoring by adding to the dict
+    - input should be a dict
+- trainer
+  - goals:
+    - composable
+    - able to make complex training schemes
+      - eg.
+        - adversarial training
 * assumptions
 - shared variables (eg. parameter tensors) will have a fixed size
 - nodes are in a directed acyclic graph
@@ -857,7 +896,11 @@
 - should shared variables contain metadata on which axes are their input axes and which are their output axes
   - useful for initialization
 ** v2
-- should "weight" inits be linear weight inits
+- generalize handled function state timing to take in a string
+  - rationale:
+    - can reuse logic
+    - there might be other things to time
+      - eg. sending data to GPU
 - canopy.handlers.monitor
   - ms / chunk
   - ms / observation
@@ -867,12 +910,15 @@
     - precision
     - recall
     - AUC
+    - gpu max memory
+- serialization
 - misc canopy
   - training time limit
   - training epoch limit
   - creating training curves
   - saving models every x iterations
   - saving first / best / last model
+- should "weight" inits be linear weight inits
 - add adam state to network
 - attaching handlers to networks instead of functions
   - rationale:
@@ -901,12 +947,12 @@
       - except when serializing/deserializing
 ** canopy.handlers
 - build
-  - batching / chunking
   - run in different process (w/ different GPU)
     - https://groups.google.com/forum/#!msg/theano-users/niQ8j_TNoqM/Y5_1ETIc3WUJ
     - use below to manually set gpu (before that, shared variables are created in the CPU):
       import theano.sandbox.cuda
       theano.sandbox.cuda.use(theano.config.device)
+  - convert args to fX handler
   - stopping conditions
     - time
     - # iterations
@@ -944,6 +990,7 @@
         - id caches on exact array
       - optimization to make datasets that fit in memory fast
     - flag for random order of minibatches
+    - time transferring data to shared variable
 ** RNNs
 - some nodes will be broken with ScanNode
   - ie. batch normalization updates
@@ -1026,6 +1073,8 @@
 - figure out how to make recurrent node's not require batch size
   - would be cool to have symbolic shapes work
 ** misc
+- consider a switch shared variable to determine whether or not to use dropout
+  - so that network doesn't have to be recompiled
 - figure out how to handle random state
   - should rng state be global, part of the network, state of a node?
     - should not be global

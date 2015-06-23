@@ -2,14 +2,12 @@ import base
 import conditional
 import nodes
 import batch
-import with_dict
+import fn
 
 from base import (NetworkHandlerAPI,
-                  NetworkHandlerImpl,
-                  handled_function)
+                  NetworkHandlerImpl)
 from conditional import (call_after_every)
 from nodes import (with_hyperparameters,
                    override_hyperparameters)
 from batch import (chunk_variables)
-from with_dict import (call_with_dict,
-                       return_dict)
+from fn import (handled_fn)

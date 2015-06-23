@@ -18,12 +18,12 @@ def test_with_hyperparameters():
          tn.toy.AddConstantNode("ac")]
     ).network()
 
-    fn = canopy.handlers.handled_function(
+    fn = canopy.handlers.handled_fn(
         network,
         [canopy.handlers.with_hyperparameters("hp", value=3)],
-        ["i"],
-        ["ac"])
-    nt.assert_equal(3, fn(0)[0])
+        {"x": "i"},
+        {"out": "ac"})
+    nt.assert_equal(3, fn({"x": 0})["out"])
 
 
 def test_override_hyperparameters1():
@@ -33,12 +33,12 @@ def test_override_hyperparameters1():
          tn.toy.AddConstantNode("ac", value=1)]
     ).network()
 
-    fn = canopy.handlers.handled_function(
+    fn = canopy.handlers.handled_fn(
         network,
         [canopy.handlers.override_hyperparameters(value=2)],
-        ["i"],
-        ["ac"])
-    nt.assert_equal(2, fn(0)[0])
+        {"x": "i"},
+        {"out": "ac"})
+    nt.assert_equal(2, fn({"x": 0})["out"])
 
 
 def test_override_hyperparameters2():
@@ -59,18 +59,18 @@ def test_override_hyperparameters2():
     fn2_args = (
         network,
         [canopy.handlers.override_hyperparameters(value=2)],
-        ["i"],
-        ["lm"]
+        {"x": "i"},
+        {"out": "lm"}
     )
-    fn2 = canopy.handlers.handled_function(*fn2_args)
-    fn2u = canopy.handlers.handled_function(*fn2_args, include_updates=True)
+    fn2 = canopy.handlers.handled_fn(*fn2_args)
+    fn2u = canopy.handlers.handled_fn(*fn2_args, include_updates=True)
 
     x = np.random.randn(3, 4, 5).astype(fX)
-    np.testing.assert_equal(fn1(x), fn2(x))
+    np.testing.assert_equal(fn1(x)[0], fn2({"x": x})["out"])
     fn1u(x)
-    np.testing.assert_equal(fn1(x), fn2(x))
-    fn2u(x)
-    np.testing.assert_equal(fn1(x), fn2(x))
+    np.testing.assert_equal(fn1(x)[0], fn2({"x": x})["out"])
+    fn2u({"x": x})
+    np.testing.assert_equal(fn1(x)[0], fn2({"x": x})["out"])
 
 
 def test_override_hyperparameters3():
@@ -84,10 +84,10 @@ def test_override_hyperparameters3():
 
     fn1 = network.function([], ["c"])
     np.testing.assert_equal(fn1()[0], x1)
-    fn2 = canopy.handlers.handled_function(
+    fn2 = canopy.handlers.handled_fn(
         network,
         [canopy.handlers.override_hyperparameters(value=x2)],
-        [],
-        ["c"]
+        {},
+        {"out": "c"}
     )
-    np.testing.assert_equal(fn2()[0], x2)
+    np.testing.assert_equal(fn2({})["out"], x2)

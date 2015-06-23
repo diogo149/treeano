@@ -154,31 +154,3 @@ class _HandledFunctionState(object):
     def time_call(self):
         # TODO add to total (keep state)
         yield
-
-
-class _HandledFunction(object):
-
-    """
-    class that stores handler-chain wide state
-    """
-
-    def __init__(self, network, handlers, inputs, outputs=None, **kwargs):
-        self.network = network
-        self.handlers = handlers + [FinalHandler()]
-
-        self.state = _HandledFunctionState(network)
-
-        for outer, inner in zip(self.handlers, self.handlers[1:]):
-            outer.set_inner(inner)
-
-        self.outermost = self.handlers[0]
-        self.outermost.initial_build(self.state,
-                                     self.network,
-                                     inputs=inputs,
-                                     outputs=outputs,
-                                     **kwargs)
-
-    def __call__(self, *args, **kwargs):
-        return self.outermost(self.state, *args, **kwargs)
-
-handled_function = _HandledFunction

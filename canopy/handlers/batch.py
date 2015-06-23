@@ -29,6 +29,8 @@ class ChunkVariables(base.NetworkHandlerImpl):
     TODO implement
     """
 
+    BATCH_IDX_KEY = "batch_idx"
+
     def __init__(self,
                  batch_size,
                  variables,
@@ -49,6 +51,9 @@ class ChunkVariables(base.NetworkHandlerImpl):
         inputs = kwargs["inputs"]
         givens = kwargs.get("givens")
 
+        assert isinstance(inputs, dict)
+        assert self.BATCH_IDX_KEY not in inputs
+
         if givens is None:
             new_givens = []
         elif isinstance(givens, dict):
@@ -57,63 +62,62 @@ class ChunkVariables(base.NetworkHandlerImpl):
             new_givens = list(givens)
 
         self.idx_var_ = T.iscalar('batch_idx')
-        self.var_to_shared_ = {}
-        new_inputs = [self.idx_var_]
-        for input_var in inputs:
+        self.key_to_shared_ = {}
+        new_inputs = dict(inputs)
+        new_inputs[self.BATCH_IDX_KEY] = self.idx_var_
+        for input_key, input_var in inputs.items():
             if input_var in self.variables:
+                # remove key from inputs
+                new_inputs.pop(input_key)
+                # create shared variable
                 v = state.network.network_variable(input_var)
                 shared_var = treeano.utils.shared_empty(
                     ndim=v.ndim,
                     dtype=v.dtype,
                 )
+                # create givens for variable
                 idx_slice = slice(self.idx_var_ * self.batch_size,
                                   (self.idx_var_ + 1) * self.batch_size)
                 batch_value = shared_var[idx_slice]
                 new_givens.append((input_var, batch_value))
-                self.var_to_shared_[input_var] = shared_var
-            else:
-                new_inputs.append(input_var)
-        # create a list of variables that are replaced (in order), so that
-        # we can later set the value of the chunked shared variables
-        # appropriately
-        self.shared_list_ = [self.var_to_shared_.get(i, None)
-                             for i in inputs]
+                # store shared variable
+                self.key_to_shared_[input_key] = shared_var
 
         kwargs["inputs"] = new_inputs
         kwargs["givens"] = new_givens
         return kwargs
 
-    def call(self, fn, *args, **kwargs):
-        assert len(args) == len(self.shared_list_)
-
+    def call(self, fn, in_dict, *args, **kwargs):
         # set shared variables, and keep the non-chunked variables
-        new_args = []
         chunk_size = None
+        # make a copy, since we are mutating it
+        in_dict = dict(in_dict)
         # TODO time transferring data to GPU
-        for arg, shared in zip(args, self.shared_list_):
-            if shared is None:
-                new_args.append(arg)
+        for input_key, shared in self.key_to_shared_.items():
+            input_val = in_dict.pop(input_key)
+            if chunk_size is None:
+                chunk_size = len(input_val)
             else:
-                if chunk_size is None:
-                    chunk_size = len(arg)
-                else:
-                    assert len(arg) == chunk_size
-                # error if chunk size not a multiple of batch size
-                assert (chunk_size % self.batch_size) == 0
-                shared.set_value(arg)
+                assert len(input_val) == chunk_size
+            # error if chunk size not a multiple of batch size
+            assert (chunk_size % self.batch_size) == 0
+            shared.set_value(input_val)
         assert chunk_size is not None
 
         # call function multiple times
+        # TODO maybe factor this out
         results = []
         for i in range(int(np.ceil(chunk_size / self.batch_size))):
-            result = fn(i, *new_args, **kwargs)
+            in_dict[self.BATCH_IDX_KEY] = i
+            result = fn(in_dict, *args, **kwargs)
             results.append(result)
-        res = []
-        for outputs in zip(*results):
+        res = {}
+        for key in results[0].keys():  # assumes at least 1 batch
+            outputs = [r[key] for r in results]
             if outputs[0].shape:
-                res.append(np.concatenate(outputs))
+                res[key] = np.concatenate(outputs)
             else:
-                res.append(self.scalar_merge(outputs))
+                res[key] = self.scalar_merge(outputs)
         return res
 
 chunk_variables = ChunkVariables
