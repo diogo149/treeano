@@ -8,15 +8,15 @@ class CallAfterEvery(base.NetworkHandlerImpl):
     calls
     """
 
-    def __init__(self, frequency, callback):
-        self.frequency = frequency
+    def __init__(self, iters, callback):
+        self.iters = iters
         self.callback = callback
         self.count = 0
 
     def call(self, fn, *args, **kwargs):
         res = fn(*args, **kwargs)
         self.count += 1
-        if (self.count % self.frequency) == 0:
+        if (self.count % self.iters) == 0:
             self.callback(res)
         return res
 
