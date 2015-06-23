@@ -119,6 +119,7 @@ class ChunkVariables(base.NetworkHandlerImpl):
             else:
                 res[key] = self.scalar_merge(outputs)
         # free memory
+        # may be inefficient if not necessary
         for shared in self.key_to_shared_.values():
             shared.set_value(np.zeros([0] * shared.ndim, dtype=shared.dtype))
         return res
