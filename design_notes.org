@@ -764,12 +764,30 @@
       - because it enables many complex use cases
         - eg. monitoring by adding to the dict
     - input should be a dict
-- trainer
-  - goals:
-    - composable
-    - able to make complex training schemes
-      - eg.
-        - adversarial training
+- attaching handlers to networks instead of functions
+  - rationale:
+    - composing together function handlers
+      - eg. some assigned in training loop, some assigned outside
+    - sharing handler state
+      - eg. shared variable for chunking
+    - serializing networks with preprpocessing
+  - make handled network class
+    - override .function
+      - call handled_function
+    - add .wrap_handlers
+      - returns new network
+    - add .wrap_handler
+    - add .get_handlers
+      - to get all handlers out
+    - get .get_base_network
+      - return the original network
+  - issue:
+    - sharing handlers shares state
+    - some handlers have function specific logic
+      - eg. which keys go where in chunk_variables
+  - conclusion:
+    - should keep handlers simple and not do this
+    - if handlers should share state, the same handler can be used for multiple functions
 * assumptions
 - shared variables (eg. parameter tensors) will have a fixed size
 - nodes are in a directed acyclic graph
@@ -896,47 +914,24 @@
 - should shared variables contain metadata on which axes are their input axes and which are their output axes
   - useful for initialization
 ** v2
+- serialization
+- ability to merge output of multiple calls
+  - take functionality from chunk_variables
+  - use case:
+    - merging results of multiple training/validation chunks
+- add flag in chunk_variables to free memory afterwards
 - generalize handled function state timing to take in a string
+  - call_multiple function
   - rationale:
     - can reuse logic
     - there might be other things to time
       - eg. sending data to GPU
-- canopy.handlers.monitor
-  - ms / chunk
-  - ms / observation
-  - callbacks for saving:
-    - MSE
-    - accuracy
-    - precision
-    - recall
-    - AUC
-    - gpu max memory
-- serialization
 - misc canopy
-  - training time limit
-  - training epoch limit
   - creating training curves
   - saving models every x iterations
   - saving first / best / last model
 - should "weight" inits be linear weight inits
 - add adam state to network
-- attaching handlers to networks instead of functions
-  - rationale:
-    - composing together function handlers
-      - eg. some assigned in training loop, some assigned outside
-    - sharing handler state
-      - eg. shared variable for chunking
-    - serializing networks with preprpocessing
-  - make handled network class
-    - override .function
-      - call handled_function
-    - add .wrap_handlers
-      - returns new network
-    - add .wrap_handler
-    - add .get_handlers
-      - to get all handlers out
-    - get .get_base_network
-      - return the original network
 - issue: serialization of handlers
   - what if handlers have theano variables as state? that may break when serializing
     - solution: need to implement getstate/setstate
@@ -957,7 +952,6 @@
     - time
     - # iterations
   - logging
-  - validation every x iterations
   - padding
     - eg. minibatch
     - in handlers.batch
