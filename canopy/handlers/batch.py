@@ -118,6 +118,9 @@ class ChunkVariables(base.NetworkHandlerImpl):
                 res[key] = np.concatenate(outputs)
             else:
                 res[key] = self.scalar_merge(outputs)
+        # free memory
+        for shared in self.key_to_shared_.values():
+            shared.set_value(np.zeros([0] * shared.ndim, dtype=shared.dtype))
         return res
 
 chunk_variables = ChunkVariables
