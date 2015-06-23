@@ -25,6 +25,52 @@ def test_to_shared_dict():
                             42.42 * np.ones((10, 15), dtype=fX))
 
 
+def test_to_value_dict():
+    network = tn.SequentialNode(
+        "seq",
+        [tn.InputNode("i", shape=(10,)),
+         tn.LinearMappingNode(
+             "lm",
+             output_dim=15,
+             inits=[treeano.inits.ConstantInit(42.42)])]
+    ).network()
+    sd = canopy.network_utils.to_value_dict(network)
+    nt.assert_equal(sd.keys(), ["lm:weight"])
+    np.testing.assert_equal(sd["lm:weight"],
+                            42.42 * np.ones((10, 15), dtype=fX))
+
+
+def test_load_value_dict():
+    def new_network():
+        return tn.SequentialNode(
+            "seq",
+            [tn.InputNode("i", shape=(10, 100)),
+             tn.LinearMappingNode(
+                 "lm",
+                 output_dim=15,
+                 inits=[treeano.inits.NormalWeightInit()])]
+        ).network()
+
+    n1 = new_network()
+    n2 = new_network()
+
+    fn1 = n1.function(["i"], ["lm"])
+    fn2 = n2.function(["i"], ["lm"])
+
+    x = np.random.randn(10, 100).astype(fX)
+
+    def test():
+        np.testing.assert_equal(fn1(x), fn2(x))
+
+    # should fail
+    nt.raises(AssertionError)(test)()
+    # change weights
+    canopy.network_utils.load_value_dict(
+        n1, canopy.network_utils.to_value_dict(n2))
+    # should not fail
+    test()
+
+
 def test_to_preallocated_init1():
     network1 = tn.SequentialNode(
         "seq",

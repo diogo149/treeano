@@ -915,6 +915,12 @@
   - useful for initialization
 ** v2
 - serialization
+  - [X] to_value_dict
+  - [X] to_value_dict test
+  - [X] load value dict
+  - [X] load value dict test
+  - [ ] separate serialization of values and node
+  - [ ] serialization tests
 - ability to merge output of multiple calls
   - take functionality from chunk_variables
   - use case:
