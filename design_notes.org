@@ -922,8 +922,8 @@
   - take functionality from chunk_variables
   - use case:
     - merging results of multiple training/validation chunks
-- add flag in chunk_variables to free memory afterwards
 - add timing to data generation
+- remove print statements
 - generalize handled function state timing to take in a string
   - call_multiple function
   - rationale:
@@ -985,6 +985,7 @@
       - optimization to make datasets that fit in memory fast
     - flag for random order of minibatches
     - time transferring data to shared variable
+    - add flag to not free memory afterwards
 ** RNNs
 - some nodes will be broken with ScanNode
   - ie. batch normalization updates

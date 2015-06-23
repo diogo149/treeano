@@ -1,3 +1,6 @@
+from __future__ import division, absolute_import
+from __future__ import print_function, unicode_literals
+
 import nose.tools as nt
 import numpy as np
 import theano
@@ -108,7 +111,7 @@ def test_add_hyperparameters():
     nt.assert_equal(2, fn1(0)[0])
     network2 = canopy.transforms.add_hyperparameters(
         network1, "hp", dict(value=3))
-    print network2.root_node
+    print(network2.root_node)
     fn2a = network2.function(["i"], ["ac"])
     nt.assert_equal(3, fn2a(0)[0])
     fn2b = network2.function(["i"], ["hp"])
