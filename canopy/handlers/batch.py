@@ -87,21 +87,21 @@ class ChunkVariables(base.NetworkHandlerImpl):
         kwargs["givens"] = new_givens
         return kwargs
 
-    def call(self, fn, in_dict, *args, **kwargs):
+    def __call__(self, state, in_dict, *args, **kwargs):
         # set shared variables, and keep the non-chunked variables
         chunk_size = None
         # make a copy, since we are mutating it
         in_dict = dict(in_dict)
-        # TODO time transferring data to GPU
-        for input_key, shared in self.key_to_shared_.items():
-            input_val = in_dict.pop(input_key)
-            if chunk_size is None:
-                chunk_size = len(input_val)
-            else:
-                assert len(input_val) == chunk_size
-            # error if chunk size not a multiple of batch size
-            assert (chunk_size % self.batch_size) == 0
-            shared.set_value(input_val)
+        with state.time("data_transfer"):
+            for input_key, shared in self.key_to_shared_.items():
+                input_val = in_dict.pop(input_key)
+                if chunk_size is None:
+                    chunk_size = len(input_val)
+                else:
+                    assert len(input_val) == chunk_size
+                # error if chunk size not a multiple of batch size
+                assert (chunk_size % self.batch_size) == 0
+                shared.set_value(input_val)
         assert chunk_size is not None
 
         # call function multiple times
@@ -109,7 +109,7 @@ class ChunkVariables(base.NetworkHandlerImpl):
         results = []
         for i in range(int(np.ceil(chunk_size / self.batch_size))):
             in_dict[self.BATCH_IDX_KEY] = i
-            result = fn(in_dict, *args, **kwargs)
+            result = self._inner_handler(state, in_dict, *args, **kwargs)
             results.append(result)
         res = {}
         for key in results[0].keys():  # assumes at least 1 batch
@@ -120,8 +120,10 @@ class ChunkVariables(base.NetworkHandlerImpl):
                 res[key] = self.scalar_merge(outputs)
         # free memory
         # may be inefficient if not necessary
-        for shared in self.key_to_shared_.values():
-            shared.set_value(np.zeros([0] * shared.ndim, dtype=shared.dtype))
+        with state.time("data_free"):
+            for shared in self.key_to_shared_.values():
+                shared.set_value(np.zeros([0] * shared.ndim,
+                                          dtype=shared.dtype))
         return res
 
 chunk_variables = ChunkVariables
