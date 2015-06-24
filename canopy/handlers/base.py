@@ -5,6 +5,7 @@ from __future__ import print_function, unicode_literals
 import abc
 import contextlib
 import time
+import collections
 
 import six
 
@@ -43,15 +44,15 @@ class NetworkHandlerAPI(six.with_metaclass(abc.ABCMeta, object)):
         self._inner_handler.compile_function(state, kwargs)
 
     def initial_build(self, state, input_network, **kwargs):
-        with state.time_build():
+        with state.time("build"):
             self.build(state, input_network)
-        with state.time_compile_function():
+        with state.time("compile_function"):
             self.compile_function(state, kwargs)
 
     def rebuild(self, state):
-        with state.time_build():
+        with state.time("build"):
             self._build_from_input(state)
-        with state.time_build():
+        with state.time("build"):
             self._compile_function_from_input(state)
 
     # ######################### methods to be overriten #######################
@@ -122,6 +123,8 @@ class _HandledFunctionState(object):
 
     def __init__(self, initial_network):
         self.initial_network = initial_network
+        self.time_total = collections.defaultdict(lambda: 0)
+        self.time_count = collections.defaultdict(lambda: 0)
 
     def update_network(self, network):
         self.network = network
@@ -129,28 +132,20 @@ class _HandledFunctionState(object):
             self.network.build()
 
     def compile_function(self, kwargs):
-        self.fn = self.network.function(**kwargs)
+        with self.time("network_compile"):
+            self.fn = self.network.function(**kwargs)
 
     def call(self, *args, **kwargs):
-        return self.fn(*args, **kwargs)
+        with self.time("network_call"):
+            return self.fn(*args, **kwargs)
 
     @contextlib.contextmanager
-    def time_build(self):
-        # TODO add to total (keep state)
+    def time(self, title):
         start_time = time.time()
         yield
         total_time = time.time() - start_time
-        print("Building took %fs" % total_time)
-
-    @contextlib.contextmanager
-    def time_compile_function(self):
-        # TODO add to total (keep state)
-        start_time = time.time()
-        yield
-        total_time = time.time() - start_time
-        print("Compiling took %fs" % total_time)
-
-    @contextlib.contextmanager
-    def time_call(self):
-        # TODO add to total (keep state)
-        yield
+        self.time_total[title] += total_time
+        self.time_count[title] += 1
+        # TODO figure out right way to print network info
+        if title != "network_call":
+            print("%s took %0.4fs" % (title, total_time))
