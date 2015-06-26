@@ -914,6 +914,8 @@
 - should shared variables contain metadata on which axes are their input axes and which are their output axes
   - useful for initialization
 ** v2
+- need evaluate_until to store state
+  - losses, times, total_time, etc.
 - misc canopy
   - creating training curves
   - saving models every x iterations

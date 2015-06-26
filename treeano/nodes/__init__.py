@@ -42,7 +42,8 @@ from updates import (UpdateScaleNode,
 from costs import (AggregatorNode,
                    ElementwisePredictionCostNode,
                    PredictionCostNode)
-from stochastic import (DropoutNode)
+from stochastic import (DropoutNode,
+                        GaussianDropoutNode)
 from composite import (DenseNode,
                        DenseCombineNode)
 

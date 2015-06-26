@@ -53,3 +53,54 @@ class DropoutNode(core.NodeImpl):
                 shape=in_vw.shape,
                 tags={"output"},
             )
+
+
+@core.register_node("gaussian_dropout")
+class GaussianDropoutNode(core.NodeImpl):
+
+    """
+    node that adds gaussian noise to units
+    """
+
+    hyperparameter_names = ("sigma",
+                            "dropout_probability",
+                            "probability",
+                            "p")
+
+    def compute_output(self, network, in_vw):
+        sigma = network.find_hyperparameter(["sigma"], None)
+        if sigma is None:
+            p = network.find_hyperparameter(["dropout_probability",
+                                             "probability",
+                                             "p"],
+                                            0)
+            if p == 0:
+                sigma = 0
+            else:
+                # derive gaussian dropout variance from bernoulli dropout
+                # probability
+                sigma = ((1 - p) / p) ** 0.5
+        if sigma == 0:
+            network.copy_variable(
+                name="default",
+                previous_variable=in_vw,
+                tags={"output"},
+            )
+        else:
+            mask_shape = in_vw.shape
+            if any(s is None for s in mask_shape):
+                # NOTE: this uses symbolic shape - can be an issue with
+                # theano.clone and random numbers
+                # https://groups.google.com/forum/#!topic/theano-users/P7Mv7Fg0kUs
+                warnings.warn("using symbolic shape for dropout mask, "
+                              "which can be an issue with theano.clone")
+                mask_shape = in_vw.variable.shape
+            # TODO save this state so that we can seed the rng
+            srng = MRG_RandomStreams()
+            mask = srng.normal(mask_shape, avg=1.0, std=sigma, dtype=floatX)
+            network.create_variable(
+                "default",
+                variable=in_vw.variable * mask,
+                shape=in_vw.shape,
+                tags={"output"},
+            )
