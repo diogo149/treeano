@@ -74,7 +74,8 @@ train_fn = canopy.handled_fn(
 
 valid_fn = canopy.handled_fn(
     network,
-    [canopy.handlers.override_hyperparameters(dropout_probability=0),
+    [canopy.handlers.override_hyperparameters(dropout_probability=0,
+                                              bn_use_moving_stats=True),
      canopy.handlers.chunk_variables(batch_size=BATCH_SIZE,
                                      variables=["x", "y"])],
     {"x": "x", "y": "y"},
