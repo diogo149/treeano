@@ -1330,7 +1330,8 @@
         - layer for representation to use
     - given a certain unit, find which inputs fire hardest
     - find inputs that are the most wrong
-    - find input that maximally activates for class
+    - find input in training set that maximally activates a unit
+    - find input that maximally activates for class (a unit)
       - with constant norm or L1/L2 loss
     - histogram of values of a tensor
       - eg. output of a layer
@@ -1346,7 +1347,11 @@
     - post-training report
       - eg. examples which are the most wrong
     - making a gif of pixelwise loss / heatmap / attention over time
+    - images on low-dimensional (2D) space
+      - with t-sne / PCA
+      - using embedding from a certain layer
     - http://cs231n.github.io/understanding-cnn/
+    - http://people.csail.mit.edu/torralba/research/drawCNN/drawNet.html
   - monitoring
     - printing out certain values
       - eg. loss
