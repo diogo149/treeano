@@ -35,7 +35,8 @@ class ChunkVariables(base.NetworkHandlerImpl):
                  batch_size,
                  variables,
                  scalar_merge="mean",
-                 cache="id"):
+                 cache="id",
+                 strict_size=True):
         # TODO figure out serialization of theano vars
         self.variables = variables
         self.batch_size = batch_size
@@ -44,8 +45,9 @@ class ChunkVariables(base.NetworkHandlerImpl):
         elif scalar_merge == "identity":
             scalar_merge = treeano.utils.identity
         self.scalar_merge = scalar_merge
-        # TODO use
+        # TODO actually use cache
         self.cache = cache
+        self.strict_size = strict_size
 
     def transform_compile_function_kwargs(self, state, **kwargs):
         inputs = kwargs["inputs"]
@@ -99,8 +101,9 @@ class ChunkVariables(base.NetworkHandlerImpl):
                     chunk_size = len(input_val)
                 else:
                     assert len(input_val) == chunk_size
-                # error if chunk size not a multiple of batch size
-                assert (chunk_size % self.batch_size) == 0
+                if self.strict_size:
+                    # error if chunk size not a multiple of batch size
+                    assert (chunk_size % self.batch_size) == 0
                 shared.set_value(input_val)
         assert chunk_size is not None
 
@@ -127,3 +130,39 @@ class ChunkVariables(base.NetworkHandlerImpl):
         return res
 
 chunk_variables = ChunkVariables
+
+
+class BatchPad(base.NetworkHandlerImpl):
+
+    """
+    pads variables with 0's to the specified batch size
+    """
+
+    def __init__(self,
+                 batch_size,
+                 keys,
+                 axis=0):
+        # TODO figure out serialization of theano vars
+        self.keys = keys
+        self.batch_size = batch_size
+        self.axis = axis
+
+    def _pad(self, arr):
+        rem = arr.shape[self.axis] % self.batch_size
+        if rem == 0:
+            return arr
+        else:
+            pad_shape = [s if i != self.axis else (self.batch_size - rem)
+                         for i, s in enumerate(arr.shape)]
+            to_pad = np.zeros(pad_shape, dtype=arr.dtype)
+            return np.concatenate([arr, to_pad], axis=self.axis)
+
+    def call(self, fn, in_dict, *args, **kwargs):
+        # make a copy, since we are mutating it
+        in_dict = dict(in_dict)
+        for key in self.keys:
+            in_dict[key] = self._pad(in_dict[key])
+
+        return fn(in_dict, *args, **kwargs)
+
+batch_pad = BatchPad
