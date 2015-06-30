@@ -5,6 +5,22 @@ import theano.tensor as T
 fX = theano.config.floatX
 
 
+def as_fX(x):
+    """
+    convert input to value with type floatX
+    """
+    if isinstance(x, (float, int, long)):
+        return np.array(x, dtype=fX)
+    elif isinstance(x, np.ndarray):
+        if x.dtype == np.float32:
+            return x
+        else:
+            return x.astype(fX)
+    else:
+        # assume theano variable
+        return x.astype(fX)
+
+
 def all_equal(seq):
     """
     whether or not all elements of a sequence are equal
