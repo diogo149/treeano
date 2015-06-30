@@ -182,7 +182,7 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
             else:
                 batch_size = np.array(batch_size)
             batch_size = batch_size.astype(fX)
-            unbias_factor = batch_size / (batch_size - 1)
+            unbias_factor = treeano.utils.as_fX(batch_size / (batch_size - 1))
             in_var = unbias_factor * biased_in_var
 
         assert in_mean.broadcastable == stats_broadcastable
