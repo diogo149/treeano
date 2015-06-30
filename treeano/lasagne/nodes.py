@@ -322,6 +322,8 @@ class MeanPool2DDNNNode(core.NodeImpl):
             param_kwargs={},
             constructor=lasagne.layers.dnn.Pool2DDNNLayer,
             kwargs=dict(
+                # TODO look into which is better
+                # can also be mode="average_inc_pad",
                 mode="average_exc_pad",
                 pool_size=network.find_hyperparameter(["pool_size"]),
                 stride=network.find_hyperparameter(["pool_stride",
