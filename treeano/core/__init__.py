@@ -27,4 +27,7 @@ from children_container import (ChildrenContainer,
 from network import (MissingHyperparameter,
                      Network)
 from node import NodeAPI
-from node_impl import NodeImpl, WrapperNodeImpl, Wrapper1NodeImpl
+from node_impl import (NodeImpl,
+                       WrapperNodeImpl,
+                       Wrapper1NodeImpl,
+                       Wrapper0NodeImpl)

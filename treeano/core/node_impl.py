@@ -178,11 +178,25 @@ class WrapperNodeImpl(NodeImpl):
 class Wrapper1NodeImpl(WrapperNodeImpl):
 
     """
-    a nicer interface on top of the minimal NodeAPI, which sane defaults
-    that could be overriden - specifically for nodes that wrap a single node
+    a nicer interface on top of the minimal NodeAPI
+    for nodes that wrap a single node
 
     usage:
     - you probably do not want to override __init__
     """
     # by default, children is a single node
     children_container = ChildContainer
+
+
+class Wrapper0NodeImpl(WrapperNodeImpl):
+
+    """
+    a nicer interface on top of the minimal NodeAPI for nodes that
+    don't take in children, but have children (ie. return something from
+    self.architecture_children())
+
+    usage:
+    - you probably do not want to override __init__
+    """
+    # by default, children is a single node
+    children_container = NoneChildrenContainer
