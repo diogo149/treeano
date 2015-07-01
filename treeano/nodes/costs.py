@@ -13,6 +13,7 @@ AGGREGATORS = {
 }
 
 
+@core.register_node("aggregator")
 class AggregatorNode(core.NodeImpl):
 
     """
@@ -32,8 +33,8 @@ class AggregatorNode(core.NodeImpl):
         )
 
 
-@core.register_node("elementwise_prediction_cost")
-class ElementwisePredictionCostNode(core.WrapperNodeImpl):
+@core.register_node("elementwise_cost")
+class ElementwiseCostNode(core.WrapperNodeImpl):
 
     """
     node for computing the element-wise cost of predictions given a target
@@ -68,8 +69,8 @@ class ElementwisePredictionCostNode(core.WrapperNodeImpl):
         )
 
 
-@core.register_node("prediction_cost")
-class PredictionCostNode(core.WrapperNodeImpl):
+@core.register_node("total_cost")
+class TotalCostNode(core.WrapperNodeImpl):
 
     """
     node for computing the cost of predictions given a target
@@ -77,14 +78,14 @@ class PredictionCostNode(core.WrapperNodeImpl):
     applies an element-wise cost, then aggregates together the costs
     """
 
-    children_container = ElementwisePredictionCostNode.children_container
-    hyperparameter_names = (ElementwisePredictionCostNode.hyperparameter_names
+    children_container = ElementwiseCostNode.children_container
+    hyperparameter_names = (ElementwiseCostNode.hyperparameter_names
                             + AggregatorNode.hyperparameter_names)
 
     def architecture_children(self):
         return [containers.SequentialNode(
             self.name + "_sequential",
-            [ElementwisePredictionCostNode(
+            [ElementwiseCostNode(
                 self.name + "_elementwise",
                 self._children.children),
              AggregatorNode(self.name + "_aggregator")])]

@@ -104,7 +104,7 @@ def _ANRAT(pred, target, lambda_, p, q, r, alpha, **kwargs):
 
 @treeano.register_node("anrat")
 class ANRATNode(treeano.WrapperNodeImpl):
-    children_container = tn.ElementwisePredictionCostNode.children_container
+    children_container = tn.ElementwiseCostNode.children_container
     hyperparameter_names = ("nrae_p",
                             "nrae_q",
                             "anrat_r",
@@ -114,7 +114,7 @@ class ANRATNode(treeano.WrapperNodeImpl):
                             "i32_target")
 
     def architecture_children(self):
-        return [tn.ElementwisePredictionCostNode(
+        return [tn.ElementwiseCostNode(
             self.name + "_elementwise",
             self._children.children)]
 

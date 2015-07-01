@@ -43,7 +43,7 @@ def check_updates_node(updates_node_cls, **hyperparameters):
                 simple.InputNode("input", shape=(3, 4, 5)),
                 composite.DenseNode("b"),
                 activations.ReLUNode("c")]),
-             "cost": costs.PredictionCostNode("cost", {
+             "cost": costs.TotalCostNode("cost", {
                  "pred": simple.ReferenceNode("pred_ref", reference="seq"),
                  "target": simple.InputNode("target", shape=(3, 14))})
              },

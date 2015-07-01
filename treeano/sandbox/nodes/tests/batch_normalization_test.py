@@ -19,7 +19,7 @@ def test_batch_normalization_node():
             [tn.InputNode("x", shape=(None, 10)),
              batch_normalization.BatchNormalizationNode("bn"),
              tn.DenseNode("d", num_units=1), ]),
-         "cost": tn.PredictionCostNode("cost", {
+         "cost": tn.TotalCostNode("cost", {
              "target": tn.InputNode("y", shape=(None, 1)),
              "pred": tn.ReferenceNode("pred_ref", reference="d"),
          },

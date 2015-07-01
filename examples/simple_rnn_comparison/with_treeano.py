@@ -52,7 +52,7 @@ with_updates = tn.HyperparameterNode(
     tn.SGDNode(
         "adam",
         {"subtree": model,
-         "cost": tn.PredictionCostNode("cost", {
+         "cost": tn.TotalCostNode("cost", {
              "pred": tn.ReferenceNode("pred_ref", reference="model"),
              "target": tn.InputNode("y", shape=(None, 1))},
          )}),
