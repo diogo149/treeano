@@ -49,7 +49,7 @@ def check_updates_node(updates_node_cls, **hyperparameters):
              },
             **hyperparameters),
         num_units=14,
-        loss_function=lambda preds, y_true: (preds - y_true) ** 2,
+        cost_function=lambda preds, y_true: (preds - y_true) ** 2,
         cost_reference="cost",
     ).network()
     fn = network.function(["input", "target"], ["cost"])

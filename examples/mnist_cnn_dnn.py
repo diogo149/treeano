@@ -75,7 +75,7 @@ with_updates = tn.HyperparameterNode(
              "pred": tn.ReferenceNode("pred_ref", reference="model"),
              "target": tn.InputNode("y", shape=(None,), dtype="int32")},
          )}),
-    loss_function=treeano.utils.categorical_crossentropy_i32,
+    cost_function=treeano.utils.categorical_crossentropy_i32,
 )
 network = with_updates.network()
 network.build()  # build eagerly to share weights

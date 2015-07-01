@@ -140,7 +140,7 @@ class ANRATNode(treeano.WrapperNodeImpl):
         )
 
     def get_hyperparameter(self, network, name):
-        if name == "loss_function":
+        if name == "cost_function":
             p = network.find_hyperparameter(["nrae_p"], 2)
             q = network.find_hyperparameter(["nrae_q"], 2)
             r = network.find_hyperparameter(["anrat_r"], 1)

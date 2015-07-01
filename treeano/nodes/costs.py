@@ -44,7 +44,7 @@ class ElementwiseCostNode(core.WrapperNodeImpl):
         pred=core.ChildContainer,
         target=core.ChildContainer,
     )
-    hyperparameter_names = ("loss_function",)
+    hyperparameter_names = ("cost_function",)
     input_keys = ("pred_output", "target_output")
 
     def init_state(self, network):
@@ -60,10 +60,10 @@ class ElementwiseCostNode(core.WrapperNodeImpl):
                                      to_key="%s_output" % child_name)
 
     def compute_output(self, network, pred, target):
-        loss_function = network.find_hyperparameter(["loss_function"])
+        cost_function = network.find_hyperparameter(["cost_function"])
         network.create_variable(
             "default",
-            variable=loss_function(pred.variable, target.variable),
+            variable=cost_function(pred.variable, target.variable),
             shape=pred.shape,
             tags={"output"}
         )

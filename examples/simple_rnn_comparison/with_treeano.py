@@ -57,7 +57,7 @@ with_updates = tn.HyperparameterNode(
              "target": tn.InputNode("y", shape=(None, 1))},
          )}),
     learning_rate=0.1,
-    loss_function=treeano.utils.squared_error,
+    cost_function=treeano.utils.squared_error,
 )
 network = with_updates.network()
 

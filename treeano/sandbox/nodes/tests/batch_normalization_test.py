@@ -23,7 +23,7 @@ def test_batch_normalization_node():
              "target": tn.InputNode("y", shape=(None, 1)),
              "pred": tn.ReferenceNode("pred_ref", reference="d"),
          },
-            loss_function=treeano.utils.squared_error)}).network()
+            cost_function=treeano.utils.squared_error)}).network()
 
     fn = network.function(["x", "y"], ["cost"], include_updates=True)
 
