@@ -5,6 +5,7 @@ nodes for costs/losses
 import theano.tensor as T
 
 from .. import core
+from . import simple
 from . import containers
 
 AGGREGATORS = {
@@ -89,3 +90,31 @@ class TotalCostNode(core.WrapperNodeImpl):
                 self.name + "_elementwise",
                 self._children.children),
              AggregatorNode(self.name + "_aggregator")])]
+
+
+@core.register_node("auxiliary_cost")
+class AuxiliaryCostNode(core.Wrapper1NodeImpl):
+
+    children_container = core.DictChildrenContainerSchema(
+        target=core.ChildContainer,
+    )
+    input_keys = ("default",)  # return input instead of cost
+
+    def architecture_children(self):
+        target = self._children["target"].children
+        return [
+            containers.SequentialNode(
+                self.name + "_sequential",
+                [TotalCostNode(
+                    self.name + "_cost",
+                    {"pred": simple.IdentityNode(self.name + "_identity"),
+                     "target": target}),
+                 simple.SendToNode(self.name + "_sendto",
+                                   to_key=self.name)])]
+
+    def get_hyperparameter(self, network, name):
+        if name == "send_to_reference":
+            return network.find_hyperparameter(["cost_reference"])
+        else:
+            return super(AuxiliaryCostNode, self).get_hyperparameter(network,
+                                                                     name)

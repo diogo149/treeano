@@ -41,7 +41,8 @@ from updates import (UpdateScaleNode,
                      AdamNode)
 from costs import (AggregatorNode,
                    ElementwiseCostNode,
-                   TotalCostNode)
+                   TotalCostNode,
+                   AuxiliaryCostNode)
 from stochastic import (DropoutNode,
                         GaussianDropoutNode)
 from composite import (DenseNode,
