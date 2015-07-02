@@ -2,12 +2,20 @@ from __future__ import division, absolute_import
 from __future__ import print_function, unicode_literals
 
 import operator
+import functools
 
 import toolz
 
 
-def _product(iterable):
-    return reduce(operator.mul, iterable, 1)
+def _smart_reduce(op, iterable):
+    iterable = list(iterable)
+    if len(iterable) == 1:
+        return iterable[0]
+    else:
+        return reduce(op, iterable[1:], iterable[0])
+
+_sum = functools.partial(_smart_reduce, operator.add)
+_product = functools.partial(_smart_reduce, operator.mul)
 
 
 class UpdateDeltas(object):
@@ -57,7 +65,7 @@ class UpdateDeltas(object):
         adds a value, and returns a new instance of UpdateDeltas
         """
         if isinstance(other, UpdateDeltas):
-            return UpdateDeltas(toolz.merge_with(sum,
+            return UpdateDeltas(toolz.merge_with(_sum,
                                                  self.deltas,
                                                  other.deltas))
         else:
@@ -68,7 +76,7 @@ class UpdateDeltas(object):
         mutates the UpdateDeltas by adding a value
         """
         if isinstance(other, UpdateDeltas):
-            self.deltas = toolz.merge_with(sum,
+            self.deltas = toolz.merge_with(_sum,
                                            self.deltas,
                                            other.deltas)
         else:
