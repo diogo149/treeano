@@ -189,3 +189,26 @@ class InputElementwiseSumNode(BaseInputCombineNode):
 
     def compute_output(self, network, *in_vws):
         elementwise_sum(network, *in_vws)
+
+
+def elementwise_product(network, *in_vws):
+    # calculate and verify shape
+    input_shapes = [vw.shape for vw in in_vws]
+    assert utils.all_equal(input_shapes)
+    network.create_variable(
+        "default",
+        variable=reduce(operator.mul, [vw.variable for vw in in_vws]),
+        shape=input_shapes[0],
+        tags={"output"},
+    )
+
+
+@core.register_node("elementwise_product")
+class ElementwiseProductNode(BaseChildrenCombineNode):
+
+    """
+    computes a product of the outputs of the node's children
+    """
+
+    def compute_output(self, network, *in_vws):
+        elementwise_product(network, *in_vws)

@@ -914,6 +914,7 @@
 - should shared variables contain metadata on which axes are their input axes and which are their output axes
   - useful for initialization
 ** v2
+- promote add constant and multiple constant nodes to real nodes from toy nodes
 - should DictChildrenContainerSchema have optional values
   - use case:
     - identity node for costs

@@ -27,7 +27,8 @@ from combine import (BaseChildrenCombineNode,
                      InputFunctionCombineNode,
                      ConcatenateNode,
                      ElementwiseSumNode,
-                     InputElementwiseSumNode)
+                     InputElementwiseSumNode,
+                     ElementwiseProductNode)
 from containers import (SequentialNode,
                         ContainerNode)
 from activations import (BaseActivationNode,

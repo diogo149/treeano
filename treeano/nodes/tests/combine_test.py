@@ -33,6 +33,14 @@ def test_input_elementwise_sum_node_serialization():
     tn.check_serialization(tn.InputElementwiseSumNode("a"))
 
 
+def test_elementwise_product_node_serialization():
+    tn.check_serialization(tn.ElementwiseProductNode("a", []))
+    tn.check_serialization(tn.ElementwiseProductNode(
+        "a",
+        [tn.ElementwiseProductNode("b", []),
+         tn.ElementwiseProductNode("c", [])]))
+
+
 def test_input_function_combine_node():
     def fcn_network(combine_fn):
         network = tn.ContainerNode("c", [
@@ -147,5 +155,23 @@ def test_input_elementwise_sum_node():
         i2 = np.array(np.random.rand(*s), dtype=fX)
         i3 = np.array(np.random.rand(*s), dtype=fX)
         np.testing.assert_allclose(i1 + i2 + i3,
+                                   fn(i1, i2, i3)[0],
+                                   rtol=1e-5)
+
+
+def test_elementwise_product_node():
+    for s in [(),
+              (3, 4, 5)]:
+        network = tn.ElementwiseProductNode(
+            "es",
+            [tn.InputNode("i1", shape=s),
+             tn.InputNode("i2", shape=s),
+             tn.InputNode("i3", shape=s)],
+        ).network()
+        fn = network.function(["i1", "i2", "i3"], ["es"])
+        i1 = np.array(np.random.rand(*s), dtype=fX)
+        i2 = np.array(np.random.rand(*s), dtype=fX)
+        i3 = np.array(np.random.rand(*s), dtype=fX)
+        np.testing.assert_allclose(i1 * i2 * i3,
                                    fn(i1, i2, i3)[0],
                                    rtol=1e-5)
