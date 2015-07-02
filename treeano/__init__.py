@@ -8,6 +8,7 @@ import utils
 import core
 import nodes
 import inits
+import node_utils
 
 from core import (UpdateDeltas,
                   SharedInit,

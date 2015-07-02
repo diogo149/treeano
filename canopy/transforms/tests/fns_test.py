@@ -65,7 +65,7 @@ def test_transform_root_node_postwalk():
 
     def append_name(node):
         # NOTE: assumes NodeImpl subclass
-        node = canopy.node_utils.copy_node(node)
+        node = treeano.node_utils.copy_node(node)
         node._name += "_1"
         return node
 
