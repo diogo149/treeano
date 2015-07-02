@@ -98,6 +98,7 @@ class AuxiliaryCostNode(core.Wrapper1NodeImpl):
     children_container = core.DictChildrenContainerSchema(
         target=core.ChildContainer,
     )
+    hyperparameter_names = ("cost_reference", "cost_function")
     input_keys = ("default",)  # return input instead of cost
 
     def architecture_children(self):

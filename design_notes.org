@@ -914,6 +914,17 @@
 - should shared variables contain metadata on which axes are their input axes and which are their output axes
   - useful for initialization
 ** v2
+- should DictChildrenContainerSchema have optional values
+  - use case:
+    - identity node for costs
+      - costs can both be passed in explicitly or sequentially
+  - if all keys are optional, can None be passed in instead?
+  - should it be explicit (some optional=True flag) or implicit (error out when trying to get key)?
+  - pros
+    - API win
+  - cons
+    - less verifiable
+- generalize auxiliarycostnode to be auxiliary node which performs some calculate and sends somewhere else (ie. not cost specific)
 - need evaluate_until to store state
   - losses, times, total_time, etc.
 - misc canopy
