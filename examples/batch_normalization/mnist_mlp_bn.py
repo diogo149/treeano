@@ -1,7 +1,7 @@
 from __future__ import division, absolute_import
 from __future__ import print_function, unicode_literals
 
-import time
+import itertools
 import numpy as np
 import sklearn.datasets
 import sklearn.cross_validation
@@ -64,37 +64,41 @@ network = with_updates.network()
 network.build()  # build eagerly to share weights
 
 BATCH_SIZE = 500
-train_fn = canopy.handled_fn(
-    network,
-    [canopy.handlers.chunk_variables(batch_size=BATCH_SIZE,
-                                     variables=["x", "y"])],
-    {"x": "x", "y": "y"},
-    {"cost": "cost"},
-    include_updates=True)
 
 valid_fn = canopy.handled_fn(
     network,
-    [canopy.handlers.override_hyperparameters(dropout_probability=0,
-                                              bn_use_moving_stats=True),
+    [canopy.handlers.time_call(key="valid_time"),
+     canopy.handlers.override_hyperparameters(dropout_probability=0),
      canopy.handlers.chunk_variables(batch_size=BATCH_SIZE,
                                      variables=["x", "y"])],
     {"x": "x", "y": "y"},
     {"cost": "cost", "pred": "pred"})
 
 
+def validate(in_map):
+    valid_out = valid_fn(in_valid)
+    probabilities = valid_out["pred"]
+    predicted_classes = np.argmax(probabilities, axis=1)
+    in_map["valid_cost"] = valid_out["cost"]
+    in_map["valid_time"] = valid_out["valid_time"]
+    in_map["valid_accuracy"] = sklearn.metrics.accuracy_score(
+        y_valid, predicted_classes)
+
+train_fn = canopy.handled_fn(
+    network,
+    [canopy.handlers.time_call(key="total_time"),
+     canopy.handlers.call_after_every(1, validate),
+     canopy.handlers.time_call(key="train_time"),
+     canopy.handlers.chunk_variables(batch_size=BATCH_SIZE,
+                                     variables=["x", "y"])],
+    {"x": "x", "y": "y"},
+    {"train_cost": "cost"},
+    include_updates=True)
+
+
 # ################################# training #################################
 
 print("Starting training...")
-
-NUM_EPOCHS = 25
-for epoch_num in range(NUM_EPOCHS):
-    start_time = time.time()
-    train_loss = train_fn(in_train)["cost"]
-    valid_out = valid_fn(in_valid)
-    valid_loss, probabilities = valid_out["cost"], valid_out["pred"]
-    predicted_classes = np.argmax(probabilities, axis=1)
-    # calculate accuracy for this epoch
-    accuracy = sklearn.metrics.accuracy_score(y_valid, predicted_classes)
-    total_time = time.time() - start_time
-    print("Epoch: %d, train_loss=%f, valid_loss=%f, accuracy=%f, time=%fs"
-          % (epoch_num + 1, train_loss, valid_loss, accuracy, total_time))
+canopy.evaluate_until(fn=train_fn,
+                      gen=itertools.repeat(in_train),
+                      max_iters=25)
