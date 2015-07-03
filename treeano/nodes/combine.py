@@ -113,17 +113,11 @@ class ConcatenateNode(BaseChildrenCombineNode):
 
     def compute_output(self, network, *in_vws):
         # find axis
-        axis = network.find_hyperparameter(["concatenate_axis",
-                                            "axis"],
-                                           None)
-        if axis is None:
-            batch_axis = network.find_hyperparameter(["batch_axis"])
-            if batch_axis is None:
-                # by default, be the first axis
-                axis = 0
-            else:
-                # by default, be the first non-batch axis
-                axis = 0 if batch_axis == 0 else 1
+        axis = network.find_hyperparameter(
+            ["concatenate_axis",
+             "axis"],
+            # by default, the first non-batch axis
+            utils.nth_non_batch_axis(network, 0))
 
         # calculate shape
         input_shapes = [vw.shape for vw in in_vws]

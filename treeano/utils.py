@@ -90,3 +90,19 @@ def shared_empty(ndim, dtype, name=None):
     create shared variable with placeholder data
     """
     return theano.shared(np.zeros([1] * ndim, dtype=dtype), name=name)
+
+
+# ##################### utils for dealing with networks #####################
+
+
+def nth_non_batch_axis(network, n):
+    """
+    returns the n-th axis that isn't the batch axis
+
+    use cases: knowing which axis is the "feature" axis
+    """
+    batch_axis = network.find_hyperparameter(["batch_axis"])
+    if batch_axis >= n:
+        return n + 1
+    else:
+        return n
