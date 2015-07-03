@@ -43,7 +43,8 @@ def test_total_cost_node():
     x = np.random.rand(3, 4, 5).astype(fX)
     y = np.random.rand(3, 4, 5).astype(fX)
     np.testing.assert_allclose(fn(x, y)[0],
-                               ((x - y) ** 2).mean())
+                               ((x - y) ** 2).mean(),
+                               rtol=1e-5)
     np.testing.assert_allclose(fn(x, x)[0],
                                0)
     np.testing.assert_allclose(fn(y, y)[0],
@@ -84,4 +85,5 @@ def test_auxiliary_cost_node():
                        + mse(x + 2, ys[1])
                        + mse(2 * (x + 2), ys[2]))
     np.testing.assert_allclose(fn(x, *ys)[0],
-                               expected_output)
+                               expected_output,
+                               rtol=1e-5)
