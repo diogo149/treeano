@@ -39,7 +39,8 @@ from activations import (BaseActivationNode,
                          SigmoidNode,
                          SoftmaxNode,
                          ReSQRTNode,
-                         AbsNode)
+                         AbsNode,
+                         ChannelOutNode)
 from downsample import (FeaturePoolNode,
                         MaxoutNode)
 from updates import (UpdateScaleNode,
