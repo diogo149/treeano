@@ -3,6 +3,7 @@ import theanode
 import combine
 import containers
 import activations
+import downsample
 import updates
 import costs
 import stochastic
@@ -36,6 +37,8 @@ from activations import (BaseActivationNode,
                          TanhNode,
                          SigmoidNode,
                          SoftmaxNode)
+from downsample import (FeaturePoolNode,
+                        MaxoutNode)
 from updates import (UpdateScaleNode,
                      StandardUpdatesNode,
                      SGDNode,
