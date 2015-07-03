@@ -54,8 +54,8 @@ class MaxoutNode(core.Wrapper0NodeImpl):
     """
     from "Maxout Networks" http://arxiv.org/abs/1302.4389
     """
-    hyperparameter_names = tuple(filter(lambda x: x != "pool_function",
-                                        FeaturePoolNode.hyperparameter_names))
+    hyperparameter_names = filter(lambda x: x != "pool_function",
+                                  FeaturePoolNode.hyperparameter_names)
 
     def architecture_children(self):
         return [FeaturePoolNode(self.name + "_featurepool")]
@@ -121,8 +121,8 @@ class Pool2DNode(core.NodeImpl):
 @core.register_node("mean_pool_2d")
 class MeanPool2DNode(core.Wrapper0NodeImpl):
 
-    hyperparameter_names = tuple(filter(lambda x: x != "pool_function",
-                                        Pool2DNode.hyperparameter_names))
+    hyperparameter_names = filter(lambda x: x != "pool_function",
+                                  Pool2DNode.hyperparameter_names)
 
     def architecture_children(self):
         return [Pool2DNode(self.name + "_pool2d")]
