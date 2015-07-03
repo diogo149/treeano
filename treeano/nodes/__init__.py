@@ -41,7 +41,9 @@ from activations import (BaseActivationNode,
                          ReSQRTNode,
                          AbsNode)
 from downsample import (FeaturePoolNode,
-                        MaxoutNode)
+                        MaxoutNode,
+                        Pool2DNode,
+                        MeanPool2DNode)
 from updates import (UpdateScaleNode,
                      StandardUpdatesNode,
                      SGDNode,

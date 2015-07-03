@@ -92,6 +92,39 @@ def shared_empty(ndim, dtype, name=None):
     return theano.shared(np.zeros([1] * ndim, dtype=dtype), name=name)
 
 
+def local_computation_output_length(input_size,
+                                    local_size,
+                                    stride,
+                                    pad):
+    """
+    calculates the output size along a single axis for a convolutional or
+    pooling operation
+    """
+    if input_size is None:
+        return None
+
+    without_stride = input_size + 2 * pad - local_size + 1
+    # equivalent to np.ceil(without_stride / stride)
+    output_size = (without_stride + stride - 1) // stride
+    return output_size
+
+
+def local_computation_output_shape(input_shape,
+                                   axes,
+                                   local_sizes,
+                                   strides,
+                                   pads):
+    output_shape = list(input_shape)
+    for axis, local_size, stride, pad in zip(axes,
+                                             local_sizes,
+                                             strides,
+                                             pads):
+        output_shape[axis] = local_computation_output_length(input_shape[axis],
+                                                             local_size,
+                                                             stride,
+                                                             pad)
+    return tuple(output_shape)
+
 # ##################### utils for dealing with networks #####################
 
 
