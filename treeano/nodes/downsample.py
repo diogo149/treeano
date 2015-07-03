@@ -27,7 +27,7 @@ class FeaturePoolNode(core.NodeImpl):
         in_features = in_shape[axis]
         assert (in_features % k) == 0
         out_shape = list(in_shape)
-        out_shape[axis] /= k
+        out_shape[axis] = in_shape[axis] // k
         out_shape = tuple(out_shape)
 
         # output calculation
