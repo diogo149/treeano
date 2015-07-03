@@ -36,7 +36,8 @@ from activations import (BaseActivationNode,
                          ReLUNode,
                          TanhNode,
                          SigmoidNode,
-                         SoftmaxNode)
+                         SoftmaxNode,
+                         ReSQRTNode)
 from downsample import (FeaturePoolNode,
                         MaxoutNode)
 from updates import (UpdateScaleNode,
