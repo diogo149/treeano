@@ -70,6 +70,7 @@ class SimpleRecurrentNode(core.Wrapper1NodeImpl):
             return network.find_hyperparameter(["num_units"])
         elif name == "constant_value":
             num_units = network.find_hyperparameter(["num_units"])
+            # FIXME use batch_axis instead of batch_size
             batch_size = network.find_hyperparameter(["batch_size"])
             if batch_size is None:
                 shape = (num_units,)

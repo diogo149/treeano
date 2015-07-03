@@ -994,6 +994,8 @@
     - time transferring data to shared variable
     - add flag to not free memory afterwards
 ** RNNs
+- use batch_axis instead of batch_size
+  - use symbolic shape to tile if batch size is None
 - some nodes will be broken with ScanNode
   - ie. batch normalization updates
 - create transform to apply non-stateful nodes like in scan, but instead use batch dim
