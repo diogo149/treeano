@@ -187,6 +187,21 @@ class VariableWrapper(object):
             self.shape_ = tuple(self.variable_.shape.eval())
         return self.shape_
 
+    def symbolic_shape(self):
+        """
+        returns the shape of the variable with None's replaced by symbolic
+        variables
+        """
+        shape = self.shape
+        var_shape = self.variable.shape
+        out_shape = []
+        for i, s in enumerate(shape):
+            if s is not None:
+                out_shape.append(s)
+            else:
+                out_shape.append(var_shape[i])
+        return tuple(out_shape)
+
     @property
     def value(self):
         assert self.is_shared

@@ -7,6 +7,8 @@ import theano.tensor as T
 
 import treeano
 
+fX = theano.config.floatX
+
 
 def test_variable1():
     i = T.iscalar()
@@ -31,3 +33,15 @@ def test_variable2():
         pass
     else:
         assert False
+
+
+def test_variable_symbolic_shape():
+    m = T.matrix()
+    f = treeano.core.variable.VariableWrapper("foo",
+                                              variable=m,
+                                              shape=(4, None))
+    s = f.symbolic_shape()
+    assert isinstance(s, tuple)
+    assert s[0] == 4
+    assert isinstance(s[1], theano.gof.graph.Variable)
+    assert s[1].eval({m: np.zeros((4, 100), dtype=fX)}) == 100
