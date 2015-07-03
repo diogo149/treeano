@@ -10,7 +10,7 @@ fX = theano.config.floatX
 
 
 def test_relu_node_serialization():
-    tn.check_serialization(tn.RelUNode("a"))
+    tn.check_serialization(tn.ReLUNode("a"))
 
 
 def test_softmax_node_serialization():

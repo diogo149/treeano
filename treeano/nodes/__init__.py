@@ -35,9 +35,11 @@ from containers import (SequentialNode,
 from activations import (BaseActivationNode,
                          ReLUNode,
                          TanhNode,
+                         ScaledTanhNode,
                          SigmoidNode,
                          SoftmaxNode,
-                         ReSQRTNode)
+                         ReSQRTNode,
+                         AbsNode)
 from downsample import (FeaturePoolNode,
                         MaxoutNode)
 from updates import (UpdateScaleNode,

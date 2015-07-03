@@ -77,3 +77,10 @@ class ReSQRTNode(BaseActivationNode):
     def activation(self, network, in_var):
         r = relu(in_var.variable)
         return T.sqrt(r + 1) - 1
+
+
+@core.register_node("abs")
+class AbsNode(BaseActivationNode):
+
+    def activation(self, network, in_var):
+        return abs(in_var.variable)
