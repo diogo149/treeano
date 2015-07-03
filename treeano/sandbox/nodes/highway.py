@@ -1,0 +1,74 @@
+"""
+from "Highway Networks"
+http://arxiv.org/abs/1505.00387
+"""
+import toolz
+import numpy as np
+import theano
+import theano.tensor as T
+import treeano
+import treeano.nodes as tn
+
+
+@treeano.register_node("highway")
+class HighwayNode(treeano.WrapperNodeImpl):
+
+    """
+    takes in a transform node and a gate node (that return variables with
+    the same shape as their input) and combines them together in a highway
+    network
+
+    g = gate(input)
+    result = g * transform(input) + (1 - g) * input
+    """
+
+    children_container = treeano.core.DictChildrenContainerSchema(
+        transform=treeano.core.ChildContainer,
+        gate=treeano.core.ChildContainer)
+
+    hyperparameter_names = ()
+
+    def architecture_children(self):
+        gate = self._children["gate"].children
+        transform = self._children["transform"].children
+
+        # prepare gates
+        transform_gate = tn.SequentialNode(
+            self.name + "_transformgate",
+            [gate,
+             # add initial value as bias instead
+             # TODO parameterize
+             tn.toy.AddConstantNode(self.name + "_biastranslation", value=-4),
+             tn.SigmoidNode(self.name + "_transformgatesigmoid")])
+        # carry gate = 1 - transform gate
+        carry_gate = tn.SequentialNode(
+            self.name + "_carrygate",
+            [tn.ReferenceNode(self.name + "_transformgateref",
+                              reference=transform_gate.name),
+             tn.toy.MultiplyConstantNode(self.name + "_invert", value=-1),
+             tn.toy.AddConstantNode(self.name + "_add", value=1)])
+
+        # combine with gates
+        gated_transform = tn.ElementwiseProductNode(
+            self.name + "_gatedtransform",
+            [transform_gate, transform])
+        gated_carry = tn.ElementwiseProductNode(
+            self.name + "_gatedcarry",
+            [carry_gate, tn.IdentityNode(self.name + "_carry")])
+        res = tn.ElementwiseSumNode(
+            self.name + "_res",
+            [gated_carry, gated_transform])
+        return [res]
+
+
+def HighwayDenseNode(name, nonlinearity_node, **hyperparameters):
+    return tn.HyperparameterNode(
+        name,
+        HighwayNode(
+            name + "_highway",
+            {"transform": tn.SequentialNode(
+                name + "_transform",
+                [tn.DenseNode(name + "_transformdense"),
+                 nonlinearity_node]),
+             "gate": tn.DenseNode(name + "_gatedense")}),
+        **hyperparameters)
