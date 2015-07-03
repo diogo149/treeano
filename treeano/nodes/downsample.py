@@ -102,7 +102,7 @@ class Pool2DNode(core.NodeImpl):
         symbolic_out_shape = utils.local_computation_output_shape(
             input_shape=in_vw.symbolic_shape(), **shape_kwargs)
 
-        # FIXME
+        # compute output
         neibs = images2neibs(ten4=in_vw.variable,
                              neib_shape=pool_size,
                              neib_step=stride,
@@ -110,7 +110,6 @@ class Pool2DNode(core.NodeImpl):
         feats = pool_fn(neibs, axis=1)
         out_var = feats.reshape(symbolic_out_shape)
 
-        # FIXME
         network.create_variable(
             "default",
             variable=out_var,
