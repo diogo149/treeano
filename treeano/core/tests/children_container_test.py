@@ -1,6 +1,7 @@
 import nose.tools as nt
 from treeano import core
 import treeano
+import treeano.nodes as tn
 
 
 def test_list_children_container():
@@ -48,7 +49,7 @@ def test_dict_children_container_schema():
         foo=core.ListChildrenContainer,
         bar=core.ChildContainer,
     )
-    node = treeano.nodes.toy.AddConstantNode("hello")
+    node = tn.AddConstantNode("hello")
     cc1 = dccs({"foo": [node, node], "bar": node})
     cc2 = core.children_container._DictChildrenContainerFromSchema(
         {"foo": core.ListChildrenContainer([node, node]),
@@ -62,7 +63,7 @@ def test_dict_children_container_schema_children():
         foo=core.ListChildrenContainer,
         bar=core.ChildContainer,
     )
-    node = treeano.nodes.toy.AddConstantNode("hello")
+    node = tn.AddConstantNode("hello")
     in_map = {"foo": [node, node], "bar": node}
     cc = dccs(in_map)
     # test that .children returns the same as the input
@@ -74,7 +75,7 @@ def test_dict_children_container_schema_serialization():
         foo=core.ListChildrenContainer,
         bar=core.ChildContainer,
     )
-    node = treeano.nodes.toy.AddConstantNode("hello")
+    node = tn.AddConstantNode("hello")
     in_map = {"foo": [node, node], "bar": node}
     cc1 = dccs(in_map)
     cc2 = core.children_container_from_data(

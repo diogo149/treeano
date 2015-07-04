@@ -955,7 +955,6 @@
 ** v2
 - auxiliary cost node (and auxiliary contractive penalty) should take a weight
   - use case: multiplying by constant
-  - toy.MultiplyConstantNode(self.name + "_mul"),
   - cost_weight hyperparameter
 - promote add constant and multiple constant nodes to real nodes from toy nodes
 - make node for each cost

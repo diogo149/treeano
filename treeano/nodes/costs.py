@@ -7,7 +7,6 @@ import theano.tensor as T
 from .. import core
 from . import simple
 from . import containers
-from . import toy
 
 AGGREGATORS = {
     'mean': T.mean,
@@ -114,12 +113,18 @@ class AuxiliaryCostNode(core.WrapperNodeImpl):
                         self.name + "_cost",
                         {"pred": simple.IdentityNode(self.name + "_identity"),
                          "target": target}),
+                     simple.MultiplyConstantNode(
+                         self.name + "_multiplyweight"),
                      simple.SendToNode(self.name + "_sendto",
                                        to_key=self.name)]))]
 
     def init_long_range_dependencies(self, network):
         # must be set in init_long_range_dependencies, because long range
         # dependencies depend on reference
-        network.forward_hyperparameter(self.name,
+        network.forward_hyperparameter(self.name + "_multiplyweight",
+                                       "value",
+                                       ["cost_weight"],
+                                       1)
+        network.forward_hyperparameter(self.name + "_sendto",
                                        "send_to_reference",
                                        ["cost_reference"])

@@ -60,11 +60,11 @@ def test_auxiliary_cost_node():
              tn.AuxiliaryCostNode(
                  "cost1",
                  {"target": tn.InputNode("y1", shape=(3, 4, 5))}),
-             tn.toy.AddConstantNode("a1", value=2),
+             tn.AddConstantNode("a1", value=2),
              tn.AuxiliaryCostNode(
                  "cost2",
                  {"target": tn.InputNode("y2", shape=(3, 4, 5))}),
-             tn.toy.MultiplyConstantNode("m1", value=2),
+             tn.MultiplyConstantNode("m1", value=2),
              tn.AuxiliaryCostNode(
                  "cost3",
                  {"target": tn.InputNode("y3", shape=(3, 4, 5))}),

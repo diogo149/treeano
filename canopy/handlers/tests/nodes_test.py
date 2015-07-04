@@ -15,7 +15,7 @@ def test_with_hyperparameters():
     network = tn.SequentialNode(
         "seq",
         [tn.InputNode("i", shape=()),
-         tn.toy.AddConstantNode("ac")]
+         tn.AddConstantNode("ac")]
     ).network()
 
     fn = canopy.handlers.handled_fn(
@@ -30,7 +30,7 @@ def test_override_hyperparameters1():
     network = tn.SequentialNode(
         "seq",
         [tn.InputNode("i", shape=()),
-         tn.toy.AddConstantNode("ac", value=1)]
+         tn.AddConstantNode("ac", value=1)]
     ).network()
 
     fn = canopy.handlers.handled_fn(

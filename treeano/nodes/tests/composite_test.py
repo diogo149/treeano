@@ -88,7 +88,7 @@ def test_dense_node_and_dense_combine_node2():
             "seq",
             [tn.InputNode("in", shape=(3, 4, 5)),
              tn.DenseNode("dense1", num_units=6),
-             tn.toy.MultiplyConstantNode("mul", value=2)]
+             tn.MultiplyConstantNode("mul", value=2)]
         ),
         inits=[treeano.inits.ConstantInit(1)]
     ).network()
@@ -132,7 +132,7 @@ def test_dense_combine_node_uses_children():
         tn.SequentialNode(
             "seq",
             [tn.InputNode("in", shape=(3, 4, 5)),
-             tn.toy.MultiplyConstantNode("mul", value=2),
+             tn.MultiplyConstantNode("mul", value=2),
              tn.DenseCombineNode(
                  "fc",
                  [tn.IdentityNode("i1"),
@@ -148,8 +148,8 @@ def test_dense_combine_node_uses_children():
             [tn.InputNode("in", shape=(3, 4, 5)),
              tn.DenseCombineNode(
                  "fc",
-                 [tn.toy.MultiplyConstantNode("mul1", value=2),
-                  tn.toy.MultiplyConstantNode("mul2", value=2)],
+                 [tn.MultiplyConstantNode("mul1", value=2),
+                  tn.MultiplyConstantNode("mul2", value=2)],
                  num_units=6)]
         ),
         inits=[treeano.inits.ConstantInit(1)]

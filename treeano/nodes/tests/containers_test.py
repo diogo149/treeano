@@ -34,7 +34,7 @@ def test_auxiliary_node():
     network = tn.SequentialNode(
         "s",
         [tn.InputNode("i", shape=()),
-         tn.AuxiliaryNode("a", tn.toy.MultiplyConstantNode("m", value=2))]
+         tn.AuxiliaryNode("a", tn.MultiplyConstantNode("m", value=2))]
     ).network()
     fn = network.function(["i"], ["s", "a", "m"])
     np.testing.assert_equal(np.array(fn(3.2)),

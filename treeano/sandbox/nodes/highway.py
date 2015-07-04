@@ -37,15 +37,15 @@ class HighwayNode(treeano.WrapperNodeImpl):
             [gate,
              # add initial value as bias instead
              # TODO parameterize
-             tn.toy.AddConstantNode(self.name + "_biastranslation", value=-4),
+             tn.AddConstantNode(self.name + "_biastranslation", value=-4),
              tn.SigmoidNode(self.name + "_transformgatesigmoid")])
         # carry gate = 1 - transform gate
         carry_gate = tn.SequentialNode(
             self.name + "_carrygate",
             [tn.ReferenceNode(self.name + "_transformgateref",
                               reference=transform_gate.name),
-             tn.toy.MultiplyConstantNode(self.name + "_invert", value=-1),
-             tn.toy.AddConstantNode(self.name + "_add", value=1)])
+             tn.MultiplyConstantNode(self.name + "_invert", value=-1),
+             tn.AddConstantNode(self.name + "_add", value=1)])
 
         # combine with gates
         gated_transform = tn.ElementwiseProductNode(

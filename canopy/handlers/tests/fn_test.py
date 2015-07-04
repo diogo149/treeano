@@ -113,7 +113,7 @@ def test_build_handler3():
             return tn.SequentialNode(
                 "seq",
                 [network.root_node,
-                 tn.toy.AddConstantNode("ac", value=42)]
+                 tn.AddConstantNode("ac", value=42)]
             ).network()
 
     network = tn.InputNode("i", shape=()).network()

@@ -21,7 +21,9 @@ from simple import (ReferenceNode,
                     ConstantNode,
                     AddBiasNode,
                     LinearMappingNode,
-                    ApplyNode)
+                    ApplyNode,
+                    AddConstantNode,
+                    MultiplyConstantNode)
 from theanode import (TileNode)
 from combine import (BaseChildrenCombineNode,
                      BaseInputCombineNode,

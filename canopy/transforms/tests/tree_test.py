@@ -22,7 +22,7 @@ def test_remove_node():
              "hp1",
              tn.HyperparameterNode(
                  "hp2",
-                 tn.toy.AddConstantNode("ac"),
+                 tn.AddConstantNode("ac"),
                  value=1
              ),
              value=2
@@ -51,7 +51,7 @@ def test_remove_subtree():
              "hp1",
              tn.HyperparameterNode(
                  "hp2",
-                 tn.toy.AddConstantNode("ac"),
+                 tn.AddConstantNode("ac"),
                  value=1
              ),
              value=2
@@ -77,7 +77,7 @@ def test_remove_parent():
              "hp1",
              tn.HyperparameterNode(
                  "hp2",
-                 tn.toy.AddConstantNode("ac"),
+                 tn.AddConstantNode("ac"),
                  value=1
              ),
              value=2
@@ -105,7 +105,7 @@ def test_add_hyperparameters():
         tn.SequentialNode(
             "seq",
             [tn.InputNode("i", shape=()),
-             tn.toy.AddConstantNode("ac")]),
+             tn.AddConstantNode("ac")]),
         default_hyperparameters={"value": 2})
     fn1 = network1.function(["i"], ["ac"])
     nt.assert_equal(2, fn1(0)[0])
