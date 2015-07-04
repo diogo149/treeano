@@ -93,25 +93,26 @@ class TotalCostNode(core.WrapperNodeImpl):
 
 
 @core.register_node("auxiliary_cost")
-class AuxiliaryCostNode(core.Wrapper1NodeImpl):
+class AuxiliaryCostNode(core.WrapperNodeImpl):
 
     children_container = core.DictChildrenContainerSchema(
         target=core.ChildContainer,
     )
     hyperparameter_names = ("cost_reference", "cost_function")
-    input_keys = ("default",)  # return input instead of cost
 
     def architecture_children(self):
         target = self._children["target"].children
         return [
-            containers.SequentialNode(
-                self.name + "_sequential",
-                [TotalCostNode(
-                    self.name + "_cost",
-                    {"pred": simple.IdentityNode(self.name + "_identity"),
-                     "target": target}),
-                 simple.SendToNode(self.name + "_sendto",
-                                   to_key=self.name)])]
+            containers.AuxiliaryNode(
+                self.name + "_auxiliary",
+                containers.SequentialNode(
+                    self.name + "_sequential",
+                    [TotalCostNode(
+                        self.name + "_cost",
+                        {"pred": simple.IdentityNode(self.name + "_identity"),
+                         "target": target}),
+                     simple.SendToNode(self.name + "_sendto",
+                                       to_key=self.name)]))]
 
     def get_hyperparameter(self, network, name):
         if name == "send_to_reference":

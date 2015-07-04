@@ -31,7 +31,8 @@ from combine import (BaseChildrenCombineNode,
                      InputElementwiseSumNode,
                      ElementwiseProductNode)
 from containers import (SequentialNode,
-                        ContainerNode)
+                        ContainerNode,
+                        AuxiliaryNode)
 from activations import (BaseActivationNode,
                          ReLUNode,
                          TanhNode,

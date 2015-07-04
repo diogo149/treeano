@@ -45,3 +45,14 @@ class ContainerNode(core.WrapperNodeImpl):
             variable=T.opt.Assert()(T.constant(0.0), 0),
             shape=(),
         )
+
+
+@core.register_node("auxiliary")
+class AuxiliaryNode(core.Wrapper1NodeImpl):
+
+    """
+    node that passes its input to an inner node, but returns its input
+    """
+
+    # return original input instead of child output
+    input_keys = ("default",)

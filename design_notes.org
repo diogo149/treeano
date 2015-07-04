@@ -932,7 +932,6 @@
   - rationale:
     - can query hyperparameters and pass them to children
   - it might work, since architecture children is called from up the tree to down it, thus all parents of a node should already be in the network
-- generalize auxiliarycostnode to be auxiliary node which performs some calculate and sends somewhere else (ie. not cost specific)
 - need evaluate_until to store state
   - losses, times, total_time, etc.
 - misc canopy
