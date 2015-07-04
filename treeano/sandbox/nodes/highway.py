@@ -2,7 +2,6 @@
 from "Highway Networks"
 http://arxiv.org/abs/1505.00387
 """
-import toolz
 import numpy as np
 import theano
 import theano.tensor as T
@@ -26,7 +25,7 @@ class HighwayNode(treeano.WrapperNodeImpl):
         transform=treeano.core.ChildContainer,
         gate=treeano.core.ChildContainer)
 
-    hyperparameter_names = ()
+    hyperparameter_names = ()  # TODO add initial bias parameter
 
     def architecture_children(self):
         gate = self._children["gate"].children
