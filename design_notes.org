@@ -841,6 +841,7 @@
 - shape dimensions of None mean that the shape is unspecified
 - a batch_axis is None, then there is no minibatch (doing single element at a time)
 - shapes should be tuples
+- batch axis is the same throughout the network
 * random notes
 - model everything as a "layer"
   - including loss/objective
