@@ -84,11 +84,8 @@ model = tn.HyperparameterNode(
          tn.TotalCostNode(
              "cost",
              {"pred": tn.IdentityNode("recon_id"),
-                 # "pred": tn.ReferenceNode("recon_ref",
-              # reference="reconstruction"),
               "target": tn.ReferenceNode("in_ref", reference="x")},
              cost_function=treeano.utils.squared_error),
-         # TODO take out of toy module
          tn.toy.MultiplyConstantNode("mul_reconstruction_error", value=0.1),
          tn.InputElementwiseSumNode("total_cost")]),
     num_units=512,
