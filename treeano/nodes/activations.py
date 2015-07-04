@@ -27,15 +27,11 @@ class BaseActivationNode(six.with_metaclass(abc.ABCMeta, core.NodeImpl)):
         pass
 
 
-def relu(x):
-    return 0.5 * (x + abs(x))
-
-
 @core.register_node("relu")
 class ReLUNode(BaseActivationNode):
 
     def activation(self, network, in_vw):
-        return relu(in_vw.variable)
+        return utils.rectify(in_vw.variable)
 
 
 @core.register_node("softmax")
@@ -76,7 +72,7 @@ class ReSQRTNode(BaseActivationNode):
     """
 
     def activation(self, network, in_vw):
-        r = relu(in_vw.variable)
+        r = utils.rectify(in_vw.variable)
         return T.sqrt(r + 1) - 1
 
 

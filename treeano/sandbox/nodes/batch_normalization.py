@@ -79,20 +79,12 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
         # calculate axes to have parameters/normalization
         # -----------------------------------------------
 
-        def find_axes(positive_keys, negative_keys):
-            pos = network.find_hyperparameter(positive_keys, None)
-            neg = network.find_hyperparameter(negative_keys, None)
-            # exactly one should be set
-            assert (pos is None) != (neg is None)
-            if pos is not None:
-                return pos
-            else:
-                return [idx for idx in range(in_vw.ndim) if idx not in neg]
-
         # axes over which there are parameters for each element
         # ie. parameter_axes == [1, 2] means shape[1] * shape[2] total
         # parameters - one for each combination of shape[1] and shape[2]
-        parameter_axes = find_axes(
+        parameter_axes = treeano.utils.find_axes(
+            network,
+            in_vw.ndim,
             positive_keys=["parameter_axes"],
             negative_keys=["non_parameter_axes"])
         parameter_broadcastable = tuple([idx not in parameter_axes
@@ -101,7 +93,9 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
                                  for b, s in zip(parameter_broadcastable,
                                                  in_vw.shape)])
         # axes to normalize over - ie. subtract the mean across these axes
-        normalization_axes = find_axes(
+        normalization_axes = treeano.utils.find_axes(
+            network,
+            in_vw.ndim,
             positive_keys=["normalization_axes"],
             negative_keys=["non_normalization_axes"])
         stats_shape = tuple([1 if idx in normalization_axes else s

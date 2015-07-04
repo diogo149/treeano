@@ -955,10 +955,7 @@
   - useful for initialization
 ** v2
 - setup continous integration
-- auxiliary cost node (and auxiliary contractive penalty) should take a weight
-  - use case: multiplying by constant
-  - cost_weight hyperparameter
-- promote add constant and multiple constant nodes to real nodes from toy nodes
+- make find_inits(additional_hyperparameter_names, default_inits) utility function
 - make node for each cost
 - should DictChildrenContainerSchema have optional values
   - use case:

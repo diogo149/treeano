@@ -36,6 +36,17 @@ def first(f, *args):
     return f
 
 
+def rectify(x, positive_coefficient=1, negative_coefficent=0):
+    abs_x = abs(x)
+    pos_x = x + abs_x
+    neg_x = x - abs_x
+    if negative_coefficent == 0:
+        return positive_coefficient * 0.5 * pos_x
+    else:
+        return (positive_coefficient * 0.5 * pos_x
+                + negative_coefficent * 0.5 * neg_x)
+
+
 def stable_softmax(x):
     """
     numerical stabilization to avoid f32 overflow
@@ -139,3 +150,20 @@ def nth_non_batch_axis(network, n):
         return n + 1
     else:
         return n
+
+
+def find_axes(network, ndim, positive_keys, negative_keys):
+    """
+    given hyperparameters for positive axes (axes which to include) and
+    negative axes (axes which to exclude), finds the axes < ndim that
+    match
+    """
+    # TODO maybe rename function?
+    pos = network.find_hyperparameter(positive_keys, None)
+    neg = network.find_hyperparameter(negative_keys, None)
+    # exactly one should be set
+    assert (pos is None) != (neg is None)
+    if pos is not None:
+        return tuple(pos)
+    else:
+        return tuple([idx for idx in range(ndim) if idx not in neg])

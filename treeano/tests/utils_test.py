@@ -4,6 +4,7 @@ import theano
 import theano.tensor as T
 
 import treeano
+import treeano.nodes as tn
 
 fX = theano.config.floatX
 
@@ -37,3 +38,24 @@ def test_clone():
 
 def test_deep_clone():
     _clone_test_case(treeano.utils.deep_clone)
+
+
+def test_find_axes():
+    def axes(ndim, pos, neg):
+        network = tn.HyperparameterNode(
+            "a",
+            tn.InputNode("b", shape=()),
+            pos=pos,
+            neg=neg,
+        ).network()["a"]
+        return treeano.utils.find_axes(network, ndim, ["pos"], ["neg"])
+
+    @nt.raises(AssertionError)
+    def axes_raises(*args):
+        axes(*args)
+
+    nt.assert_equal(axes(3, [2], None), (2,))
+    nt.assert_equal(axes(3, [1], None), (1,))
+    nt.assert_equal(axes(3, None, [1]), (0, 2))
+    nt.assert_equal(axes(3, None, [0, 1]), (2,))
+    axes_raises(3, [2], [1])
