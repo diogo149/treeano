@@ -260,12 +260,13 @@ class RelativeNetwork(object):
                                node_name,
                                key,
                                hyperparameter_keys,
+                               *args,
                                **kwargs):
         """
         forwards a set of hyperparameters to a different node under a different
         key
         """
-        value = self.find_hyperparameter(hyperparameter_keys, **kwargs)
+        value = self.find_hyperparameter(hyperparameter_keys, *args, **kwargs)
         self.set_hyperparameter(node_name, key, value)
 
     def find_hyperparameter(self,
