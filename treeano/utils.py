@@ -152,7 +152,12 @@ def nth_non_batch_axis(network, n):
         return n
 
 
-def find_axes(network, ndim, positive_keys, negative_keys):
+def find_axes(network,
+              ndim,
+              positive_keys,
+              negative_keys,
+              positive_default=None,
+              negative_default=None):
     """
     given hyperparameters for positive axes (axes which to include) and
     negative axes (axes which to exclude), finds the axes < ndim that
@@ -161,8 +166,18 @@ def find_axes(network, ndim, positive_keys, negative_keys):
     # TODO maybe rename function?
     pos = network.find_hyperparameter(positive_keys, None)
     neg = network.find_hyperparameter(negative_keys, None)
-    # exactly one should be set
-    assert (pos is None) != (neg is None)
+    # at most one should be set
+    assert (pos is None) or (neg is None)
+
+    if (pos is None) and (neg is None):
+        # need defaults
+        # exactly one should be set
+        assert (positive_default is None) != (negative_default is None)
+        if positive_default is not None:
+            pos = positive_default
+        else:
+            neg = negative_default
+
     if pos is not None:
         return tuple(pos)
     else:
