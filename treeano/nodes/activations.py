@@ -81,3 +81,29 @@ class AbsNode(BaseActivationNode):
 
     def activation(self, network, in_vw):
         return abs(in_vw.variable)
+
+
+@core.register_node("leaky_relu")
+class LeakyReLUNode(BaseActivationNode):
+
+    hyperparameter_names = ("leak_alpha",
+                            "alpha")
+
+    def activation(self, network, in_vw):
+        alpha = network.find_hyperparameter(["leak_alpha",
+                                             "alpha"],
+                                            0.01)
+        return utils.rectify(in_vw.variable, negative_coefficient=alpha)
+
+
+@core.register_node("very_leaky_relu")
+class VeryLeakyReLUNode(BaseActivationNode):
+
+    hyperparameter_names = ("leak_alpha",
+                            "alpha")
+
+    def activation(self, network, in_vw):
+        alpha = network.find_hyperparameter(["leak_alpha",
+                                             "alpha"],
+                                            1. / 3)
+        return utils.rectify(in_vw.variable, negative_coefficient=alpha)

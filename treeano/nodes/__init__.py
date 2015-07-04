@@ -42,7 +42,9 @@ from activations import (BaseActivationNode,
                          SigmoidNode,
                          SoftmaxNode,
                          ReSQRTNode,
-                         AbsNode)
+                         AbsNode,
+                         LeakyReLUNode,
+                         VeryLeakyReLUNode)
 from downsample import (FeaturePoolNode,
                         MaxoutNode,
                         Pool2DNode,
