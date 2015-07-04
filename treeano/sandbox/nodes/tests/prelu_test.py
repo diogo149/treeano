@@ -25,5 +25,5 @@ def test_prelu_node():
     fn = network.function(["i"], ["p"])
     x = np.array([[-1.0, -0.2, 0.2, 1.0]], dtype=fX)
     ans = np.array([[-0.25, -0.05, 0.2, 1.0]], dtype=fX)
-    np.testing.assert_equal(fn(x)[0],
-                            ans)
+    np.testing.assert_allclose(fn(x)[0],
+                               ans)

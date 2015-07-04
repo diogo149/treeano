@@ -59,7 +59,7 @@ class PReLUNode(treeano.NodeImpl):
         network.create_variable(
             "default",
             variable=treeano.utils.rectify(in_vw.variable,
-                                           negative_coefficent=alpha),
+                                           negative_coefficient=alpha),
             shape=in_vw.shape,
             tags={"output"},
         )

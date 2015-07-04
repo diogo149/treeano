@@ -36,15 +36,17 @@ def first(f, *args):
     return f
 
 
-def rectify(x, positive_coefficient=1, negative_coefficent=0):
-    abs_x = abs(x)
-    pos_x = x + abs_x
-    neg_x = x - abs_x
-    if negative_coefficent == 0:
-        return positive_coefficient * 0.5 * pos_x
-    else:
-        return (positive_coefficient * 0.5 * pos_x
-                + negative_coefficent * 0.5 * neg_x)
+def rectify(x, negative_coefficient=0):
+    """
+    general fast way of performing ReLU-type activations
+
+    see below for info:
+    https://github.com/Lasagne/Lasagne/pull/163
+    https://github.com/Theano/Theano/issues/2698
+    """
+    f1 = 0.5 * (1 + negative_coefficient)
+    f2 = 0.5 * (1 - negative_coefficient)
+    return f1 * x + f2 * abs(x)
 
 
 def stable_softmax(x):
