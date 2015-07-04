@@ -155,6 +155,7 @@ def elementwise_sum(network, *in_vws):
     # calculate and verify shape
     input_shapes = [vw.shape for vw in in_vws]
     assert utils.all_equal(input_shapes)
+    # TODO initialize reduce with first element, so graph doesn't have extra 0
     network.create_variable(
         "default",
         variable=reduce(operator.add, [vw.variable for vw in in_vws]),
@@ -189,6 +190,7 @@ def elementwise_product(network, *in_vws):
     # calculate and verify shape
     input_shapes = [vw.shape for vw in in_vws]
     assert utils.all_equal(input_shapes)
+    # TODO initialize reduce with first element, so graph doesn't have extra 1
     network.create_variable(
         "default",
         variable=reduce(operator.mul, [vw.variable for vw in in_vws]),
