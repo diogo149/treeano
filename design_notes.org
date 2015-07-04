@@ -915,16 +915,23 @@
   - useful for initialization
 ** v2
 - promote add constant and multiple constant nodes to real nodes from toy nodes
+- make node for each cost
 - should DictChildrenContainerSchema have optional values
   - use case:
     - identity node for costs
       - costs can both be passed in explicitly or sequentially
   - if all keys are optional, can None be passed in instead?
+    - would allow lots of nodes to have default parameters
+  - can a single node be passed in if the node takes in a single child?
   - should it be explicit (some optional=True flag) or implicit (error out when trying to get key)?
   - pros
     - API win
   - cons
     - less verifiable
+- should architecture_children be passed in partial network?
+  - rationale:
+    - can query hyperparameters and pass them to children
+  - it might work, since architecture children is called from up the tree to down it, thus all parents of a node should already be in the network
 - generalize auxiliarycostnode to be auxiliary node which performs some calculate and sends somewhere else (ie. not cost specific)
 - need evaluate_until to store state
   - losses, times, total_time, etc.
