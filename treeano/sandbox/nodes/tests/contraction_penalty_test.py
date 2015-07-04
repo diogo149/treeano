@@ -27,7 +27,10 @@ def test_elementwise_contraction_penalty_node1():
     ).network()
     fn = network.function(["i"], ["s"])
     x = np.random.rand(10, 3).astype(fX)
-    np.testing.assert_equal(fn(x)[0], np.zeros(10, dtype=fX))
+    # jacobian of each location is 1
+    # squared jacobian is 1
+    # mean squared jacobian is 1/3
+    np.testing.assert_equal(fn(x)[0], np.ones(10, dtype=fX) / 3)
 
 
 def test_elementwise_contraction_penalty_node2():

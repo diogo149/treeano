@@ -99,10 +99,13 @@ class AuxiliaryContractionPenaltyNode(treeano.Wrapper1NodeImpl):
                                         to_key=self.name)]))])]
 
     def init_long_range_dependencies(self, network):
+        network.forward_hyperparameter(self.name + "_sendto",
+                                       "send_to_reference",
+                                       ["cost_reference"])
+
+    def init_state(self, network):
+        super(AuxiliaryContractionPenaltyNode, self).init_state(network)
         network.forward_hyperparameter(self.name + "_multiplyweight",
                                        "value",
                                        ["cost_weight"],
                                        1)
-        network.forward_hyperparameter(self.name + "_sendto",
-                                       "send_to_reference",
-                                       ["cost_reference"])
