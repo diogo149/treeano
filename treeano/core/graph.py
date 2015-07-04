@@ -53,10 +53,13 @@ class TreeanoGraph(object):
     def __init__(self, root_node):
         self.name_to_node = init_name_to_node(root_node)
         self.architectural_tree = init_architectural_tree(self.name_to_node)
-        # since all parents automatically depend on their children,
-        # we can initialize the computation grpah as a copy of the
-        # architectural tree
-        self.computation_graph = self.architectural_tree.copy()
+        # - since all parents automatically depend on their children,
+        #   we can initialize the computation grpah as a copy of the
+        #   architectural tree
+        # - this is a multi graph so the same node can be the input to a given
+        #   node multiple times
+        self.computation_graph = nx.MultiDiGraph(
+            self.architectural_tree.copy())
         self.is_mutable = True
 
     def _nodes(self, order=None):
