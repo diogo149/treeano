@@ -13,13 +13,10 @@ def test_constant_init():
 
         input_keys = ()
 
-        def get_hyperparameter(self, network, hyperparameter_name):
-            if hyperparameter_name == "inits":
-                return [treeano.inits.ConstantInit(1)]
-            else:
-                return super(DummyNode, self).get_hyperparameter(
-                    network,
-                    hyperparameter_name)
+        def init_state(self, network):
+            network.set_hyperparameter(self.name,
+                                       "inits",
+                                       [treeano.inits.ConstantInit(1)])
 
         def compute_output(self, network):
             inits = network.find_hyperparameter(["inits"])

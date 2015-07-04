@@ -44,12 +44,12 @@ class StochasticPool2DNode(treeano.Wrapper0NodeImpl):
     def architecture_children(self):
         return [tn.Pool2DNode(self.name + "_pool2d")]
 
-    def get_hyperparameter(self, network, name):
-        if name == "pool_function":
-            deterministic = network.find_hyperparameter(["deterministic"],
-                                                        False)
-            return functools.partial(stochastic_pool,
-                                     deterministic=deterministic)
-        else:
-            return super(StochasticPool2DNode, self).get_hyperparameter(
-                network, name)
+    def init_state(self, network):
+        super(StochasticPool2DNode, self).init_state(network)
+        deterministic = network.find_hyperparameter(["deterministic"],
+                                                    False)
+        pool_fn = functools.partial(stochastic_pool,
+                                    deterministic=deterministic)
+        network.set_hyperparameter(self.name + "_pool2d",
+                                   "pool_function",
+                                   pool_fn)

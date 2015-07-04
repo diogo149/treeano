@@ -63,12 +63,11 @@ class DenseNode(core.WrapperNodeImpl):
                  simple.AddBiasNode(self._name + "_bias")
                  ])]
 
-    def get_hyperparameter(self, network, name):
-        if name == "output_dim":
-            # remap a child looking for "output_dim" to "num_units"
-            return network.find_hyperparameter(["num_units"])
-        else:
-            return super(DenseNode, self).get_hyperparameter(network, name)
+    def init_state(self, network):
+        super(DenseNode, self).init_state(network)
+        network.forward_hyperparameter(self._name + "_linear",
+                                       "output_dim",
+                                       ["num_units"])
 
 
 @core.register_node("dense_combine")
@@ -97,10 +96,8 @@ class DenseCombineNode(core.WrapperNodeImpl):
                                             mapped_children),
                  simple.AddBiasNode(self._name + "_bias")])]
 
-    def get_hyperparameter(self, network, name):
-        if name == "output_dim":
-            # remap a child looking for "output_dim" to "num_units"
-            return network.find_hyperparameter(["num_units"])
-        else:
-            return super(DenseCombineNode, self).get_hyperparameter(network,
-                                                                    name)
+    def init_state(self, network):
+        super(DenseCombineNode, self).init_state(network)
+        network.forward_hyperparameter(self.name,
+                                       "output_dim",
+                                       ["num_units"])

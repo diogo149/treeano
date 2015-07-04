@@ -131,33 +131,32 @@ class ANRATNode(treeano.WrapperNodeImpl):
                                                      5)
         if ANRAT_USE_LOG_LAMBDA:
             initial_lambda = np.log(initial_lambda)
-        network.create_variable(
+
+        lambda_vw = network.create_variable(
             name="lambda",
             is_shared=True,
             shape=(),
             tags={"parameter"},
             inits=inits + [treeano.inits.ConstantInit(initial_lambda)],
         )
+        p = network.find_hyperparameter(["nrae_p"], 2)
+        q = network.find_hyperparameter(["nrae_q"], 2)
+        r = network.find_hyperparameter(["anrat_r"], 1)
+        alpha = network.find_hyperparameter(["anrat_alpha", "alpha"], 0.1)
+        i32_target = network.find_hyperparameter(["i32_target"], False)
+        lambda_var = lambda_vw.variable
 
-    def get_hyperparameter(self, network, name):
-        if name == "cost_function":
-            p = network.find_hyperparameter(["nrae_p"], 2)
-            q = network.find_hyperparameter(["nrae_q"], 2)
-            r = network.find_hyperparameter(["anrat_r"], 1)
-            alpha = network.find_hyperparameter(["anrat_alpha", "alpha"], 0.1)
-            i32_target = network.find_hyperparameter(["i32_target"], False)
-            # get lambda from ANRAT node, not child node
-            lambda_vw = network[self.name].get_variable("lambda")
-            lambda_var = lambda_vw.variable
-            if ANRAT_USE_LOG_LAMBDA:
-                lambda_var = T.exp(lambda_var)
-            return functools.partial(
-                _ANRAT,
-                lambda_=lambda_var,
-                p=p,
-                q=q,
-                r=r,
-                alpha=alpha,
-                i32_target=i32_target)
-        else:
-            return super(ANRATNode, self).get_hyperparameter(network, name)
+        if ANRAT_USE_LOG_LAMBDA:
+            lambda_var = T.exp(lambda_var)
+
+        cost_function = functools.partial(
+            _ANRAT,
+            lambda_=lambda_var,
+            p=p,
+            q=q,
+            r=r,
+            alpha=alpha,
+            i32_target=i32_target)
+        network.set_hyperparameter(self.name + "_elementwise",
+                                   "cost_function",
+                                   cost_function)

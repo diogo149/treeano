@@ -686,6 +686,45 @@
   - conclusion:
     - wrap lasagne in the short-term
     - eventually make out own
+- how can nodes pass hyperparameters into their children the right way?
+  - ideally we want to apply it only to the correct children
+  - use cases
+    - sometimes parents pass a hyperparameter to a child with a different name
+  - alternatives
+    - override get_hyperparameter
+      - pros
+        - already implemented / needed
+      - cons
+        - ugly code
+        - can't specify a hyperparameter for a specific child
+    - allow get_hyperparameter to know which node is calling find_hyperparameter
+      - in general, it seems like a good thing to allow more complex queries
+        - eg. maybe when calling weight initializations, you might want to query based on type of unit
+          - eg. to initialize recurrent states to something near identity
+    - use set_hyperparameter for custom hyperparameters
+      - in init_state
+      - have ability to specify hyperparameter for a particular child
+      - pros
+        - can specify hyperparameters for exactly the child you want
+      - cons
+        - hyperparameters can't be set lazily
+        - need to set state in init_state
+          - this has issues
+            - this occurs after init_long_range_dependencies, and some hyperparameters are needed for that
+              - solution: for those nodes, call set_hyperparameter in init_long_range_dependencies
+    - pass partial created network into architecture_children
+      - rationale:
+        - can query hyperparameters and pass them to children
+      - it might work, since architecture children is called from up the tree to down it, thus all parents of a node should already be in the network
+      - pros
+        - uses existing abstractions
+      - cons
+        - hyperparameters can't be set lazily
+        - can't be done currently
+          - architecture children is currently being called before the architectural tree is even created
+            - it's also called multiple times, which may cause issues
+  - conclusion:
+    - set_hyperparameter function
 * canopy - general
 - treeano should not have hooks
   - there should be a clean separation of mapping from parameterization to theano variable and all the extra (modular) logic
@@ -914,6 +953,10 @@
 - should shared variables contain metadata on which axes are their input axes and which are their output axes
   - useful for initialization
 ** v2
+- auxiliary cost node (and auxiliary contractive penalty) should take a weight
+  - use case: multiplying by constant
+  - toy.MultiplyConstantNode(self.name + "_mul"),
+  - cost_weight hyperparameter
 - promote add constant and multiple constant nodes to real nodes from toy nodes
 - make node for each cost
 - should DictChildrenContainerSchema have optional values
@@ -928,10 +971,6 @@
     - API win
   - cons
     - less verifiable
-- should architecture_children be passed in partial network?
-  - rationale:
-    - can query hyperparameters and pass them to children
-  - it might work, since architecture children is called from up the tree to down it, thus all parents of a node should already be in the network
 - need evaluate_until to store state
   - losses, times, total_time, etc.
 - misc canopy
@@ -1109,15 +1148,6 @@
   - use FAST_COMPILE mode, and do .shape symbolically, in case it can be optimized
   - can use compute_test_value for shape computation
   - eg. T.zeros((3,4,5)).shape.tag.test_value
-- how can nodes pass hyperparameters into their children the right way?
-  - overwriting get_hyperparameter is wrong, because it affects all children
-  - ideally we want to apply it only to the correct children
-  - alternatives:
-    - allow get_hyperparameter to know which node is calling find_hyperparameter
-      - in general, it seems like a good thing to allow more complex queries
-        - eg. maybe when calling weight initializations, you might want to query based on type of unit
-          - eg. to initialize recurrent states to something near identity
-    - use a set_hyperparameter function
 - new parameter tags:
   - updates_state
     - rationale: might want to reset it

@@ -7,6 +7,7 @@ import theano.tensor as T
 from .. import core
 from . import simple
 from . import containers
+from . import toy
 
 AGGREGATORS = {
     'mean': T.mean,
@@ -98,7 +99,9 @@ class AuxiliaryCostNode(core.WrapperNodeImpl):
     children_container = core.DictChildrenContainerSchema(
         target=core.ChildContainer,
     )
-    hyperparameter_names = ("cost_reference", "cost_function")
+    hyperparameter_names = ("cost_reference",
+                            "cost_function",
+                            "cost_weight")
 
     def architecture_children(self):
         target = self._children["target"].children
@@ -114,9 +117,9 @@ class AuxiliaryCostNode(core.WrapperNodeImpl):
                      simple.SendToNode(self.name + "_sendto",
                                        to_key=self.name)]))]
 
-    def get_hyperparameter(self, network, name):
-        if name == "send_to_reference":
-            return network.find_hyperparameter(["cost_reference"])
-        else:
-            return super(AuxiliaryCostNode, self).get_hyperparameter(network,
-                                                                     name)
+    def init_long_range_dependencies(self, network):
+        # must be set in init_long_range_dependencies, because long range
+        # dependencies depend on reference
+        network.forward_hyperparameter(self.name,
+                                       "send_to_reference",
+                                       ["cost_reference"])

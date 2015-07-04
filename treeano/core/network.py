@@ -59,6 +59,7 @@ class Network(object):
             node_state["current_variables"] = {}
             node_state["original_variables"] = {}
             node_state["additional_data"] = {}
+            node_state["set_hyperparameters"] = {}
             self.node_state[node.name] = node_state
         # initialize long range dependencies
         # ---
@@ -247,6 +248,26 @@ class RelativeNetwork(object):
     def get_variable(self, variable_name):
         return self._state["current_variables"][variable_name]
 
+    def set_hyperparameter(self, node_name, key, value):
+        """
+        sets a hyperparameter for a child node
+        """
+        if node_name not in self._state["set_hyperparameters"]:
+            self._state["set_hyperparameters"][node_name] = {}
+        self._state["set_hyperparameters"][node_name][key] = value
+
+    def forward_hyperparameter(self,
+                               node_name,
+                               key,
+                               hyperparameter_keys,
+                               **kwargs):
+        """
+        forwards a set of hyperparameters to a different node under a different
+        key
+        """
+        value = self.find_hyperparameter(hyperparameter_keys, **kwargs)
+        self.set_hyperparameter(node_name, key, value)
+
     def find_hyperparameter(self,
                             hyperparameter_keys,
                             default_value=NoDefaultValue):
@@ -288,14 +309,27 @@ class RelativeNetwork(object):
         # look through hyperparameters of all ancestors
         ancestors = list(self.graph.architecture_ancestors(self._name))
         # prefer closer nodes over more specific queries
+        done_ancestors_names = []
         for node in [self._node] + ancestors:
+            # append current node to done ancestor
+            # ---
+            # this is done before the loop, so a node can set_hyperparameter
+            # for itself
+            done_ancestors_names.append(node.name)
+            # prepare set_hyperparameters state
+            node_hps = self.node_state[node.name]["set_hyperparameters"]
             for hyperparameter_key in hyperparameter_keys:
+                # try finding set hyperparameters
+                for ancestor_name in done_ancestors_names:
+                    try:
+                        yield node_hps[ancestor_name][hyperparameter_key]
+                    except KeyError:
+                        pass
+                # try finding provided hyperparameters
                 try:
-                    value = node.get_hyperparameter(self, hyperparameter_key)
+                    yield node.get_hyperparameter(self, hyperparameter_key)
                 except MissingHyperparameter:
                     pass
-                else:
-                    yield value
         # try returning the given default value, if any
         if default_value is not NoDefaultValue:
             yield default_value

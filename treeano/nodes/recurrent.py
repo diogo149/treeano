@@ -64,22 +64,19 @@ class SimpleRecurrentNode(core.Wrapper1NodeImpl):
                 ]))
         return [scan_node]
 
-    def get_hyperparameter(self, network, name):
-        if name == "output_dim":
-            # remap a child looking for "output_dim" to "num_units"
-            return network.find_hyperparameter(["num_units"])
-        elif name == "constant_value":
-            num_units = network.find_hyperparameter(["num_units"])
-            # FIXME use batch_axis instead of batch_size
-            batch_size = network.find_hyperparameter(["batch_size"])
-            if batch_size is None:
-                shape = (num_units,)
-            else:
-                shape = (batch_size, num_units)
-            zeros = T.zeros(shape)
-            # unfortunately, theano.tensor.zeros makes the result broadcastable
-            # if the shape of any dimension is 1, so we have to undo this
-            return T.patternbroadcast(zeros, (False,) * len(shape))
+    def init_state(self, network):
+        super(SimpleRecurrentNode, self).init_state(network)
+        num_units = network.find_hyperparameter(["num_units"])
+        # FIXME use batch_axis instead of batch_size
+        batch_size = network.find_hyperparameter(["batch_size"])
+        if batch_size is None:
+            shape = (num_units,)
         else:
-            return super(SimpleRecurrentNode, self).get_hyperparameter(network,
-                                                                       name)
+            shape = (batch_size, num_units)
+        zeros = T.zeros(shape)
+        # unfortunately, theano.tensor.zeros makes the result broadcastable
+        # if the shape of any dimension is 1, so we have to undo this
+        value = T.patternbroadcast(zeros, (False,) * len(shape))
+        network.set_hyperparameter(self._name + "_initialstate",
+                                   "constant_value",
+                                   value)

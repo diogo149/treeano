@@ -60,11 +60,11 @@ class MaxoutNode(core.Wrapper0NodeImpl):
     def architecture_children(self):
         return [FeaturePoolNode(self.name + "_featurepool")]
 
-    def get_hyperparameter(self, network, name):
-        if name == "pool_function":
-            return T.max
-        else:
-            return super(MaxoutNode, self).get_hyperparameter(network, name)
+    def init_state(self, network):
+        super(MaxoutNode, self).init_state(network)
+        network.set_hyperparameter(self.name + "_featurepool",
+                                   "pool_function",
+                                   T.max)
 
 
 @core.register_node("pool_2d")
@@ -127,9 +127,8 @@ class MeanPool2DNode(core.Wrapper0NodeImpl):
     def architecture_children(self):
         return [Pool2DNode(self.name + "_pool2d")]
 
-    def get_hyperparameter(self, network, name):
-        if name == "pool_function":
-            return T.mean
-        else:
-            return super(MeanPool2DNode, self).get_hyperparameter(network,
-                                                                  name)
+    def init_state(self, network):
+        super(MeanPool2DNode, self).init_state(network)
+        network.set_hyperparameter(self.name + "_pool2d",
+                                   "pool_function",
+                                   T.mean)
