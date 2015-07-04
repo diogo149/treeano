@@ -954,6 +954,7 @@
 - should shared variables contain metadata on which axes are their input axes and which are their output axes
   - useful for initialization
 ** v2
+- setup continous integration
 - auxiliary cost node (and auxiliary contractive penalty) should take a weight
   - use case: multiplying by constant
   - cost_weight hyperparameter
