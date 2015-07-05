@@ -954,6 +954,7 @@
 - should shared variables contain metadata on which axes are their input axes and which are their output axes
   - useful for initialization
 ** v2
+- add deterministic flag
 - setup continous integration
 - make find_inits(additional_hyperparameter_names, default_inits) utility function
 - make node for each cost
