@@ -725,6 +725,21 @@
             - it's also called multiple times, which may cause issues
   - conclusion:
     - set_hyperparameter function
+- should DictChildrenContainerSchema have optional values
+  - use case:
+    - identity node for costs
+      - costs can both be passed in explicitly or sequentially
+    - auxiliary cost nodes can have additional hidden layers
+  - if all keys are optional, can None be passed in instead?
+    - would allow lots of nodes to have default parameters
+  - can a single node be passed in if the node takes in a single child?
+  - should it be explicit (some optional=True flag) or implicit (error out when trying to get key)?
+  - pros
+    - API win
+  - cons
+    - less verifiable
+  - conclusion:
+    - yes! allows much less repetitive code - since the same logic can be more polymorphic
 * canopy - general
 - treeano should not have hooks
   - there should be a clean separation of mapping from parameterization to theano variable and all the extra (modular) logic
@@ -959,18 +974,6 @@
 - setup continous integration
 - make find_inits(additional_hyperparameter_names, default_inits) utility function
 - make node for each cost
-- should DictChildrenContainerSchema have optional values
-  - use case:
-    - identity node for costs
-      - costs can both be passed in explicitly or sequentially
-  - if all keys are optional, can None be passed in instead?
-    - would allow lots of nodes to have default parameters
-  - can a single node be passed in if the node takes in a single child?
-  - should it be explicit (some optional=True flag) or implicit (error out when trying to get key)?
-  - pros
-    - API win
-  - cons
-    - less verifiable
 - need evaluate_until to store state
   - losses, times, total_time, etc.
 - misc canopy

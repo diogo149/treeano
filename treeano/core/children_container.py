@@ -156,6 +156,9 @@ class DictChildrenContainer(ChildrenContainer):
     def __getitem__(self, key):
         return self._children[key]
 
+    def get(self, key, default=None):
+        return self._children.get(key, default)
+
 
 @serialization_state.register_children_container("dict_from_schema")
 class _DictChildrenContainerFromSchema(DictChildrenContainer):
@@ -199,7 +202,7 @@ class DictChildrenContainerSchema(object):
         self.schema = schema
 
     def __call__(self, children):
-        assert children.keys() == self.schema.keys()
+        assert len(set(children.keys()) - set(self.schema.keys())) == 0
         new_children = {}
         for k in children:
             new_children[k] = self.schema[k](children[k])

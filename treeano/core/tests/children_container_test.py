@@ -83,3 +83,15 @@ def test_dict_children_container_schema_serialization():
 
     nt.assert_equal(cc1.__class__, cc2.__class__)
     nt.assert_equal(cc1.__dict__, cc2.__dict__)
+
+
+def test_dict_children_container_schema_optional_children():
+    dccs = core.DictChildrenContainerSchema(
+        foo=core.ListChildrenContainer,
+        bar=core.ChildContainer,
+    )
+    node = tn.AddConstantNode("hello")
+    in_map = {"foo": [node, node]}
+    cc = dccs(in_map)
+    # test that .children returns the same as the input
+    nt.assert_equal(cc.children, in_map)
