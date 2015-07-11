@@ -9,25 +9,25 @@ import treeano.nodes as tn
 fX = theano.config.floatX
 
 
-def test_function_aggregator_node_serialization():
+def test_aggregator_node_serialization():
     tn.check_serialization(tn.AggregatorNode("a"))
 
 
-def test_function_elementwise_cost_node_serialization():
+def test_elementwise_cost_node_serialization():
     tn.check_serialization(tn.ElementwiseCostNode(
         "foo",
         {"pred": tn.IdentityNode("foo"),
          "target": tn.IdentityNode("bar")}))
 
 
-def test_function_total_cost_node_serialization():
+def test_total_cost_node_serialization():
     tn.check_serialization(tn.TotalCostNode(
         "foo",
         {"pred": tn.IdentityNode("foo"),
          "target": tn.IdentityNode("bar")}))
 
 
-def test_function_auxilliary_cost_node_serialization():
+def test_auxilliary_cost_node_serialization():
     tn.check_serialization(tn.AuxiliaryCostNode(
         "foo",
         {"target": tn.IdentityNode("bar")}))
