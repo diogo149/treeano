@@ -202,6 +202,7 @@ class DictChildrenContainerSchema(object):
         self.schema = schema
 
     def __call__(self, children):
+        # check that children keys is a subset of schema keys
         assert len(set(children.keys()) - set(self.schema.keys())) == 0
         new_children = {}
         for k in children:
