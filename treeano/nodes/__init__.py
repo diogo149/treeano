@@ -61,6 +61,7 @@ from costs import (AggregatorNode,
 from stochastic import (DropoutNode,
                         GaussianDropoutNode)
 from composite import (DenseNode,
-                       DenseCombineNode)
+                       DenseCombineNode,
+                       AuxiliaryDenseSoftmaxCCENode)
 
 from test_utils import check_serialization

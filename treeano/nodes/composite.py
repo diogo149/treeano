@@ -13,6 +13,8 @@ from .. import core
 from . import simple
 from . import containers
 from . import combine
+from . import costs
+from . import activations
 
 
 def _flatten_1d_or_2d(v):
@@ -101,3 +103,23 @@ class DenseCombineNode(core.WrapperNodeImpl):
         network.forward_hyperparameter(self.name,
                                        "output_dim",
                                        ["num_units"])
+
+
+@core.register_node("auxiliary_dense_softmax_categorical_crossentropy")
+class AuxiliaryDenseSoftmaxCCENode(core.WrapperNodeImpl):
+
+    hyperparameter_names = (DenseNode.hyperparameter_names
+                            + costs.AuxiliaryCostNode.hyperparameter_names)
+    children_container = core.DictChildrenContainerSchema(
+        target=core.ChildContainer,
+    )
+
+    def architecture_children(self):
+        return [costs.AuxiliaryCostNode(
+            self.name + "_auxiliary",
+            {"target": self._children["target"].children,
+             "pre_cost": containers.SequentialNode(
+                 self.name + "_sequential",
+                 [DenseNode(self.name + "_dense"),
+                  activations.SoftmaxNode(self.name + "_softmax")])},
+            cost_function=T.nnet.categorical_crossentropy)]
