@@ -24,7 +24,8 @@ from simple import (ReferenceNode,
                     ApplyNode,
                     AddConstantNode,
                     MultiplyConstantNode)
-from theanode import (TileNode)
+from theanode import (TileNode,
+                      ToOneHotNode)
 from combine import (BaseChildrenCombineNode,
                      BaseInputCombineNode,
                      InputFunctionCombineNode,
