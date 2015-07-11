@@ -51,11 +51,17 @@ class BaseInputCombineNode(six.with_metaclass(abc.ABCMeta, core.NodeImpl)):
     SendToNode's (eg. a main cost node where all other costs are sent to it)
     """
 
+    hyperparameter_names = ("ignore_default_input",)
+
     def init_state(self, network):
         """
         forward the input of this node to each of the children as a default
         """
+        ignore_default_input = network.find_hyperparameter(
+            ["ignore_default_input"], False)
         self.input_keys = tuple(sorted(network.get_all_input_edges().keys()))
+        if ignore_default_input:
+            self.input_keys = filter(lambda x: x != "default", self.input_keys)
 
     @abc.abstractmethod
     def compute_output(self, network, *in_vws):
