@@ -97,6 +97,7 @@ class AuxiliaryCostNode(core.WrapperNodeImpl):
 
     children_container = core.DictChildrenContainerSchema(
         target=core.ChildContainer,
+        pre_cost=core.ChildContainer,
     )
     hyperparameter_names = ("cost_reference",
                             "cost_function",
@@ -104,19 +105,33 @@ class AuxiliaryCostNode(core.WrapperNodeImpl):
 
     def architecture_children(self):
         target = self._children["target"].children
+        nodes = []
+
+        # allow for adding auxiliar nodes between input and cost
+        pre_cost_container = self._children.get("pre_cost")
+        if pre_cost_container is not None:
+            pre_cost_node = pre_cost_container.children
+            nodes.append(pre_cost_node)
+
+        # TODO parameterize cost node (to one that may not just be a function)
+        # ie. something stateful
+        nodes.append(TotalCostNode(
+            self.name + "_cost",
+            {"pred": simple.IdentityNode(self.name + "_identity"),
+             "target": target}))
+        nodes += [
+            simple.MultiplyConstantNode(
+                self.name + "_multiplyweight"),
+            simple.SendToNode(self.name + "_sendto",
+                              to_key=self.name)
+        ]
+
         return [
             containers.AuxiliaryNode(
                 self.name + "_auxiliary",
                 containers.SequentialNode(
                     self.name + "_sequential",
-                    [TotalCostNode(
-                        self.name + "_cost",
-                        {"pred": simple.IdentityNode(self.name + "_identity"),
-                         "target": target}),
-                     simple.MultiplyConstantNode(
-                         self.name + "_multiplyweight"),
-                     simple.SendToNode(self.name + "_sendto",
-                                       to_key=self.name)]))]
+                    nodes))]
 
     def init_long_range_dependencies(self, network):
         # must be set in init_long_range_dependencies, because long range

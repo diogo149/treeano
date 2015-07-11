@@ -973,7 +973,14 @@
 - handled_function hook for providing a timer callback
 - setup continous integration
 - make find_inits(additional_hyperparameter_names, default_inits) utility function
-- make node for each cost
+- make node for each cost + auxiliary versions of cost + auxiliary version w/ dense node
+  - CategoricalCrossEntropyNode
+    - CCENode
+  - BinaryCrossEntropyNode
+    - BCENode
+  - SoftmaxCCENode
+  - TemperatureSoftmaxCCENode
+  - AuxiliaryDenseSoftmaxCCENode
 - need evaluate_until to store state
   - losses, times, total_time, etc.
 - misc canopy
