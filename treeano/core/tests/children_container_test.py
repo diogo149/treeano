@@ -95,3 +95,13 @@ def test_dict_children_container_schema_optional_children():
     cc = dccs(in_map)
     # test that .children returns the same as the input
     nt.assert_equal(cc.children, in_map)
+
+
+def test_dict_children_container_schema_no_children():
+    dccs = core.DictChildrenContainerSchema(
+        foo=core.ListChildrenContainer,
+        bar=core.ChildContainer,
+    )
+    cc = dccs(None)
+    # test that .children returns the same as the input
+    nt.assert_equal(cc.children, {})
