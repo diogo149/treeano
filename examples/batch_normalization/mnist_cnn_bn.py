@@ -54,7 +54,6 @@ model = tn.HyperparameterNode(
     filter_size=(5, 5),
     pool_size=(2, 2),
     num_units=256,
-    dropout_probability=0.5,
     inits=[treeano.inits.XavierNormalInit()],
 )
 
@@ -66,8 +65,8 @@ with_updates = tn.HyperparameterNode(
          "cost": tn.TotalCostNode("cost", {
              "pred": tn.ReferenceNode("pred_ref", reference="model"),
              "target": tn.InputNode("y", shape=(None,), dtype="int32")},
+             cost_function=treeano.utils.categorical_crossentropy_i32,
          )}),
-    cost_function=treeano.utils.categorical_crossentropy_i32,
 )
 network = with_updates.network()
 network.build()  # build eagerly to share weights
@@ -77,7 +76,7 @@ BATCH_SIZE = 500
 valid_fn = canopy.handled_fn(
     network,
     [canopy.handlers.time_call(key="valid_time"),
-     canopy.handlers.override_hyperparameters(dropout_probability=0),
+     canopy.handlers.override_hyperparameters(bn_use_moving_stats=True),
      canopy.handlers.chunk_variables(batch_size=BATCH_SIZE,
                                      variables=["x", "y"])],
     {"x": "x", "y": "y"},

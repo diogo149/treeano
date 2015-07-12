@@ -45,7 +45,6 @@ model = tn.HyperparameterNode(
          tn.SoftmaxNode("pred"),
          ]),
     num_units=512,
-    dropout_probability=0.5,
     inits=[treeano.inits.XavierNormalInit()],
 )
 
@@ -68,7 +67,7 @@ BATCH_SIZE = 500
 valid_fn = canopy.handled_fn(
     network,
     [canopy.handlers.time_call(key="valid_time"),
-     canopy.handlers.override_hyperparameters(dropout_probability=0),
+     canopy.handlers.override_hyperparameters(bn_use_moving_stats=True),
      canopy.handlers.chunk_variables(batch_size=BATCH_SIZE,
                                      variables=["x", "y"])],
     {"x": "x", "y": "y"},
