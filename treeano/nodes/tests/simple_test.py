@@ -21,6 +21,12 @@ def test_send_to_node_serialization():
     tn.check_serialization(tn.SendToNode("a", reference="bar"))
 
 
+def test_hyperparameter_node_serialization():
+    tn.check_serialization(
+        tn.HyperparameterNode("a",
+                              tn.ReferenceNode("b")))
+
+
 def test_add_bias_node_serialization():
     tn.check_serialization(tn.AddBiasNode("a"))
     tn.check_serialization(tn.AddBiasNode(

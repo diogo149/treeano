@@ -2,6 +2,7 @@ import treeano
 
 from .. import network_utils
 from .. import walk_utils
+from .. import node_utils
 
 
 def network_to_kwargs(network, priority="post_override"):
@@ -84,17 +85,8 @@ def transform_root_node_postwalk(network, fn, **kwargs):
     in a postwalk (ie. leaves first) to all nodes in a tree, and returns a
     transformed network
     """
-    def postwalk_fn(obj):
-        if isinstance(obj, treeano.core.NodeAPI):
-            res = fn(obj)
-            assert isinstance(res, treeano.core.NodeAPI)
-            return res
-        else:
-            return obj
-
     def inner(root_node):
-        # TODO use more efficient walk function
-        return walk_utils.walk(root_node, postwalk_fn=postwalk_fn)
+        return node_utils.postwalk_node(root_node, fn)
 
     return transform_root_node(network, inner, **kwargs)
 

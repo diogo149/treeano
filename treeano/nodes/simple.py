@@ -65,11 +65,13 @@ class HyperparameterNode(core.Wrapper1NodeImpl):
     for providing hyperparameters to a subtree
     """
 
-    def __init__(self, name, node, **hyperparameters):
+    def __init__(self, name, children, **hyperparameters):
         # set hyperparameter keys to be all passed in keys
         self.hyperparameter_names = hyperparameters.keys()
         # override init to allow for using keyword arguments
-        super(HyperparameterNode, self).__init__(name, node, **hyperparameters)
+        super(HyperparameterNode, self).__init__(name,
+                                                 children,
+                                                 **hyperparameters)
 
 
 @core.register_node("input")
