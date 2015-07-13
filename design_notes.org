@@ -975,6 +975,13 @@
 - should shared variables contain metadata on which axes are their input axes and which are their output axes
   - useful for initialization
 ** v2
+- some way of having static "hyperparameters"?
+  - eg. ones that affect the architecture
+  - example: make this same unit 3 times
+    - eg.
+      - conv-conv-conv-pool
+  - maybe this should be a function
+    - doesn't have to be a concept built into treeano
 - add deterministic flag
 - compare caffe inception time to theano inception time
 - handled_function hook for providing a timer callback

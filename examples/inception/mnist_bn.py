@@ -30,20 +30,17 @@ in_train = {"x": X_train, "y": y_train}
 in_valid = {"x": X_valid, "y": y_valid}
 
 # ############################## prepare model ##############################
-inception_activation = {"activation": tn.SequentialNode(
-    "inception_seq",
-    [bn.BatchNormalizationNode("inception_bn"),
-     tn.ReLUNode("inception_relu")]
-)}
 model = tn.HyperparameterNode(
     "model",
     tn.SequentialNode(
         "seq",
         [tn.InputNode("x", shape=(None, 1, 28, 28)),
-         inception.InceptionNode("i1", inception_activation),
+         inception.InceptionNode("i1"),
          tl.MaxPool2DDNNNode("mp1"),
-         inception.InceptionNode("i2", inception_activation),
+         bn.BatchNormalizationNode("bn1"),
+         inception.InceptionNode("i2"),
          tl.MaxPool2DDNNNode("mp2"),
+         bn.BatchNormalizationNode("bn2"),
          tn.DenseNode("fc1"),
          tn.ReLUNode("relu3"),
          tn.DenseNode("fc2", num_units=10),
