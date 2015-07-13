@@ -976,6 +976,7 @@
   - useful for initialization
 ** v2
 - add deterministic flag
+- compare caffe inception time to theano inception time
 - handled_function hook for providing a timer callback
 - setup continous integration
 - make find_inits(additional_hyperparameter_names, default_inits) utility function
