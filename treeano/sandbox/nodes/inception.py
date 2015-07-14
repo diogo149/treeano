@@ -21,6 +21,12 @@ class InceptionNode(treeano.WrapperNodeImpl):
     children_container = treeano.core.DictChildrenContainerSchema(
         activation=treeano.core.ChildContainer,
     )
+    hyperparameter_names = ("num_filters_1x1",
+                            "num_filters_3x3reduce",
+                            "num_filters_3x3",
+                            "num_filters_5x5reduce",
+                            "num_filters_5x5",
+                            "num_filters_poolproj")
 
     def architecture_children(self):
         activation_container = self._children.get("activation")
