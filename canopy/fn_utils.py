@@ -14,7 +14,8 @@ def evaluate_until(fn,
                    gen,
                    max_iters=None,
                    max_seconds=None,
-                   callback=_default_evaluate_until_callback):
+                   callback=_default_evaluate_until_callback,
+                   catch_keyboard_interrupt=True):
     """
     evaluates a function on the output of a data generator until a given
     stopping condition
@@ -24,6 +25,12 @@ def evaluate_until(fn,
     """
     start_time = time.time()
     new_gen = enumerate(gen)
+
+    to_catch = (StopIteration,)
+    if catch_keyboard_interrupt:
+        to_catch = to_catch + (KeyboardInterrupt,)
+
+    print("Beginning evaluate_until")
     try:
         while True:
             with fn.state.time("generating_data"):
@@ -36,5 +43,5 @@ def evaluate_until(fn,
             res = fn(data)
             if callback is not None:
                 callback(i, res)
-    except StopIteration:
-        pass
+    except to_catch:
+        print("Ending evaluate_until")
