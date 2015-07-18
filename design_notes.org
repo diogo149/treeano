@@ -1148,6 +1148,8 @@
 ** misc
 - consider a switch shared variable to determine whether or not to use dropout
   - so that network doesn't have to be recompiled
+  - should there be some easy way of toggling these kinds of variables
+  - need to recompile anyway, since network at validation time won't have updates
 - figure out how to handle random state
   - should rng state be global, part of the network, state of a node?
     - should not be global

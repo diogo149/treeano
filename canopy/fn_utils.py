@@ -38,7 +38,8 @@ def evaluate_until(fn,
                     and (time.time() - start_time >= max_seconds)):
                 break
             res = fn(data)
-            res["_iter"] = i
+            # adding 1 to be 1-indexed instead of 0-indexed
+            res["_iter"] = i + 1
             res["_time"] = time.time() - start_time
             if callback is not None:
                 callback(res)
