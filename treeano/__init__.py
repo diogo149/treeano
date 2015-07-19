@@ -6,6 +6,7 @@ visualization
 
 import utils
 import core
+import theano_extensions
 import nodes
 import inits
 import node_utils
