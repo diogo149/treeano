@@ -1146,6 +1146,7 @@
 - figure out how to make recurrent node's not require batch size
   - would be cool to have symbolic shapes work
 ** misc
+- parameterize spatial axes (similar to batch_axis)
 - consider a switch shared variable to determine whether or not to use dropout
   - so that network doesn't have to be recompiled
   - should there be some easy way of toggling these kinds of variables
