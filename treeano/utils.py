@@ -3,6 +3,7 @@ import theano
 import theano.tensor as T
 
 fX = theano.config.floatX
+np_fX = np.dtype(fX)
 
 
 def as_fX(x):
@@ -12,7 +13,7 @@ def as_fX(x):
     if isinstance(x, (float, int, long)):
         return np.array(x, dtype=fX)
     elif isinstance(x, np.ndarray):
-        if x.dtype == np.float32:
+        if x.dtype == np_fX:
             return x
         else:
             return x.astype(fX)
