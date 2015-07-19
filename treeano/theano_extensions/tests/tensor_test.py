@@ -87,6 +87,20 @@ def test_percentile_keepdims_broadcastable():
     np.testing.assert_allclose(ans, res, rtol=1e-5)
 
 
+def test_percentile_keepdims_input_broadcastable():
+    v = T.tensor4()
+    nt.assert_equal(ttt.percentile(v.dimshuffle(0, 1, 2, "x", 3),
+                                   0,
+                                   axis=[2]).broadcastable,
+                    (False, False, True, False))
+    v = T.tensor4()
+    nt.assert_equal(ttt.percentile(v.dimshuffle(0, 1, 2, 3, "x"),
+                                   0,
+                                   axis=[2],
+                                   keepdims=True).broadcastable,
+                    (False, False, True, False, True))
+
+
 # TODO implement gradient
 # def test_percentile_grad():
 #     # test that gradient works and returns 0

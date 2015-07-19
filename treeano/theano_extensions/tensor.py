@@ -44,9 +44,12 @@ class PercentileOp(theano.Op):
 
         # calculate broadcastable
         if self.keepdims:
-            broadcastable = [ax in axis for ax in range(a.ndim)]
+            broadcastable = [b or (ax in axis)
+                             for ax, b in enumerate(a.broadcastable)]
         else:
-            broadcastable = [False for ax in range(a.ndim) if ax not in axis]
+            broadcastable = [b
+                             for ax, b in enumerate(a.broadcastable)
+                             if ax not in axis]
 
         out = T.TensorType(a.dtype, broadcastable)()
         return theano.gof.Apply(self, [a, q], [out])
