@@ -975,6 +975,12 @@
 - should shared variables contain metadata on which axes are their input axes and which are their output axes
   - useful for initialization
 ** v2
+- multistage training
+  - eg.
+    - unsupervised training
+    - training the classification layer
+    - fine tuning the whole thing
+- use new mean pooling operation: http://deeplearning.net/software/theano/library/tensor/signal/downsample.html
 - some way of having static "hyperparameters"?
   - eg. ones that affect the architecture
   - example: make this same unit 3 times
