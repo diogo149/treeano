@@ -2,6 +2,8 @@ import numpy as np
 import theano
 import theano.tensor as T
 
+from .. import utils
+
 
 class PercentileOp(theano.Op):
 
@@ -10,15 +12,51 @@ class PercentileOp(theano.Op):
     returns q-th percentile of the data for q in [0, 100]
     """
 
+    # TODO can implement gradient w.r.t. q
+
+    __props__ = ("axis", "keepdims")
+
+    def __init__(self, axis, keepdims):
+        if isinstance(axis, list):
+            axis = tuple(axis)
+        assert axis is None or isinstance(axis, (int, tuple))
+        self.axis = axis
+        self.keepdims = keepdims
+
     def make_node(self, a, q):
+        # cast q to theano variable
         if isinstance(q, (int, float)):
             q = theano.gof.Constant(T.fscalar, q)
-        return theano.gof.Apply(self, [a, q], [T.fscalar()])
+
+        # out = T.TensorType(a.dtype, ())()
+        # if self.keepdims:
+        #     out = T.makeKeepDims(a, out, self.axis)
+        # return theano.gof.Apply(self, [a, q], [out])
+        # # FIXME
+
+        # set to all axes if none specified
+        if self.axis is None:
+            axis = range(a.ndim)
+        elif isinstance(self.axis, int):
+            axis = [self.axis]
+        else:
+            axis = self.axis
+
+        # calculate broadcastable
+        if self.keepdims:
+            broadcastable = [ax in axis for ax in range(a.ndim)]
+        else:
+            broadcastable = [False for ax in range(a.ndim) if ax not in axis]
+
+        out = T.TensorType(a.dtype, broadcastable)()
+        return theano.gof.Apply(self, [a, q], [out])
 
     def perform(self, node, inputs, output_storage):
         a, q = inputs
         z, = output_storage
-        z[0] = np.percentile(a, q)
+        res = np.percentile(a, q, axis=self.axis, keepdims=self.keepdims)
+        z[0] = utils.as_fX(res)
 
 
-percentile = PercentileOp()
+def percentile(a, q, axis=None, keepdims=False):
+    return PercentileOp(axis, keepdims)(a, q)
