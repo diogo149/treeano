@@ -11,7 +11,7 @@ import theano.tensor as T
 import treeano
 import treeano.nodes as tn
 import canopy
-from treeano.sandbox.nodes import sparsity_penalty as sp
+from treeano.sandbox.nodes import kl_sparsity_penalty as sp
 
 fX = theano.config.floatX
 
@@ -36,11 +36,11 @@ model = tn.HyperparameterNode(
         [tn.InputNode("x", shape=(None, 28 * 28)),
          tn.DenseNode("fc1"),
          tn.SigmoidNode("sigmoid1"),
-         sp.AuxiliarySparsityPenaltyNode("sp1", cost_weight=1e1),
+         sp.AuxiliaryKLSparsityPenaltyNode("sp1", cost_weight=1e1),
          tn.DropoutNode("do1"),
          tn.DenseNode("fc2"),
          tn.SigmoidNode("sigmoid2"),
-         sp.AuxiliarySparsityPenaltyNode("sp2", cost_weight=1e1),
+         sp.AuxiliaryKLSparsityPenaltyNode("sp2", cost_weight=1e1),
          tn.DropoutNode("do2"),
          tn.DenseNode("fc3", num_units=10),
          tn.SoftmaxNode("pred"),

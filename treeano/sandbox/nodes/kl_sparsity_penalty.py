@@ -1,5 +1,6 @@
 """
-for applying a sparsity (for saturating nonlinearities)
+for applying a sparsity (for saturating nonlinearities) using KL-divergence
+of a bernoulli distribution
 
 unsure of origin, but see the following pdf for info:
 http://web.stanford.edu/class/cs294a/sparseAutoencoder.pdf
@@ -25,8 +26,8 @@ def _bernoulli_kl_divergence(p, outputs):
             - (1 - p) * T.log(1 - outputs))
 
 
-@treeano.register_node("elementwise_sparsity_penalty")
-class ElementwiseSparsityPenaltyNode(treeano.NodeImpl):
+@treeano.register_node("elementwise_kl_sparsity_penalty")
+class ElementwiseKLSparsityPenaltyNode(treeano.NodeImpl):
 
     hyperparameter_names = ("target_sparsity",
                             "sparsity",
@@ -48,13 +49,13 @@ class ElementwiseSparsityPenaltyNode(treeano.NodeImpl):
         )
 
 
-@treeano.register_node("auxiliary_sparsity_penalty")
-class AuxiliarySparsityPenaltyNode(treeano.Wrapper0NodeImpl):
+@treeano.register_node("auxiliary_kl_sparsity_penalty")
+class AuxiliaryKLSparsityPenaltyNode(treeano.Wrapper0NodeImpl):
 
     hyperparameter_names = (
         ("cost_reference",
          "cost_weight")
-        + ElementwiseSparsityPenaltyNode.hyperparameter_names)
+        + ElementwiseKLSparsityPenaltyNode.hyperparameter_names)
 
     def architecture_children(self):
         return [
@@ -62,7 +63,7 @@ class AuxiliarySparsityPenaltyNode(treeano.Wrapper0NodeImpl):
                 self.name + "_auxiliary",
                 tn.SequentialNode(
                     self.name + "_sequential",
-                    [ElementwiseSparsityPenaltyNode(
+                    [ElementwiseKLSparsityPenaltyNode(
                         self.name + "_sparsitypenalty"),
                      tn.AggregatorNode(self.name + "_aggregator"),
                      tn.MultiplyConstantNode(self.name + "_multiplyweight"),
@@ -74,7 +75,7 @@ class AuxiliarySparsityPenaltyNode(treeano.Wrapper0NodeImpl):
                                        ["cost_reference"])
 
     def init_state(self, network):
-        super(AuxiliarySparsityPenaltyNode, self).init_state(network)
+        super(AuxiliaryKLSparsityPenaltyNode, self).init_state(network)
         network.forward_hyperparameter(self.name + "_multiplyweight",
                                        "value",
                                        ["cost_weight"],
