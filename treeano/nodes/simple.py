@@ -10,6 +10,7 @@ import toolz
 import theano
 import theano.tensor as T
 
+from .. import utils
 from .. import core
 
 
@@ -126,10 +127,10 @@ class ConstantNode(core.NodeImpl):
 
     def compute_output(self, network):
         value = network.find_hyperparameter(["constant_value", "value"])
-        if isinstance(value, theano.gof.graph.Variable):
+        if utils.is_nonshared_variable(value):
             variable = value
             shape = None
-        elif isinstance(value, theano.compile.sharedvalue.SharedVariable):
+        elif utils.is_shared_variable(value):
             variable = value
             shape = value.get_value().shape
         else:

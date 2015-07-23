@@ -22,6 +22,18 @@ def as_fX(x):
         return x.astype(fX)
 
 
+def is_nonshared_variable(x):
+    return isinstance(x, theano.gof.graph.Variable)
+
+
+def is_shared_variable(x):
+    return isinstance(x, theano.compile.sharedvalue.SharedVariable)
+
+
+def is_variable(x):
+    return is_nonshared_variable(x) or is_shared_variable(x)
+
+
 def all_equal(seq):
     """
     whether or not all elements of a sequence are equal

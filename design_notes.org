@@ -946,6 +946,22 @@
 - increasing learning rate / step size for some part of the network
 - applying transformations to updates (eg. gradient clipping)
 * TODOs
+** decisions to make
+- hyperparameters that affect initialization
+  - eg. reading in in_axes and out_axes from the network
+- hyperparameters that affect topology
+  - eg.
+    - whether or not to send input to children
+  - should it even be an option?
+  - some way of having static "hyperparameters"?
+    - eg. ones that affect the architecture
+    - example: make this same unit 3 times
+      - eg.
+        - conv-conv-conv-pool
+    - maybe this should be a function
+      - doesn't have to be a concept built into treeano
+- should shared variables contain metadata on which axes are their input axes and which are their output axes
+  - useful for initialization
 ** annoyances
 - writing recurrent nets using scannode is much worse than writing in theano
 - having an explicit batch dimension seems to cause quit a bit of complexity
@@ -965,15 +981,62 @@
     - explicitly add additional data that shows how to read that data
     - same thing w/ names + hyperparameters
     - remove nodeapi/nodeimpl distinction
-** decisions to make
-- hyperparameters that affect initialization
-  - eg. reading in in_axes and out_axes from the network
-- hyperparameters that affect topology
-  - eg.
-    - whether or not to send input to children
-  - should it even be an option?
-- should shared variables contain metadata on which axes are their input axes and which are their output axes
-  - useful for initialization
+** monitoring
+- how to properly handle monitoring?
+  - how to do learning curves?
+    - callback every iteration
+      - this way it behaves like live plotting
+  - how to handle monitoring?
+    - what controls monitoring?
+      - alternatives:
+        1. simple handler, nodes control monitoring
+           - nodes have flags to create monitor variables
+           - handler queries graph for all monitor variables
+             - does something with them
+               - eg.
+                 - prints them
+                 - makes a plot
+           - pros
+             - same interface / implementation to parameterize node as to control monitoring
+        2. simple nodes, handler controls monitoring
+           - handler is either given a node or a query (eg. all dense nodes) for variables to monitor
+        3. some combination of both?
+      - conclusion: nodes control monitoring
+    - should there be a common switch for all nodes to enable/disable monitoring
+      - alternatives
+        - no switch
+          - cons
+            - lack of consistent interface to disable monitoring
+            - can't disable monitoring for a heterogeneous subtree
+        - as part of framework
+          - pros
+            - hardest to screw up
+          - cons
+            - additional assumptions in framework
+        - by convention
+          - pros
+            - gets benefit of having switch without having to build it into framework
+          - cons
+            - less DRY since logic needs to be everywhere
+      - pros
+        - consistency
+    - how do you monitor scalars?
+      - should we add an assertion for monitor variables to have shape ()
+      - printing?
+      - plotting over time?
+        - w/ matplotlib
+        - w/ text gnuplot
+      - need to add it to theano function outputs
+        - to perform GPU transfer efficiently
+        - thus need a handler
+          - how much complexity in the handler?
+      - can costs be a monitored variable as well?
+    - how do you monitor tensors?
+      - might want to make a gif of an image?
+      - otherwise might instead just summarize to a scalar
+    - how do you combine train and valid monitoring?
+    - how do you create variables for updates and not compute them when not updating?
+      - ie. how do you make sure update-specific monitoring variables aren't unnecessarily computed
 ** v2
 - multistage training
   - eg.
@@ -981,13 +1044,6 @@
     - training the classification layer
     - fine tuning the whole thing
 - use new mean pooling operation: http://deeplearning.net/software/theano/library/tensor/signal/downsample.html
-- some way of having static "hyperparameters"?
-  - eg. ones that affect the architecture
-  - example: make this same unit 3 times
-    - eg.
-      - conv-conv-conv-pool
-  - maybe this should be a function
-    - doesn't have to be a concept built into treeano
 - add deterministic flag
 - compare caffe inception time to theano inception time
 - handled_function hook for providing a timer callback
@@ -1038,21 +1094,11 @@
     - eg. minibatch
     - in handlers.batch
   - passing extra input to the network (curriculum learning)
-  - taking extra output (monitoring)
-    - saving in a map?
-    - printing stats
   - saving model
   - polyak averaging
   - validation
     - assert shape of numpy array is same as that of the input variable
   - pre/post processing input/output
-  - convert map input to list
-    - eg. function({"a": var, "b": var}, {"c": var, "d": var})
-      - takes in a map
-      - returns a map
-    - use cases:
-      - monitoring (to get a value out)
-      - hyperparameter annealing
   - compile with nan detection mode
     - http://deeplearning.net/software/theano/tutorial/debug_faq.html
       - search for detect_nan

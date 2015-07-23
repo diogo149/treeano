@@ -5,6 +5,7 @@ import numpy as np
 import theano
 import theano.tensor as T
 
+from .. import utils
 from .inits import ZeroInit
 
 ENABLE_TEST_VALUE = theano.config.compute_test_value != "off"
@@ -73,8 +74,7 @@ class VariableWrapper(object):
         if broadcastable is not None and variable is not None:
             assert broadcastable == variable.broadcastable
         if is_shared is not None and variable is not None:
-            assert is_shared == isinstance(self.variable,
-                                           theano.compile.SharedVariable)
+            assert is_shared == utils.is_shared_variable(self.variable)
         if dtype is not None and variable is not None:
             assert dtype == variable.dtype
         if tags is not None:
@@ -96,8 +96,7 @@ class VariableWrapper(object):
         if self.is_shared_ is None:
             # if is_shared is not supplied, a variable must be supplied
             assert self.variable_ is not None
-            self.is_shared_ = isinstance(self.variable,
-                                         theano.compile.SharedVariable)
+            self.is_shared_ = utils.is_shared_variable(self.variable)
         return self.is_shared_
 
     @property
