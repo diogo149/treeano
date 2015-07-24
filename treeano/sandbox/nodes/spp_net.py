@@ -81,7 +81,6 @@ class SpatialPyramidPoolingNode(treeano.NodeImpl):
         # compute out
         mp_kwargs_list = [spp_max_pool_kwargs(in_shape[2:], spp_level)
                           for spp_level in spp_levels]
-        print(mp_kwargs_list)
         pooled = [downsample.max_pool_2d(in_vw.variable, **kwargs)
                   for kwargs in mp_kwargs_list]
         out_var = T.concatenate([p.flatten(2) for p in pooled], axis=1)
