@@ -49,7 +49,8 @@ from activations import (BaseActivationNode,
 from downsample import (FeaturePoolNode,
                         MaxoutNode,
                         Pool2DNode,
-                        MeanPool2DNode)
+                        MeanPool2DNode,
+                        GlobalPoolNode)
 from updates import (UpdateScaleNode,
                      StandardUpdatesNode,
                      SGDNode,
@@ -59,8 +60,8 @@ from costs import (AggregatorNode,
                    TotalCostNode,
                    AuxiliaryCostNode)
 from stochastic import (DropoutNode,
-                        SpatialDropoutNode,
-                        GaussianDropoutNode)
+                        GaussianDropoutNode,
+                        SpatialDropoutNode)
 from composite import (DenseNode,
                        DenseCombineNode,
                        AuxiliaryDenseSoftmaxCCENode)

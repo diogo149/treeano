@@ -25,6 +25,10 @@ def test_mean_pool_2d_node_serialization():
     tn.check_serialization(tn.MeanPool2DNode("a"))
 
 
+def test_global_pool_node_serialization():
+    tn.check_serialization(tn.GlobalPoolNode("a"))
+
+
 def test_maxout_hyperparameters():
     nt.assert_equal(
         set(tn.FeaturePoolNode.hyperparameter_names),
@@ -55,3 +59,17 @@ def test_mean_pool_2d_node():
     np.testing.assert_equal(fn(x)[0], ans)
     nt.assert_equal(network["m"].get_variable("default").shape,
                     ans.shape)
+
+
+def test_global_pool_node():
+    network = tn.SequentialNode(
+        "s",
+        [tn.InputNode("i", shape=(6, 5, 4, 3)),
+         tn.GlobalPoolNode("gp", pool_function=T.mean)]
+    ).network()
+    fn = network.function(["i"], ["s"])
+    x = np.random.randn(6, 5, 4, 3).astype(fX)
+    ans = x.mean(axis=(2, 3))
+    np.testing.assert_allclose(fn(x)[0],
+                               ans,
+                               rtol=1e-5)

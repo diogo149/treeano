@@ -132,3 +132,28 @@ class MeanPool2DNode(core.Wrapper0NodeImpl):
         network.set_hyperparameter(self.name + "_pool2d",
                                    "pool_function",
                                    T.mean)
+
+
+@core.register_node("global_pool")
+class GlobalPoolNode(core.NodeImpl):
+
+    """
+    pools all spatial locations into a single value
+    """
+
+    hyperparameter_names = ("pool_function",)
+
+    def compute_output(self, network, in_vw):
+        pool_fn = network.find_hyperparameter(["pool_function"])
+        # FIXME generalize to other axes
+        # assume that spatial locations are all trailing locations
+        # 3-tensor with all spatial axes flattened into the final one:
+        flattened = in_vw.variable.flatten(3)
+        # pool together
+        out_var = pool_fn(flattened, axis=2)
+        network.create_variable(
+            "default",
+            variable=out_var,
+            shape=in_vw.shape[:2],
+            tags={"output"},
+        )
