@@ -59,6 +59,7 @@ from costs import (AggregatorNode,
                    TotalCostNode,
                    AuxiliaryCostNode)
 from stochastic import (DropoutNode,
+                        SpatialDropoutNode,
                         GaussianDropoutNode)
 from composite import (DenseNode,
                        DenseCombineNode,
