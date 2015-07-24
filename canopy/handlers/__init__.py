@@ -15,3 +15,4 @@ from batch import (chunk_variables,
                    batch_pad)
 from monitor import (time_call,
                      time_per_row)
+from misc import callback_with_input
