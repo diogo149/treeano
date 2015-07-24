@@ -133,11 +133,7 @@ class SpatialDropoutNode(core.NodeImpl):
             )
         else:
             rescale_factor = 1 / (1 - p)
-            # XXX: We'll assume this is of the form (batch, channel, width, height)
-            # TODO: Generalize to other shape dimensions.
             mask_shape = in_vw.shape
-            # For spatial dropout, just specify the channel to be dropped out.
-            # Then have the mask broadcast.
             if any(s is None for s in mask_shape):
                 # NOTE: this uses symbolic shape - can be an issue with
                 # theano.clone and random numbers
@@ -145,15 +141,18 @@ class SpatialDropoutNode(core.NodeImpl):
                 warnings.warn("using symbolic shape for dropout mask, "
                               "which can be an issue with theano.clone")
                 mask_shape = in_vw.symbolic_shape()
+            # FIXME generalize to other shape dimensions.
+            # assume this is of the form bc01 (batch, channel, width, height)
             mask_shape = mask_shape[:2]
             # TODO save this state so that we can seed the rng
             srng = MRG_RandomStreams()
             mask = rescale_factor * srng.binomial(mask_shape,
                                                   p=p,
                                                   dtype=floatX)
+            mask = mask.dimshuffle(0, 1, 'x', 'x')
             network.create_variable(
                 "default",
-                variable=in_vw.variable * mask.dimshuffle(0, 1, 'x', 'x'),
+                variable=in_vw.variable * mask,
                 shape=in_vw.shape,
                 tags={"output"},
             )
