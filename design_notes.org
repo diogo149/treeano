@@ -1034,10 +1034,34 @@
     - how do you monitor tensors?
       - might want to make a gif of an image?
       - otherwise might instead just summarize to a scalar
+      - this might warrant it's own handler to save a bunch of tensors to a directory
     - how do you combine train and valid monitoring?
+      - possible solution:
+        - have monitoring handler take in a prefix / format string
+        - all monitor names are formatted according to that string
     - how do you create variables for updates and not compute them when not updating?
       - ie. how do you make sure update-specific monitoring variables aren't unnecessarily computed
+      - alternatives:
+        - some smart built-in thing
+          - eg. a variable wrapper tag
+          - automatically determines which monitored variables should be used
+        - ignoring the problem
+          - eg. you might want update statistics on valid set even if the update isn't performed
+        - a manual flag
+          - this would allow one to choose the right behaviour
+- how to know what to plot?
+  - solution: training dashboard
+    - D3 charts
+    - dropdown to select which are in the x and y axis
+    - sane defaults
+      - x = time, y = matching regex "cost"
+      - changing axes scale
+      - multiple x and y?
+    - checkbox to "auto-refresh"
+      - this would involve re-reading a json file with all data
 ** v2
+- use joblib for serialization
+  - rationale: much more efficient for numpy arrays
 - multistage training
   - eg.
     - unsupervised training
@@ -1198,6 +1222,12 @@
 - figure out how to make recurrent node's not require batch size
   - would be cool to have symbolic shapes work
 ** misc
+- percentile tests fail for floatX=float64
+- generalize / share code between stochastic:
+  - dropout
+  - spatial dropout
+  - gaussian dropout
+  - variational dropout (adaptive gaussian)
 - parameterize spatial axes (similar to batch_axis)
 - consider a switch shared variable to determine whether or not to use dropout
   - so that network doesn't have to be recompiled
@@ -1472,6 +1502,7 @@
       - show input patch that maximally activates a conv neuron
       - given mean image, maximize class score - L2 norm
       - deconvolutional networks
+      - occlusion heatmap
     - saving learning curves
     - post-training report
       - eg. examples which are the most wrong
