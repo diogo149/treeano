@@ -58,6 +58,11 @@ def spp_max_pool_kwargs(in_shape, out_shape):
 @treeano.register_node("spatial_pyramid_pooling")
 class SpatialPyramidPoolingNode(treeano.NodeImpl):
 
+    """
+    eg.
+    SpatialPyramidPoolingNode("spp", spp_levels=[(1, 1), (2, 2), (4, 4)])
+    """
+
     hyperparameter_names = ("spp_levels",)
 
     def compute_output(self, network, in_vw):
