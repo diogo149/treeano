@@ -10,6 +10,7 @@ from .. import utils
 floatX = theano.config.floatX
 
 
+# TODO: Refactor to extract shared logic from these nodes.
 @core.register_node("dropout")
 class DropoutNode(core.NodeImpl):
 
@@ -101,6 +102,58 @@ class GaussianDropoutNode(core.NodeImpl):
             network.create_variable(
                 "default",
                 variable=in_vw.variable * mask,
+                shape=in_vw.shape,
+                tags={"output"},
+            )
+
+
+@core.register_node("spatial_dropout")
+class SpatialDropoutNode(core.NodeImpl):
+
+    """
+    node that drops out random filters
+
+    Each filter is either on or off.
+    """
+
+    hyperparameter_names = ("dropout_probability",
+                            "probability",
+                            "p")
+
+    def compute_output(self, network, in_vw):
+        p = network.find_hyperparameter(["dropout_probability",
+                                         "probability",
+                                         "p"],
+                                        0)
+        if p == 0:
+            network.copy_variable(
+                name="default",
+                previous_variable=in_vw,
+                tags={"output"},
+            )
+        else:
+            rescale_factor = 1 / (1 - p)
+            # XXX: We'll assume this is of the form (batch, channel, width, height)
+            # TODO: Generalize to other shape dimensions.
+            mask_shape = in_vw.shape
+            # For spatial dropout, just specify the channel to be dropped out.
+            # Then have the mask broadcast.
+            if any(s is None for s in mask_shape):
+                # NOTE: this uses symbolic shape - can be an issue with
+                # theano.clone and random numbers
+                # https://groups.google.com/forum/#!topic/theano-users/P7Mv7Fg0kUs
+                warnings.warn("using symbolic shape for dropout mask, "
+                              "which can be an issue with theano.clone")
+                mask_shape = in_vw.symbolic_shape()
+            mask_shape = mask_shape[:2]
+            # TODO save this state so that we can seed the rng
+            srng = MRG_RandomStreams()
+            mask = rescale_factor * srng.binomial(mask_shape,
+                                                  p=p,
+                                                  dtype=floatX)
+            network.create_variable(
+                "default",
+                variable=in_vw.variable * mask.dimshuffle(0, 1, 'x', 'x'),
                 shape=in_vw.shape,
                 tags={"output"},
             )
