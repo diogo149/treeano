@@ -19,6 +19,8 @@ fX = theano.config.floatX
 def spp_max_pool_axis_kwargs(in_shape, out_shape):
     symbolic = (treeano.utils.is_variable(in_shape)
                 or treeano.utils.is_variable(out_shape))
+    # maxpool requires static shape
+    assert not symbolic
     if symbolic:
         int_ceil = lambda x: T.ceil(x).astype("int32")
     else:
