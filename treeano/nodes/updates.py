@@ -3,6 +3,7 @@ nodes that provide updates for shared variables
 """
 import abc
 
+import toolz
 import six
 import numpy as np
 import theano
@@ -133,7 +134,9 @@ class NesterovMomentumNode(core.Wrapper1NodeImpl):
 
     def mutate_update_deltas(self, network, update_deltas):
         momentum = network.find_hyperparameter(["momentum"], 0.9)
-        # FIXME get/set inits
+        inits = list(toolz.concat(network.find_hyperparameters(
+            ["inits"],
+            [])))
         shared_vws = network.find_vws_in_subtree(is_shared=True)
         for vw in shared_vws:
             var = vw.variable
@@ -143,6 +146,7 @@ class NesterovMomentumNode(core.Wrapper1NodeImpl):
                     shape=vw.shape,
                     is_shared=True,
                     tags={"state"},
+                    inits=inits,
                 )
                 velocity = velocity_vw.variable
                 delta = update_deltas[var]
