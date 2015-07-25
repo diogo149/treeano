@@ -54,6 +54,8 @@ from downsample import (FeaturePoolNode,
 from updates import (UpdateScaleNode,
                      StandardUpdatesNode,
                      SGDNode,
+                     NesterovMomentumNode,
+                     NAGNode,
                      AdamNode)
 from costs import (AggregatorNode,
                    ElementwiseCostNode,

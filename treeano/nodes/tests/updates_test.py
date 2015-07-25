@@ -49,3 +49,7 @@ def test_sgd_node():
 
 def test_adam_node():
     nodes.test_utils.check_updates_node(nodes.AdamNode)
+
+
+def test_nag_node():
+    nodes.test_utils.check_updates_node(nodes.NAGNode, learning_rate=0.01)

@@ -1056,9 +1056,16 @@
     - sane defaults
       - x = time, y = matching regex "cost"
       - changing axes scale
+        - log/non-log
+        - clip (in case some losses are really high)
+        - add moving average
+        - maximum frequency of plotting
       - multiple x and y?
     - checkbox to "auto-refresh"
       - this would involve re-reading a json file with all data
+    - ways of answering the question "what is the best $OBJECTIVE in < $TIME"
+      - maybe some smart filtering on each axis with summary stats
+        - eg. min, 95% percentile, etc.
 ** v2
 - use joblib for serialization
   - rationale: much more efficient for numpy arrays

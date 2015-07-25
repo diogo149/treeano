@@ -108,7 +108,7 @@ class NodeAPI(six.with_metaclass(abc.ABCMeta, object)):
         computes updates of a node and modifies the update_deltas that
         the network passed in
 
-        NOTE: will be called exactly once, and should not mutate the input
+        NOTE: will be called exactly once, and should mutate the input
         update_deltas, not return a new one
         """
 

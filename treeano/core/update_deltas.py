@@ -117,3 +117,6 @@ class UpdateDeltas(object):
 
     def __setitem__(self, key, value):
         self.deltas[key] = value
+
+    def __contains__(self, item):
+        return item in self.deltas

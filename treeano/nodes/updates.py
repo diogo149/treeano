@@ -96,6 +96,8 @@ class StandardUpdatesNode(six.with_metaclass(abc.ABCMeta,
     def _new_update_deltas(self, network, parameters, grads):
         pass
 
+# ################################### sgd ###################################
+
 
 @core.register_node("sgd")
 class SGDNode(StandardUpdatesNode):
@@ -115,6 +117,60 @@ class SGDNode(StandardUpdatesNode):
                                   for param, grad in zip(parameter_variables,
                                                          grads)})
 
+
+# ############################ nesterov momentum ############################
+
+@core.register_node("nesterov_momentum")
+class NesterovMomentumNode(core.Wrapper1NodeImpl):
+
+    """
+    node that transforms all incoming updates to parameters
+    in the subtree to use nesterov momentum
+    """
+
+    # TODO add way to filter parameters and only apply to a subset
+    hyperparameter_names = ("momentum",)
+
+    def mutate_update_deltas(self, network, update_deltas):
+        momentum = network.find_hyperparameter(["momentum"], 0.9)
+        # FIXME get/set inits
+        shared_vws = network.find_vws_in_subtree(is_shared=True)
+        for vw in shared_vws:
+            var = vw.variable
+            if var in update_deltas:
+                velocity_vw = network.create_variable(
+                    "velocity(%s)" % vw.name,
+                    shape=vw.shape,
+                    is_shared=True,
+                    tags={"state"},
+                )
+                velocity = velocity_vw.variable
+                delta = update_deltas[var]
+                new_velocity = momentum * velocity + delta
+                update_deltas[velocity] = new_velocity - velocity
+                update_deltas[var] = delta + momentum * new_velocity
+
+
+def NAGNode(name, children, learning_rate=None, momentum=None):
+    """
+    Node for Nesterov's Accelerated Gradient Descent
+    """
+    subtree = children["subtree"]
+    cost = children["cost"]
+    if learning_rate is None:
+        sgd_kwargs = {}
+    else:
+        sgd_kwargs = {"learning_rate": learning_rate}
+    if momentum is None:
+        momentum_kwargs = {}
+    else:
+        momentum_kwargs = {"momentum": momentum}
+    momentum_node = NesterovMomentumNode(name + "_momentum",
+                                         subtree,
+                                         **momentum_kwargs)
+    new_children = {"subtree": momentum_node,
+                    "cost": cost}
+    return SGDNode(name, new_children, **sgd_kwargs)
 
 # ################################### adam ###################################
 
