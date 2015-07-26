@@ -28,12 +28,6 @@ class PercentileOp(theano.Op):
         if isinstance(q, (int, float)):
             q = theano.gof.Constant(T.fscalar, q)
 
-        # out = T.TensorType(a.dtype, ())()
-        # if self.keepdims:
-        #     out = T.makeKeepDims(a, out, self.axis)
-        # return theano.gof.Apply(self, [a, q], [out])
-        # # FIXME
-
         # set to all axes if none specified
         if self.axis is None:
             axis = range(a.ndim)
