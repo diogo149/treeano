@@ -2,6 +2,8 @@
 from
 "RMSProp and equilibrated adaptive learning rates for non-convex optimization"
 http://arxiv.org/abs/1502.04390
+
+NOTE: Rop doesn't work for many operations, and it often causes nan's
 """
 
 import toolz
@@ -55,6 +57,8 @@ class EquilibratedSGDNode(tn.StandardUpdatesNode):
                 inits=inits,
             )
 
+            # TODO ESGD update should only occur every 20 iterations
+            # to amortize cost
             parameter = parameter_vw.variable
             D = D_vw.variable
             # TODO save this state so that we can seed the rng
