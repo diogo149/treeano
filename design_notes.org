@@ -1368,7 +1368,9 @@
     - options
       - g2 = theano.compile.deep_copy_op(g)
       - g3 = theano.compile.view_op(g)
+        - doesn't support Rop
       - g4 = T.tensor_copy(g)
+    - TODO benchmark
   - ie. add names to variables
     - var.name = "somename"
     - have a defined name separator
@@ -1631,6 +1633,7 @@
 ** future
 - make python3 compatible
 - use metaclass for registering classes for serialization
+  - see: https://github.com/lmjohns3/downhill/blob/master/downhill/util.py
 - look into drawing:
   - https://github.com/Lasagne/Lasagne/issues/174
     - https://github.com/ebenolson/Lasagne/blob/master/examples/draw_net.py
