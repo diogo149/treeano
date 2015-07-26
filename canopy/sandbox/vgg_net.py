@@ -14,6 +14,8 @@ def vgg_16_nodes(conv_only):
     whether or not to only return conv layers (before FC layers)
     """
     assert conv_only
+
+    # NOTE: using Conv2DDNNNode's because the network uses "same" convs
     return tn.HyperparameterNode(
         "vgg16",
         tn.SequentialNode(
