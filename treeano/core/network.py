@@ -393,9 +393,15 @@ class RelativeNetwork(object):
         the main use case for this is for wrapper nodes which just pass
         their input as their output
         """
+        # creating a view of the variable
+        # rationale:
+        # 1. shared variables are seen as normal variables (so shared variables
+        #    aren't accidentaly owned by multiple nodes)
+        # 2. TODO each variable can be given its own name
+        variable = theano.compile.view_op(previous_variable.variable)
         return self.create_variable(
             name,
-            variable=previous_variable.variable,
+            variable=variable,
             shape=previous_variable.shape,
             tags=tags,
         )
