@@ -192,7 +192,12 @@ class WeightDecayNode(core.Wrapper1NodeImpl):
 
     def new_update_deltas(self, network):
         decay = network.find_hyperparameter(["l2_decay",
-                                             "weight_decay"])
+                                             "weight_decay"],
+                                            0)
+        if decay == 0:
+            # don't add updates if decay is 0
+            return super(WeightDecayNode, self).new_update_deltas(network)
+
         weight_vws = network.find_vws_in_subtree(tags=["weight"])
         weights = [vw.variable for vw in weight_vws]
         return core.UpdateDeltas({w: -decay * w for w in weights})
