@@ -142,7 +142,7 @@ class NesterovMomentumNode(core.Wrapper1NodeImpl):
             var = vw.variable
             if var in update_deltas:
                 velocity_vw = network.create_variable(
-                    "velocity(%s)" % vw.name,
+                    "nesterov_momentum_velocity(%s)" % vw.name,
                     shape=vw.shape,
                     is_shared=True,
                     tags={"state"},
