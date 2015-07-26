@@ -332,3 +332,31 @@ class MeanPool2DDNNNode(core.NodeImpl):
                 pad=network.find_hyperparameter(["pad"], (0, 0)),
             )
         )
+
+# ############################## normalization ##############################
+
+
+@core.register_node("lasagne_lrn2d")
+class LocalResponseNormalization2DNode(core.NodeImpl):
+
+    """
+    node wrapping lasagne's Pool2DDNNLayer with mode = average_exc_pad
+    """
+
+    hyperparameter_names = ("lrn_alpha",
+                            "lrn_k",
+                            "lrn_beta",
+                            "lrn_n")
+
+    def compute_output(self, network, in_vw):
+        import lasagne.layers.dnn
+        wrap_lasagne_node(
+            network=network,
+            in_vw=in_vw,
+            param_kwargs={},
+            constructor=lasagne.layers.LocalResponseNormalization2DLayer,
+            kwargs=dict(
+                alpha=network.find_hyperparameter(["lrn_alpha"], 1e-4),
+                k=network.find_hyperparameter(["lrn_k"], 2),
+                beta=network.find_hyperparameter(["lrn_beta"], 0.75),
+                n=network.find_hyperparameter(["lrn_n"], 5)))
