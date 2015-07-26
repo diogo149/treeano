@@ -1100,7 +1100,6 @@
     - merging results of multiple training/validation chunks
 - remove print statements
 - should "weight" inits be linear weight inits
-- add adam state to network
 - issue: serialization of handlers
   - what if handlers have theano variables as state? that may break when serializing
     - solution: need to implement getstate/setstate
@@ -1229,6 +1228,12 @@
 - figure out how to make recurrent node's not require batch size
   - would be cool to have symbolic shapes work
 ** misc
+- add way to filter parameters and only apply updates to a subset
+  - use cases:
+    - nesterov momentum
+    - l2 weight decay
+    - any update node
+  - one might argue that one could choose which nodes to wrap, but some nodes might have multiple parameters
 - lazy way of storing new values instead of update deltas
   - pros
     - saves a few nodes in graph

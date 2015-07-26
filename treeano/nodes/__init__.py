@@ -56,6 +56,7 @@ from updates import (UpdateScaleNode,
                      SGDNode,
                      NesterovMomentumNode,
                      NAGNode,
+                     WeightDecayNode,
                      AdamNode)
 from costs import (AggregatorNode,
                    ElementwiseCostNode,

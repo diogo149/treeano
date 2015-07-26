@@ -1,7 +1,7 @@
 import numpy as np
 import theano
-
-from treeano import nodes
+import treeano
+import treeano.nodes as tn
 
 floatX = theano.config.floatX
 
@@ -9,18 +9,22 @@ floatX = theano.config.floatX
 def test_update_scale_node_serialization():
     # NOTE: setting shape to be list because of json serialization
     # (serializing a tuple results in a list)
-    nodes.check_serialization(nodes.UpdateScaleNode(
-        "a", nodes.InputNode("a", shape=[3, 4, 5])))
+    tn.check_serialization(tn.UpdateScaleNode(
+        "a", tn.InputNode("a", shape=[3, 4, 5])))
+
+
+def test_weight_decay_node_serialization():
+    tn.check_serialization(tn.WeightDecayNode("a", tn.IdentityNode("b")))
 
 
 def test_update_scale_node():
 
     # testing constant updater
-    network = nodes.toy.ConstantUpdaterNode(
+    network = tn.toy.ConstantUpdaterNode(
         "cun",
-        nodes.SequentialNode("seq", [
-            nodes.InputNode("i", shape=(1, 2, 3)),
-            nodes.DenseNode("fc", num_units=5)
+        tn.SequentialNode("seq", [
+            tn.InputNode("i", shape=(1, 2, 3)),
+            tn.DenseNode("fc", num_units=5)
         ]),
         value=5,
     ).network()
@@ -28,13 +32,13 @@ def test_update_scale_node():
     assert ud[network["fc_linear"].get_variable("weight").variable] == 5
 
     # test update scale node
-    network = nodes.toy.ConstantUpdaterNode(
+    network = tn.toy.ConstantUpdaterNode(
         "cun",
-        nodes.SequentialNode("seq", [
-            nodes.InputNode("i", shape=(1, 2, 3)),
-            nodes.UpdateScaleNode(
+        tn.SequentialNode("seq", [
+            tn.InputNode("i", shape=(1, 2, 3)),
+            tn.UpdateScaleNode(
                 "usn",
-                nodes.DenseNode("fc", num_units=5),
+                tn.DenseNode("fc", num_units=5),
                 scale_factor=-2)
         ]),
         value=5,
@@ -44,12 +48,40 @@ def test_update_scale_node():
 
 
 def test_sgd_node():
-    nodes.test_utils.check_updates_node(nodes.SGDNode, learning_rate=0.01)
+    tn.test_utils.check_updates_node(tn.SGDNode, learning_rate=0.01)
 
 
 def test_adam_node():
-    nodes.test_utils.check_updates_node(nodes.AdamNode)
+    tn.test_utils.check_updates_node(tn.AdamNode)
 
 
 def test_nag_node():
-    nodes.test_utils.check_updates_node(nodes.NAGNode, learning_rate=0.01)
+    tn.test_utils.check_updates_node(tn.NAGNode, learning_rate=0.01)
+
+
+def test_weight_decay_node():
+    class WeightNode(treeano.NodeImpl):
+        input_keys = ()
+
+        def compute_output(self, network):
+            network.create_variable(
+                "default",
+                is_shared=True,
+                shape=(),
+                tags={"weight", "parameter"},
+                inits=[treeano.inits.ConstantInit(100.0)],
+            )
+
+    network = tn.WeightDecayNode(
+        "a",
+        WeightNode("b"),
+        weight_decay=0.5
+    ).network()
+    fn1 = network.function([], ["a"])
+    fn2 = network.function([], ["a"], include_updates=True)
+
+    np.testing.assert_equal(fn1(), [100.0])
+    np.testing.assert_equal(fn1(), [100.0])
+    np.testing.assert_equal(fn2(), [100.0])
+    np.testing.assert_equal(fn2(), [50.0])
+    np.testing.assert_equal(fn2(), [25.0])

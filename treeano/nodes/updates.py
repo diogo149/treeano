@@ -155,6 +155,7 @@ class NesterovMomentumNode(core.Wrapper1NodeImpl):
                 update_deltas[var] = delta + momentum * new_velocity
 
 
+# TODO make a real node
 def NAGNode(name, children, learning_rate=None, momentum=None):
     """
     Node for Nesterov's Accelerated Gradient Descent
@@ -175,6 +176,26 @@ def NAGNode(name, children, learning_rate=None, momentum=None):
     new_children = {"subtree": momentum_node,
                     "cost": cost}
     return SGDNode(name, new_children, **sgd_kwargs)
+
+# ############################### weight decay ###############################
+
+
+@core.register_node("weight_decay")
+class WeightDecayNode(core.Wrapper1NodeImpl):
+
+    """
+    equivalent to L2 loss on the weights
+    """
+
+    hyperparameter_names = ("l2_decay",
+                            "weight_decay")
+
+    def new_update_deltas(self, network):
+        decay = network.find_hyperparameter(["l2_decay",
+                                             "weight_decay"])
+        weight_vws = network.find_vws_in_subtree(tags=["weight"])
+        weights = [vw.variable for vw in weight_vws]
+        return core.UpdateDeltas({w: -decay * w for w in weights})
 
 # ################################### adam ###################################
 
