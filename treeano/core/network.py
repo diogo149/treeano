@@ -1,10 +1,12 @@
 import types
 
 import theano
+import theano.tensor as T
 
 from .graph import TreeanoGraph
 from .update_deltas import UpdateDeltas
 from .variable import VariableWrapper
+from .. import utils
 
 
 class MissingHyperparameter(Exception):
@@ -393,12 +395,12 @@ class RelativeNetwork(object):
         the main use case for this is for wrapper nodes which just pass
         their input as their output
         """
-        # creating a view of the variable
-        # rationale:
-        # 1. shared variables are seen as normal variables (so shared variables
-        #    aren't accidentaly owned by multiple nodes)
-        # 2. TODO each variable can be given its own name
-        variable = theano.compile.view_op(previous_variable.variable)
+        variable = previous_variable.variable
+        if utils.is_shared_variable(variable):
+            # creating a "copy"of the variable
+            # rationale: shared variables are seen as normal variables
+            # (so shared variables aren't accidentaly owned by multiple nodes)
+            variable = T.tensor_copy(variable)
         return self.create_variable(
             name,
             variable=variable,
