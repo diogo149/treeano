@@ -71,6 +71,35 @@ def test_load_value_dict():
     test()
 
 
+def test_load_value_dict_not_strict():
+    n1 = tn.SequentialNode(
+        "seq",
+        [tn.InputNode("i", shape=(10, 100)),
+         tn.LinearMappingNode(
+             "lm",
+             output_dim=15,
+             inits=[treeano.inits.NormalWeightInit()])]
+    ).network()
+    n2 = tn.InputNode("i", shape=()).network()
+
+    def test1(strict):
+        canopy.network_utils.load_value_dict(
+            n1,
+            canopy.network_utils.to_value_dict(n2),
+            strict=strict)
+
+    def test2(strict):
+        canopy.network_utils.load_value_dict(
+            n2,
+            canopy.network_utils.to_value_dict(n1),
+            strict=strict)
+
+    nt.raises(AssertionError)(test1)(strict=True)
+    nt.raises(AssertionError)(test2)(strict=True)
+    test1(strict=False)
+    test2(strict=False)
+
+
 def test_to_preallocated_init1():
     network1 = tn.SequentialNode(
         "seq",
