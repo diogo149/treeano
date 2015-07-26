@@ -71,7 +71,7 @@ def test_load_value_dict():
     test()
 
 
-def test_load_value_dict_not_strict():
+def test_load_value_dict_not_strict_keys():
     n1 = tn.SequentialNode(
         "seq",
         [tn.InputNode("i", shape=(10, 100)),
@@ -82,22 +82,22 @@ def test_load_value_dict_not_strict():
     ).network()
     n2 = tn.InputNode("i", shape=()).network()
 
-    def test1(strict):
+    def test1(strict_keys):
         canopy.network_utils.load_value_dict(
             n1,
             canopy.network_utils.to_value_dict(n2),
-            strict=strict)
+            strict_keys=strict_keys)
 
-    def test2(strict):
+    def test2(strict_keys):
         canopy.network_utils.load_value_dict(
             n2,
             canopy.network_utils.to_value_dict(n1),
-            strict=strict)
+            strict_keys=strict_keys)
 
-    nt.raises(AssertionError)(test1)(strict=True)
-    nt.raises(AssertionError)(test2)(strict=True)
-    test1(strict=False)
-    test2(strict=False)
+    nt.raises(AssertionError)(test1)(strict_keys=True)
+    nt.raises(AssertionError)(test2)(strict_keys=True)
+    test1(strict_keys=False)
+    test2(strict_keys=False)
 
 
 def test_to_preallocated_init1():

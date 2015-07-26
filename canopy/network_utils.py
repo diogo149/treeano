@@ -16,11 +16,14 @@ def to_value_dict(network):
     return {k: v.get_value() for k, v in shared_dict.items()}
 
 
-def load_value_dict(network, value_dict, strict=True):
+def load_value_dict(network,
+                    value_dict,
+                    strict_keys=True,
+                    ignore_different_shape=False):
     shared_dict = to_shared_dict(network)
     value_keys = set(value_dict.keys())
     network_keys = set(shared_dict.keys())
-    if strict:
+    if strict_keys:
         assert value_keys == network_keys
         keys = value_keys
     else:
@@ -29,7 +32,11 @@ def load_value_dict(network, value_dict, strict=True):
         shared = shared_dict[k]
         old_val = shared.get_value()
         new_val = value_dict[k]
-        assert old_val.shape == new_val.shape
+        if ignore_different_shape:
+            if old_val.shape != new_val.shape:
+                continue
+        else:
+            assert old_val.shape == new_val.shape
         shared.set_value(new_val)
 
 
