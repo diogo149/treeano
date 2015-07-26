@@ -32,9 +32,21 @@ def check_serialization(node):
         core.node_from_data(json.loads(json.dumps(core.node_to_data(node)))))
 
 
-def check_updates_node(updates_node_cls, **hyperparameters):
+def check_updates_node(updates_node_cls,
+                       activation="relu",
+                       **hyperparameters):
+    """
+    nonlinearity:
+    some nodes don't work with ReLU (eg. equilibrated sgd)
+    """
     import nose.tools as nt
     np.random.seed(42)
+
+    activation = dict(
+        relu=activations.ReLUNode,
+        sigmoid=activations.SigmoidNode,
+    )[activation]
+
     network = simple.HyperparameterNode(
         "g",
         updates_node_cls(
@@ -42,7 +54,7 @@ def check_updates_node(updates_node_cls, **hyperparameters):
             {"subtree": containers.SequentialNode("seq", [
                 simple.InputNode("input", shape=(3, 4, 5)),
                 composite.DenseNode("b"),
-                activations.ReLUNode("c")]),
+                activation("c")]),
              "cost": costs.TotalCostNode("cost", {
                  "pred": simple.ReferenceNode("pred_ref", reference="seq"),
                  "target": simple.InputNode("target", shape=(3, 14))})
