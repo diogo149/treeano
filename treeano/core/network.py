@@ -398,8 +398,11 @@ class RelativeNetwork(object):
         variable = previous_variable.variable
         if utils.is_shared_variable(variable):
             # creating a "copy"of the variable
+            # ---
             # rationale: shared variables are seen as normal variables
             # (so shared variables aren't accidentaly owned by multiple nodes)
+            # ---
+            # why tensor_copy? theano.compile.view_op doesn't support Rop
             variable = T.tensor_copy(variable)
         return self.create_variable(
             name,
