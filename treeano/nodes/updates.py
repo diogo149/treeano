@@ -78,7 +78,8 @@ class StandardUpdatesNode(six.with_metaclass(abc.ABCMeta,
             # ---
             # example use case: ANRAT - a cost function with parameters
             parameters_network = network
-        parameters = parameters_network.find_vws_in_subtree(tags=["parameter"])
+        parameter_vws = parameters_network.find_vws_in_subtree(
+            tags=["parameter"])
 
         # calculate cost
         cost = self._children["cost"].children
@@ -87,14 +88,14 @@ class StandardUpdatesNode(six.with_metaclass(abc.ABCMeta,
         # find gradients
         # ---
         # NOTE: gradient computation is factored out to enable future caching
-        parameter_variables = [p.variable for p in parameters]
+        parameter_variables = [p.variable for p in parameter_vws]
         grads = T.grad(cost_var, parameter_variables)
 
         # compute update deltas
-        return self._new_update_deltas(network, parameters, grads)
+        return self._new_update_deltas(network, parameter_vws, grads)
 
     @abc.abstractmethod
-    def _new_update_deltas(self, network, parameters, grads):
+    def _new_update_deltas(self, network, parameter_vws, grads):
         pass
 
 # ################################### sgd ###################################
@@ -110,13 +111,12 @@ class SGDNode(StandardUpdatesNode):
     hyperparameter_names = ("sgd_learning_rate",
                             "learning_rate")
 
-    def _new_update_deltas(self, network, parameters, grads):
+    def _new_update_deltas(self, network, parameter_vws, grads):
         learning_rate = network.find_hyperparameter(["sgd_learning_rate",
                                                      "learning_rate"])
-        parameter_variables = [p.variable for p in parameters]
-        return core.UpdateDeltas({param: -learning_rate * grad
-                                  for param, grad in zip(parameter_variables,
-                                                         grads)})
+        return core.UpdateDeltas({vw.variable: -learning_rate * grad
+                                  for vw, grad in zip(parameter_vws,
+                                                      grads)})
 
 
 # ############################ nesterov momentum ############################
@@ -179,75 +179,31 @@ def NAGNode(name, children, learning_rate=None, momentum=None):
 # ################################### adam ###################################
 
 
-def adam_v4(all_grads,
-            all_params,
-            learning_rate=0.001,
-            beta1=0.9,
-            beta2=0.999,
-            epsilon=1e-8,
-            lambda_=1 - 1e-8):
-    """
-    based on Adam update rule http://arxiv.org/abs/1412.6980
-    (v4 or v5, which is the same as v4)
-    """
-    updates = []
-
-    # alpha / stepsize / learning rate are all the same thing
-    # using alpha because that is what is used in the paper
-    alpha = learning_rate
-
-    t = theano.shared(np.array(0., dtype=theano.config.floatX))
-    t_next = t + 1
-    beta1_t = beta1 * lambda_ ** t
-
-    # compute some values only once
-    # unbias terms to take into account initializing with 0
-    m_unbias_term = 1 - beta1 ** t_next
-    v_unbias_term = T.sqrt(1 - beta2 ** t_next)
-    epsilon_hat = epsilon * v_unbias_term
-    alpha_t = alpha * v_unbias_term / m_unbias_term
-
-    for param, grad in zip(all_params, all_grads):
-        # 1st moment
-        mparam = theano.shared(np.zeros(param.get_value().shape,
-                                        dtype=theano.config.floatX))
-        # 2nd moment
-        vparam = theano.shared(np.zeros(param.get_value().shape,
-                                        dtype=theano.config.floatX))
-
-        # new value for 1st moment estimate
-        m = beta1_t * mparam + (1 - beta1_t) * grad
-        # new value for 2nd moment estimate
-        v = beta2 * vparam + (1 - beta2) * T.sqr(grad)
-
-        param_next = param - alpha_t * m / (T.sqrt(v) + epsilon_hat)
-
-        updates.append((mparam, m))
-        updates.append((vparam, v))
-        updates.append((param, param_next))
-
-    updates.append((t, t_next))
-    return updates
-
-
 @core.register_node("adam")
 class AdamNode(StandardUpdatesNode):
 
     """
     node that provides updates via Adam update rule
+    based on Adam update rule v7 (http://arxiv.org/abs/1412.6980)
     """
 
     hyperparameter_names = ("adam_learning_rate",
                             "adam_alpha",
                             "learning_rate",
                             "adam_beta1",
-                            "beta1")
+                            "beta1",
+                            "adam_beta2",
+                            "beta2",
+                            "adam_epsilon",
+                            "epsilon")
 
-    def _new_update_deltas(self, network, parameters, grads):
-        learning_rate = network.find_hyperparameter(["adam_learning_rate",
-                                                     "adam_alpha",
-                                                     "learning_rate"],
-                                                    0.001)
+    def _new_update_deltas(self, network, parameter_vws, grads):
+        # alpha / stepsize / learning rate are all the same thing
+        # using alpha because that is what is used in the paper
+        alpha = network.find_hyperparameter(["adam_learning_rate",
+                                             "adam_alpha",
+                                             "learning_rate"],
+                                            0.001)
         beta1 = network.find_hyperparameter(["adam_beta1",
                                              "beta1"],
                                             0.9)
@@ -257,16 +213,63 @@ class AdamNode(StandardUpdatesNode):
         epsilon = network.find_hyperparameter(["adam_epsilon",
                                                "epsilon"],
                                               1e-8)
-        lambda_ = network.find_hyperparameter(["adam_lambda",
-                                               "lambda_",
-                                               "lambda"],
-                                              1 - 1e-8)
-        parameter_variables = [p.variable for p in parameters]
-        updates = adam_v4(grads,
-                          parameter_variables,
-                          learning_rate=learning_rate,
-                          beta1=beta1,
-                          beta2=beta2,
-                          epsilon=epsilon,
-                          lambda_=lambda_)
-        return core.UpdateDeltas.from_updates(updates)
+        inits = list(toolz.concat(network.find_hyperparameters(
+            ["inits"],
+            [])))
+
+        update_deltas = core.UpdateDeltas()
+
+        # keep count state only once
+        t_vw = network.create_variable(
+            "adam_count",
+            shape=(),
+            is_shared=True,
+            tags={"state"},
+            inits=inits,
+        )
+        t = t_vw.variable
+        new_t = t + 1
+        update_deltas[t] = new_t - t
+
+        # compute some values only once
+        # unbias terms to take into account initializing with 0
+        m_unbias_term = 1 - beta1 ** new_t
+        v_unbias_term = T.sqrt(1 - beta2 ** new_t)
+        epsilon_hat = epsilon * v_unbias_term
+        alpha_t = alpha * v_unbias_term / m_unbias_term
+
+        for parameter_vw, grad in zip(parameter_vws, grads):
+            # 1st moment
+            # moving average of gradient
+            m_vw = network.create_variable(
+                "adam_m(%s)" % parameter_vw.name,
+                shape=parameter_vw.shape,
+                is_shared=True,
+                tags={"state"},
+                inits=inits,
+            )
+            # 2nd moment
+            # moving average of squared gradient
+            v_vw = network.create_variable(
+                "adam_v(%s)" % parameter_vw.name,
+                shape=parameter_vw.shape,
+                is_shared=True,
+                tags={"state"},
+                inits=inits,
+            )
+
+            m = m_vw.variable
+            v = v_vw.variable
+
+            # new value for 1st moment estimate
+            new_m = beta1 * m + (1 - beta1) * grad
+            # new value for 2nd moment estimate
+            new_v = beta2 * v + (1 - beta2) * T.sqr(grad)
+
+            parameter_delta = - alpha_t * new_m / (T.sqrt(new_v) + epsilon_hat)
+
+            update_deltas[m] = new_m - m
+            update_deltas[v] = new_v - v
+            update_deltas[parameter_vw.variable] = parameter_delta
+
+        return update_deltas

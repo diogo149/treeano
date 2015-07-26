@@ -1229,6 +1229,9 @@
 - figure out how to make recurrent node's not require batch size
   - would be cool to have symbolic shapes work
 ** misc
+- lazy way of storing new values instead of update deltas
+  - pros
+    - saves a few nodes in graph
 - percentile tests fail for floatX=float64
 - generalize / share code between stochastic:
   - dropout
