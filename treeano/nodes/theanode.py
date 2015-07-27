@@ -57,3 +57,29 @@ class ToOneHotNode(core.NodeImpl):
             shape=in_var.shape + (nb_class,),
             tags={"output"},
         )
+
+
+@core.register_node("reshape")
+class ReshapeNode(core.NodeImpl):
+
+    """
+    like theano.tensor.reshape
+    """
+
+    hyperparameter_names = ("newshape",
+                            "shape")
+
+    def compute_output(self, network, in_vw):
+        new_shape = network.find_hyperparameter(["newshape",
+                                                 "shape"])
+        old_shape = in_vw.shape
+        # TODO handle case when -1 is given
+        assert -1 not in new_shape
+        # TODO handle case when None is given
+        assert None not in new_shape
+        network.create_variable(
+            "default",
+            variable=T.reshape(in_vw.variable, new_shape),
+            shape=new_shape,
+            tags={"output"},
+        )

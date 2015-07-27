@@ -1225,6 +1225,7 @@
     - let x be variable batch size
     - let y be variable time size
     - can have some nodes have shape 3 * x
+  - can make them theano variables, and have a completely separate theano graph for batch sizes
 - figure out how to make recurrent node's not require batch size
   - would be cool to have symbolic shapes work
 ** misc

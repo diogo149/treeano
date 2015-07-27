@@ -17,6 +17,10 @@ def test_to_one_hot_node_serialization():
     tn.check_serialization(tn.ToOneHotNode("a"))
 
 
+def test_reshape_node_serialization():
+    tn.check_serialization(tn.ReshapeNode("a"))
+
+
 def test_tile_node():
     network = tn.SequentialNode(
         "n",
@@ -44,3 +48,16 @@ def test_to_one_hot_node():
                             x)
     nt.assert_equal((3, 8),
                     network["ohe"].get_variable("default").shape)
+
+
+def test_reshape_node():
+    network = tn.SequentialNode(
+        "s",
+        [tn.InputNode("in", shape=(3, 4, 5)),
+         tn.ReshapeNode("r", shape=(5, 12))]
+    ).network()
+    fn = network.function(["in"], ["s"])
+    x = np.random.randn(3, 4, 5).astype(fX)
+    res = fn(x)[0]
+    np.testing.assert_allclose(res,
+                               x.reshape(5, 12))
