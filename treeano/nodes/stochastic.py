@@ -45,8 +45,11 @@ class DropoutNode(core.NodeImpl):
                 mask_shape = in_vw.variable.shape
             # TODO save this state so that we can seed the rng
             srng = MRG_RandomStreams()
+            # set bernoulli probability to be inverse of dropout probability
+            # because 1 means to keep the unit
+            bernoulli_prob = 1 - p
             mask = rescale_factor * srng.binomial(mask_shape,
-                                                  p=p,
+                                                  p=bernoulli_prob,
                                                   dtype=floatX)
             network.create_variable(
                 "default",
@@ -146,8 +149,11 @@ class SpatialDropoutNode(core.NodeImpl):
             mask_shape = mask_shape[:2]
             # TODO save this state so that we can seed the rng
             srng = MRG_RandomStreams()
+            # set bernoulli probability to be inverse of dropout probability
+            # because 1 means to keep the unit
+            bernoulli_prob = 1 - p
             mask = rescale_factor * srng.binomial(mask_shape,
-                                                  p=p,
+                                                  p=bernoulli_prob,
                                                   dtype=floatX)
             mask = mask.dimshuffle(0, 1, 'x', 'x')
             network.create_variable(
