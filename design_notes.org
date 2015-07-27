@@ -1067,6 +1067,7 @@
       - maybe some smart filtering on each axis with summary stats
         - eg. min, 95% percentile, etc.
 ** v2
+- use new mean pooling operation: http://deeplearning.net/software/theano/library/tensor/signal/downsample.html
 - use joblib for serialization
   - rationale: much more efficient for numpy arrays
 - multistage training
@@ -1074,7 +1075,6 @@
     - unsupervised training
     - training the classification layer
     - fine tuning the whole thing
-- use new mean pooling operation: http://deeplearning.net/software/theano/library/tensor/signal/downsample.html
 - add deterministic flag
 - compare caffe inception time to theano inception time
 - handled_function hook for providing a timer callback
