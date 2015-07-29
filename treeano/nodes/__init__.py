@@ -10,6 +10,7 @@ import stochastic
 import scan
 import composite
 import recurrent
+import debug
 import toy
 import test_utils
 
@@ -69,5 +70,6 @@ from stochastic import (DropoutNode,
 from composite import (DenseNode,
                        DenseCombineNode,
                        AuxiliaryDenseSoftmaxCCENode)
+from debug import (PrintNode)
 
 from test_utils import check_serialization
