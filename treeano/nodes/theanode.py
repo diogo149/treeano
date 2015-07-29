@@ -77,9 +77,14 @@ class ReshapeNode(core.NodeImpl):
         assert -1 not in new_shape
         # TODO handle case when None is given
         assert None not in new_shape
+        # FIXME
+        # out_var = T.reshape(in_vw.variable,
+        #                     newshape=new_shape,
+        #                     ndim=len(new_shape))
+        out_var = in_vw.variable.reshape(new_shape)
         network.create_variable(
             "default",
-            variable=T.reshape(in_vw.variable, new_shape),
+            variable=out_var,
             shape=new_shape,
             tags={"output"},
         )

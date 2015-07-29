@@ -1229,6 +1229,8 @@
 - figure out how to make recurrent node's not require batch size
   - would be cool to have symbolic shapes work
 ** misc
+- simpler way of reshaping
+  - eg. I want to divide this dim by 2 and multiply this dim by 2
 - add way to filter parameters and only apply updates to a subset
   - use cases:
     - nesterov momentum
