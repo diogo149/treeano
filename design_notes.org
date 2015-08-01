@@ -1067,6 +1067,7 @@
       - maybe some smart filtering on each axis with summary stats
         - eg. min, 95% percentile, etc.
 ** v2
+- util for getting inits from network
 - use new mean pooling operation: http://deeplearning.net/software/theano/library/tensor/signal/downsample.html
 - use joblib for serialization
   - rationale: much more efficient for numpy arrays
