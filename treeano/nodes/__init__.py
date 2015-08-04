@@ -27,7 +27,8 @@ from simple import (ReferenceNode,
                     MultiplyConstantNode)
 from theanode import (TileNode,
                       ToOneHotNode,
-                      ReshapeNode)
+                      ReshapeNode,
+                      GradientReversalNode)
 from combine import (BaseChildrenCombineNode,
                      BaseInputCombineNode,
                      InputFunctionCombineNode,

@@ -21,6 +21,10 @@ def test_reshape_node_serialization():
     tn.check_serialization(tn.ReshapeNode("a"))
 
 
+def test_gradient_reversal_node_serialization():
+    tn.check_serialization(tn.GradientReversalNode("a"))
+
+
 def test_tile_node():
     network = tn.SequentialNode(
         "n",

@@ -6,6 +6,7 @@ import theano
 import theano.tensor as T
 
 from .. import core
+from .. import theano_extensions
 
 fX = theano.config.floatX
 
@@ -87,4 +88,21 @@ class ReshapeNode(core.NodeImpl):
             variable=out_var,
             shape=new_shape,
             tags={"output"},
+        )
+
+
+@core.register_node("gradient_reversal")
+class GradientReversalNode(core.NodeImpl):
+
+    """
+    like treeano.theano_extensions.gradient.gradient_reversal
+    """
+
+    def compute_output(self, network, in_vw):
+        out_var = theano_extensions.gradient.gradient_reversal(in_vw.variable)
+        network.create_variable(
+            "default",
+            variable=out_var,
+            shape=in_vw.shape,
+            tags={"output"}
         )
