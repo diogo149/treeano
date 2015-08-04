@@ -16,7 +16,7 @@ def test_gradient_reversal():
     s2 = ttg.gradient_reversal(s1)
     g2 = T.grad(s2, m)
     g1_res, g2_res, s1_res, s2_res = theano.function([m], [g1, g2, s1, s2])(v)
-    np.testing.assert_equal(v.sum(), s1_res)
+    np.testing.assert_allclose(v.sum(), s1_res)
     np.testing.assert_equal(s1_res, s2_res)
     np.testing.assert_equal(np.ones((3, 4), dtype=fX), g1_res)
     np.testing.assert_equal(g1_res, -g2_res)
