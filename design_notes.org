@@ -1049,24 +1049,17 @@
           - eg. you might want update statistics on valid set even if the update isn't performed
         - a manual flag
           - this would allow one to choose the right behaviour
-- how to know what to plot?
-  - solution: training dashboard
-    - D3 charts
-    - dropdown to select which are in the x and y axis
-    - sane defaults
-      - x = time, y = matching regex "cost"
-      - changing axes scale
-        - log/non-log
-        - clip (in case some losses are really high)
-        - add moving average
-        - maximum frequency of plotting
-      - multiple x and y?
-    - checkbox to "auto-refresh"
-      - this would involve re-reading a json file with all data
-    - ways of answering the question "what is the best $OBJECTIVE in < $TIME"
-      - maybe some smart filtering on each axis with summary stats
-        - eg. min, 95% percentile, etc.
-- possible option: http://mri.readthedocs.org/en/latest/
+- monitor features
+  - exluding values outside of boundaries
+  - choosing plot type
+    - box plot
+    - mean
+    - raw data
+  - clipping min/max value for x/y axis
+  - ability to save settings to localstorage
+  - ways of answering the question "what is the best $OBJECTIVE in < $TIME"
+    - maybe some smart filtering on each axis with summary stats
+      - eg. min, 95% percentile, etc.
 ** v2
 - util for getting inits from network
 - use new mean pooling operation: http://deeplearning.net/software/theano/library/tensor/signal/downsample.html

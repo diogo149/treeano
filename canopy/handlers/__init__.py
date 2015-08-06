@@ -14,5 +14,6 @@ from nodes import (with_hyperparameters,
 from batch import (chunk_variables,
                    batch_pad)
 from monitor import (time_call,
-                     time_per_row)
+                     time_per_row,
+                     evaluate_monitoring_variables)
 from misc import callback_with_input

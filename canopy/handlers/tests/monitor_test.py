@@ -44,3 +44,33 @@ def test_time_per_row2():
         {"x": "i"},
         {"out": "i"})
     fn({"x": 0})
+
+
+def test_evaluate_monitoring_variables():
+
+    class FooNode(treeano.NodeImpl):
+
+        def compute_output(self, network, in_vw):
+            network.create_variable(
+                "default",
+                variable=42 * in_vw.variable.sum(),
+                shape=(),
+                tags={"monitor"}
+            )
+
+    network = tn.SequentialNode(
+        "s",
+        [tn.InputNode("i", shape=(3, 4, 5)),
+         FooNode("f")]
+    ).network()
+    x = np.random.randn(3, 4, 5).astype(fX)
+    fn = canopy.handlers.handled_fn(
+        network,
+        [canopy.handlers.evaluate_monitoring_variables("train_%s")],
+        {"x": "i"},
+        {})
+    res = fn({"x": x})
+    ans_key = "train_f:default"
+    assert ans_key in res
+    np.testing.assert_allclose(res[ans_key],
+                               42 * x.sum())
