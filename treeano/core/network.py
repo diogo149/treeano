@@ -119,11 +119,13 @@ class Network(object):
             node.mutate_update_deltas(self.relative_network(node),
                                       self.update_deltas)
 
-    def relative_network(self, node):
+    def relative_network(self, node=None):
         """
         returns a network relative to a single node
         """
         self.build()
+        if node is None:
+            node = self.root_node
         return RelativeNetwork(self, node)
 
     def __getitem__(self, node_name):
