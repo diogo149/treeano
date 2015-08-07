@@ -1224,6 +1224,29 @@
 - figure out how to make recurrent node's not require batch size
   - would be cool to have symbolic shapes work
 ** misc
+- ipython notebook template with common actions
+  - eg.
+    - visualization
+      - error analysis
+- don't use __call__ for handlers
+  - some kinds of handlers don't need state
+  - for more modularity, we should separate out the kinds of handlers:
+    - eg.
+      - pre-call handlers
+        - manipulating input
+      - post-call handlers
+        - manipulating output
+        - eg.
+          - saving monitoring data
+      - no-network-state pre+post
+        - eg.
+          - timing
+  - then the other handlers can overwrite __call__ in the most appropriate way
+    - eg.
+      - pre-call handlers are just functions on input kwargs
+      - post-call handlers are just functions on result
+      - no-network-state pre+post can be a context manager
+        - eg. ~with time_call(...)~ or as a handler
 - simpler way of reshaping
   - eg. I want to divide this dim by 2 and multiply this dim by 2
 - add way to filter parameters and only apply updates to a subset
