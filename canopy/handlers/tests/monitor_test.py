@@ -66,7 +66,7 @@ def test_evaluate_monitoring_variables():
     x = np.random.randn(3, 4, 5).astype(fX)
     fn = canopy.handlers.handled_fn(
         network,
-        [canopy.handlers.evaluate_monitoring_variables("train_%s")],
+        [canopy.handlers.evaluate_monitoring_variables(fmt="train_%s")],
         {"x": "i"},
         {})
     res = fn({"x": x})
