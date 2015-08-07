@@ -8,47 +8,70 @@ var EPSILON = 1e-6;
 
 var defaultSettings = [
   {
-    id: "chart-1",
+    title: "foo",
+    onlyRelevantTooltipKeys: true,
     rollingMeanWindow: 1,
+    numXTicks: 11,
+    numYTicks: 11,
+    scales: {
+      idx: {
+        keys: ["_idx"],
+        lower: "min",
+        upper: "max",
+        scale: "linear"
+      },
+      cost: {
+        keys: ["valid_cost"],
+        lower: "min",
+        upper: "max",
+        scale: "log"
+      }
+    },
     x: {
-      numTicks: 11,
       key: "_idx",
-      lower: "min",
-      upper: "max",
-      scale: "linear"
+      scale: "idx"
     },
-    y: {
-      numTicks: 11,
-      key: "valid_cost",
-      scale: "log",
-      lower: "min",
-      upper: "max",
-      color: "category10"
-    },
-    otherYs: [
+    ys: [
+      {
+        key: "valid_cost",
+        scale: "cost",
+        color: "category10"
+      }
     ]
   },
   {
-    id: "chart-2",
+    title: "bar",
+    onlyRelevantTooltipKeys: true,
     rollingMeanWindow: 1,
+    numXTicks: 11,
+    numYTicks: 11,
+    scales: {
+      idx: {
+        keys: ["_idx"],
+        lower: "min",
+        upper: "max",
+        scale: "linear"
+      },
+      cost: {
+        keys: ["train_cost", "valid_cost"],
+        scale: "linear",
+        lower: "min",
+        upper: "max"
+      }
+    },
     x: {
-      numTicks: 11,
       key: "_idx",
-      lower: "min",
-      upper: "max",
-      scale: "linear"
+      scale: "idx"
     },
-    y: {
-      numTicks: 11,
-      key: "train_cost",
-      scale: "linear",
-      lower: "min",
-      upper: "max",
-      color: "category10"
-    },
-    otherYs: [
+    ys: [
       {
         key: "valid_cost",
+        scale: "cost",
+        color: "category10"
+      },
+      {
+        key: "train_cost",
+        scale: "cost",
         color: "category10"
       }
     ]
@@ -120,54 +143,62 @@ function loadMonitorData(callback) {
   );
 }
 
-function makeScale(scaleData) {
-  var lower;
-  var upper;
+function makeScaleFn(scaleData) {
+  return function(range) {
+    var lower;
+    var upper;
 
-  var vals = _.pluck(monitorData, scaleData.key);
+    var vals = _(monitorData)
+          .map(function(d) {
+            return _.map(scaleData.keys, function(k) { return d[k]; });
+          })
+          .flatten()
+          .filter(_.isNumber)
+          .value();
 
-  // TODO add option for percentiles
-  switch (scaleData.lower) {
-  case "min":
-    lower = _.min(vals);
-    break;
-  default:
-    if (_.isNumber(scaleData.lower)) {
-      lower = scaleData.lower;
-    } else {
-      throw "Incorrect lower bound: " + scaleData.lower;
+    // TODO add option for percentiles
+    switch (scaleData.lower) {
+    case "min":
+      lower = _.min(vals);
+      break;
+    default:
+      if (_.isNumber(scaleData.lower)) {
+        lower = scaleData.lower;
+      } else {
+        throw "Incorrect lower bound: " + scaleData.lower;
+      }
     }
-  }
 
-  switch (scaleData.upper) {
-  case "max":
-    upper = _.max(vals);
-    break;
-  default:
-    if (_.isNumber(scaleData.upper)) {
-      upper = scaleData.upper;
-    } else {
-      throw "Incorrect upper bound: " + scaleData.upper;
+    switch (scaleData.upper) {
+    case "max":
+      upper = _.max(vals);
+      break;
+    default:
+      if (_.isNumber(scaleData.upper)) {
+        upper = scaleData.upper;
+      } else {
+        throw "Incorrect upper bound: " + scaleData.upper;
+      }
     }
-  }
 
-  var baseScale;
-  switch (scaleData.scale) {
-  case "linear":
-    baseScale = d3.scale.linear();
-    break;
-  case "log":
-    baseScale = d3.scale.log();
-    if (lower === 0) {
-      // need to clamp to not compute very negative values
-      lower += EPSILON;
-      baseScale.clamp(true);
+    var baseScale;
+    switch (scaleData.scale) {
+    case "linear":
+      baseScale = d3.scale.linear();
+      break;
+    case "log":
+      baseScale = d3.scale.log();
+      if (lower === 0) {
+        // need to clamp to not compute very negative values
+        lower += EPSILON;
+        baseScale.clamp(true);
+      }
+      break;
+    default:
+      throw "Incorrect scale: " + scaleData.scale;
     }
-    break;
-  default:
-    throw "Incorrect scale: " + scaleData.scale;
-  }
-  return baseScale.domain([lower, upper]);
+    return baseScale.domain([lower, upper]).range(range);
+  };
 }
 
 function createChartView() {
@@ -178,12 +209,15 @@ function createChartView() {
   var $tabsList = $("<ul/>");
   $tabs.append($tabsList);
 
-  _.forEach(settings, function(chartData) {
+  _.forEach(settings, function(chartData, chartIdx) {
+    var chartId = "chart-" + chartIdx;
     $tabsList.append(
-      $("<li><a href=\"#$ID\">$ID</a></li>".replace(/\$ID/g, chartData.id))
+      $("<li><a href=\"#$ID\">$TITLE</a></li>"
+        .replace(/\$ID/g, chartId)
+        .replace(/\$TITLE/g, chartData.title))
     );
     var $tab = $("<div/>");
-    $tab.attr("id", chartData.id);
+    $tab.attr("id", chartId);
     var $chart = $("<div/>");
     $tabs.append($tab);
     $tab.append($chart);
@@ -206,19 +240,23 @@ function createChartView() {
           width = 600 - margin.left - margin.right,
           height = 400 - margin.top - margin.bottom;
 
-      var x = makeScale(chartData.x).range([0, width]);
-      var y = makeScale(chartData.y).range([height, 0]);
+      var xRange = [0, width];
+      var yRange = [height, 0];
+      var scales = _.mapValues(chartData.scales, makeScaleFn);
+      var x = scales[chartData.x.scale](xRange);
+      // use first y value as axis
+      var y = scales[chartData.ys[0].scale](yRange);
 
       var xAxis = d3.svg.axis()
             .scale(x)
             .orient("bottom")
-            .ticks(chartData.x.numTicks)
+            .ticks(chartData.numXTicks)
             .tickSize(-height);
 
       var yAxis = d3.svg.axis()
             .scale(y)
             .orient("left")
-            .ticks(chartData.y.numTicks)
+            .ticks(chartData.numYTicks)
             .tickSize(-width);
 
       // TODO add axis labels
@@ -256,11 +294,11 @@ function createChartView() {
       var legendData = [];
 
       var category10ColorScale = d3.scale.category10();
-      var yMaps = [chartData.y].concat(chartData.otherYs);
-      _.forEach(yMaps, function(yMap, yIdx) {
-        var yVis = vis.append("g");
+      _.forEach(chartData.ys, function(yMap, yIdx) {
         // TODO have each y have it's own window
         var rollingMeanWindow = chartData.rollingMeanWindow;
+        var yScale = scales[yMap.scale](yRange);
+        var yVis = vis.append("g");
 
         var color;
         switch (yMap.color) {
@@ -273,7 +311,7 @@ function createChartView() {
         default:
           color = yMap.color;
         }
-        var dataToY = function(d) { return y(d[yMap.key]); };
+        var dataToY = function(d) { return yScale(d[yMap.key]); };
         var ySelectors = [];
         ySelectors.push(yVis.append("svg:path")
                         .attr("class", "line")
@@ -338,8 +376,20 @@ function createChartView() {
         var translateX = focusX + margin.left;
         var translateY = focusY + margin.right;
         $tooltip.css("transform", "translate(" + translateX + "px," + translateY + "px)");
-        // TODO show only relevant keys
-        var newText = JSON.stringify(focusData, undefined, 1);
+
+        // optionally show only the relevant keys for the tooltip
+        var jsonData;
+        if (chartData.onlyRelevantTooltipKeys) {
+          jsonData = {};
+          var relevantTooltipKeys = _.pluck(chartData.ys, "key").concat([chartData.x.key]);
+          _.forEach(relevantTooltipKeys, function(k) {
+            jsonData[k] = focusData[k];
+          });
+        } else {
+          jsonData = focusData;
+        }
+
+        var newText = JSON.stringify(jsonData, undefined, 1);
         if ($tooltip.text() !== newText) {
           $tooltip.text(newText);
         }
@@ -436,11 +486,6 @@ function createEditView() {
                    .css("display", "block")
                    .click(function() {
                      settings = JSON.parse(textarea.val());
-
-                     // validation
-                     if (_.uniq(_.pluck(settings, "id")).length !== settings.length) {
-                       throw "All id's must be unique";
-                     }
 
                      // TODO save in local storage (or something like that)
                      createChartView();
