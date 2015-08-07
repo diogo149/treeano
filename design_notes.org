@@ -1050,15 +1050,15 @@
     - remove nodeapi/nodeimpl distinction
 ** monitoring
 - monitor features
-  - having each y have it's own scale
-    - optional - since we don't want y's with the same units to have different scales
   - ability to save settings to localstorage
   - exluding values outside of boundaries
   - choosing plot type
     - box plot
     - mean
     - raw data
-  - clipping min/max value for x/y axis
+  - smarter min/max values
+    - eg. 95-th percentile
+  - rolling median?
   - ways of answering the question "what is the best $OBJECTIVE in < $TIME"
     - maybe some smart filtering on each axis with summary stats
       - eg. min, 95% percentile, etc.
