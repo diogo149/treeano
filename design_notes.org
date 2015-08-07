@@ -1048,20 +1048,6 @@
     - explicitly add additional data that shows how to read that data
     - same thing w/ names + hyperparameters
     - remove nodeapi/nodeimpl distinction
-** monitoring
-- monitor features
-  - ability to save settings to localstorage
-  - exluding values outside of boundaries
-  - choosing plot type
-    - box plot
-    - mean
-    - raw data
-  - smarter min/max values
-    - eg. 95-th percentile
-  - rolling median?
-  - ways of answering the question "what is the best $OBJECTIVE in < $TIME"
-    - maybe some smart filtering on each axis with summary stats
-      - eg. min, 95% percentile, etc.
 ** v2
 - util for getting inits from network
 - use new mean pooling operation: http://deeplearning.net/software/theano/library/tensor/signal/downsample.html
@@ -1508,6 +1494,19 @@
   - https://github.com/rakeshvar/rnn_ctc/blob/master/ctc.py
   - https://github.com/shawntan/rnn-experiment/blob/master/CTC.ipynb
 ** canopy
+- monitor features
+  - ability to save settings to localstorage
+  - exluding values outside of boundaries
+  - choosing plot type
+    - box plot
+    - mean
+    - raw data
+  - smarter min/max values
+    - eg. 95-th percentile
+  - rolling median?
+  - ways of answering the question "what is the best $OBJECTIVE in < $TIME"
+    - maybe some smart filtering on each axis with summary stats
+      - eg. min, 95% percentile, etc.
 - workflows / hooks
   - training
   - distillation
