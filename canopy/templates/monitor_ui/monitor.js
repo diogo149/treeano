@@ -304,9 +304,8 @@ function createChartView() {
         });
       });
 
-      var focus = vis.append("g")
-          .attr("class", "focus")
-          .style("display", "none");
+      var $tooltip = $("<pre/>").css("position", "absolute");
+      $chart.prepend($tooltip);
 
       var focusLine = vis.append("line")
             .attr("y1", y.range()[0])
@@ -316,23 +315,39 @@ function createChartView() {
             .style("opacity", 0.5)
             .style("fill", "none");
 
-      focus.append("text")
-        .attr("x", 9)
-        .attr("dy", ".35em");
-
-
       vis.append("rect")
         .attr("class", "overlay")
         .attr("fill", "none")
         .attr("pointer-events", "all")
           .attr("width", width)
-          .attr("height", height)
-          .on("mouseover", function() { focus.style("display", null); })
-          .on("mouseout", function() { focus.style("display", "none"); })
-          .on("mousemove", mousemove);
+        .attr("height", height)
+        .on("mousemove", mousemove);
 
-      function mousemove() {
-        var mouseX = d3.mouse(this)[0],
+      var focusX, focusY, focusData;
+
+      var updateFocus = function() {
+        // update line
+        focusLine.attr("x1", focusX).attr("x2", focusX);
+
+        // update tooltip
+        var chartPos = $chart.position();
+        // take margin into account because this is raw html
+        var translateX = focusX + margin.left;
+        var translateY = focusY + margin.right;
+        $tooltip.css("transform", "translate(" + translateX + "px," + translateY + "px)");
+        // TODO show only relevant keys
+        var newText = JSON.stringify(focusData, undefined, 1);
+        if ($tooltip.text() !== newText) {
+          $tooltip.text(newText);
+        }
+      };
+
+      var updateFocusThrottled = _.throttle(updateFocus, 100);
+
+      function mousemove(event) {
+        var mouse = d3.mouse(this),
+            mouseX = mouse[0],
+            mouseY = mouse[1],
             x0 = x.invert(mouseX),
             bisector = d3.bisector(function(d) { return d[chartData.x.key]; }).left,
             // set minimum of 1
@@ -340,22 +355,17 @@ function createChartView() {
             d0 = monitorData[i - 1],
             d1 = monitorData[i];
         // figure out which of the 2 surrounding points is closer
-        var d;
         if (Math.abs(dataToX(d0) - mouseX) > Math.abs(dataToX(d1) - mouseX)) {
-          d = d1;
+          focusData = d1;
         } else {
-          d = d0;
+          focusData = d0;
         }
-
         // put focus on x location aligned with samples
-        var focus_x = x(d._idx);
+        focusX = x(focusData._idx);
         // put focus on y at location of mouse
-        var focus_y = d3.mouse(this)[1];
+        focusY = d3.mouse(this)[1];
 
-        focus.attr("transform", "translate(" + focus_x + "," + focus_y + ")");
-        focusLine.attr("x1", focus_x).attr("x2", focus_x);
-        // TODO show only relevant keys
-        focus.select("text").text(JSON.stringify(d));
+        updateFocusThrottled();
       }
 
       // legend
