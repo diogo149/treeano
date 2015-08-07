@@ -132,7 +132,7 @@ function makeScale(scaleData) {
     lower = _.min(vals);
     break;
   default:
-    if (_.isNumber(scaleData.upper)) {
+    if (_.isNumber(scaleData.lower)) {
       lower = scaleData.lower;
     } else {
       throw "Incorrect lower bound: " + scaleData.lower;
@@ -216,10 +216,12 @@ function createChartView() {
             .tickSize(-height);
 
       var yAxis = d3.svg.axis()
-          .scale(y)
-          .orient("left")
-          .ticks(chartData.y.numTicks)
-          .tickSize(-width);
+            .scale(y)
+            .orient("left")
+            .ticks(chartData.y.numTicks)
+            .tickSize(-width);
+
+      // TODO add axis labels
 
       var vis = d3.select($chart[0])
         .selectAll("svg")
@@ -257,6 +259,7 @@ function createChartView() {
       var yMaps = [chartData.y].concat(chartData.otherYs);
       _.forEach(yMaps, function(yMap, yIdx) {
         var yVis = vis.append("g");
+        // TODO have each y have it's own window
         var rollingMeanWindow = chartData.rollingMeanWindow;
 
         var color;
