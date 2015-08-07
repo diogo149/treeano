@@ -842,6 +842,73 @@
   - conclusion:
     - should keep handlers simple and not do this
     - if handlers should share state, the same handler can be used for multiple functions
+- how to properly handle monitoring?
+  - how to do learning curves?
+    - callback every iteration
+      - this way it behaves like live plotting
+  - how to handle monitoring?
+    - what controls monitoring?
+      - alternatives:
+        1. simple handler, nodes control monitoring
+           - nodes have flags to create monitor variables
+           - handler queries graph for all monitor variables
+             - does something with them
+               - eg.
+                 - prints them
+                 - makes a plot
+           - pros
+             - same interface / implementation to parameterize node as to control monitoring
+        2. simple nodes, handler controls monitoring
+           - handler is either given a node or a query (eg. all dense nodes) for variables to monitor
+        3. some combination of both?
+      - conclusion: nodes control monitoring
+    - should there be a common switch for all nodes to enable/disable monitoring
+      - alternatives
+        - no switch
+          - cons
+            - lack of consistent interface to disable monitoring
+            - can't disable monitoring for a heterogeneous subtree
+        - as part of framework
+          - pros
+            - hardest to screw up
+          - cons
+            - additional assumptions in framework
+        - by convention
+          - pros
+            - gets benefit of having switch without having to build it into framework
+          - cons
+            - less DRY since logic needs to be everywhere
+      - pros
+        - consistency
+    - how do you monitor scalars?
+      - should we add an assertion for monitor variables to have shape ()
+      - printing?
+      - plotting over time?
+        - w/ matplotlib
+        - w/ text gnuplot
+      - need to add it to theano function outputs
+        - to perform GPU transfer efficiently
+        - thus need a handler
+          - how much complexity in the handler?
+      - can costs be a monitored variable as well?
+    - how do you monitor tensors?
+      - might want to make a gif of an image?
+      - otherwise might instead just summarize to a scalar
+      - this might warrant it's own handler to save a bunch of tensors to a directory
+    - how do you combine train and valid monitoring?
+      - possible solution:
+        - have monitoring handler take in a prefix / format string
+        - all monitor names are formatted according to that string
+    - how do you create variables for updates and not compute them when not updating?
+      - ie. how do you make sure update-specific monitoring variables aren't unnecessarily computed
+      - alternatives:
+        - some smart built-in thing
+          - eg. a variable wrapper tag
+          - automatically determines which monitored variables should be used
+        - ignoring the problem
+          - eg. you might want update statistics on valid set even if the update isn't performed
+        - a manual flag
+          - this would allow one to choose the right behaviour
 * assumptions
 - shared variables (eg. parameter tensors) will have a fixed size
 - nodes are in a directed acyclic graph
@@ -982,73 +1049,6 @@
     - same thing w/ names + hyperparameters
     - remove nodeapi/nodeimpl distinction
 ** monitoring
-- how to properly handle monitoring?
-  - how to do learning curves?
-    - callback every iteration
-      - this way it behaves like live plotting
-  - how to handle monitoring?
-    - what controls monitoring?
-      - alternatives:
-        1. simple handler, nodes control monitoring
-           - nodes have flags to create monitor variables
-           - handler queries graph for all monitor variables
-             - does something with them
-               - eg.
-                 - prints them
-                 - makes a plot
-           - pros
-             - same interface / implementation to parameterize node as to control monitoring
-        2. simple nodes, handler controls monitoring
-           - handler is either given a node or a query (eg. all dense nodes) for variables to monitor
-        3. some combination of both?
-      - conclusion: nodes control monitoring
-    - should there be a common switch for all nodes to enable/disable monitoring
-      - alternatives
-        - no switch
-          - cons
-            - lack of consistent interface to disable monitoring
-            - can't disable monitoring for a heterogeneous subtree
-        - as part of framework
-          - pros
-            - hardest to screw up
-          - cons
-            - additional assumptions in framework
-        - by convention
-          - pros
-            - gets benefit of having switch without having to build it into framework
-          - cons
-            - less DRY since logic needs to be everywhere
-      - pros
-        - consistency
-    - how do you monitor scalars?
-      - should we add an assertion for monitor variables to have shape ()
-      - printing?
-      - plotting over time?
-        - w/ matplotlib
-        - w/ text gnuplot
-      - need to add it to theano function outputs
-        - to perform GPU transfer efficiently
-        - thus need a handler
-          - how much complexity in the handler?
-      - can costs be a monitored variable as well?
-    - how do you monitor tensors?
-      - might want to make a gif of an image?
-      - otherwise might instead just summarize to a scalar
-      - this might warrant it's own handler to save a bunch of tensors to a directory
-    - how do you combine train and valid monitoring?
-      - possible solution:
-        - have monitoring handler take in a prefix / format string
-        - all monitor names are formatted according to that string
-    - how do you create variables for updates and not compute them when not updating?
-      - ie. how do you make sure update-specific monitoring variables aren't unnecessarily computed
-      - alternatives:
-        - some smart built-in thing
-          - eg. a variable wrapper tag
-          - automatically determines which monitored variables should be used
-        - ignoring the problem
-          - eg. you might want update statistics on valid set even if the update isn't performed
-        - a manual flag
-          - this would allow one to choose the right behaviour
 - monitor features
   - having each y have it's own scale
   - exluding values outside of boundaries

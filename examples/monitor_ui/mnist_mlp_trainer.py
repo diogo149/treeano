@@ -23,6 +23,13 @@ X = mnist['data'].astype(fX) / 255.0
 y = mnist['target'].astype("int32")
 X_train, X_valid, y_train, y_valid = sklearn.cross_validation.train_test_split(
     X, y, random_state=42)
+
+# NOTE: limit to small training set for faster epochs
+X_train = X_train[:500]
+X_valid = X_valid[:500]
+y_train = y_train[:500]
+y_valid = y_valid[:500]
+
 in_train = {"x": X_train, "y": y_train}
 in_valid = {"x": X_valid, "y": y_valid}
 
@@ -116,5 +123,5 @@ result_writer = canopy.sandbox.monitor_ui.ResultWriter(dirname="monitor",
 print("Starting training...")
 canopy.evaluate_until(fn=train_fn,
                       gen=itertools.repeat(in_train),
-                      max_iters=25,
+                      max_iters=1000,
                       callback=result_writer.write)
