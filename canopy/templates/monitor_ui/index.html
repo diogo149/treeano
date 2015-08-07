@@ -1,0 +1,30 @@
+<html>
+  <head>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.10.1/lodash.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.css">
+    <style type="text/css">
+    svg {
+	font: 10px sans-serif;
+	shape-rendering: crispEdges;
+    }
+
+    /*     draw axis lines in white */
+    .axis path,
+    .axis line {
+	fill: none;
+	stroke: #fff;
+    }
+    </style>
+  </head>
+  <body>
+    <button onclick="createChartView()">Chart View</button>
+    <button onclick="createEditView()">Edit View</button>
+    <button onclick="createDataView()">Data View</button>
+    <hr>
+    <div id="main-view"></div>
+    <script type="text/javascript" src="monitor.js"></script>
+  </body>
+</html>

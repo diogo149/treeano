@@ -1050,6 +1050,7 @@
         - a manual flag
           - this would allow one to choose the right behaviour
 - monitor features
+  - having each y have it's own scale
   - exluding values outside of boundaries
   - choosing plot type
     - box plot
