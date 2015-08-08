@@ -26,7 +26,8 @@ class PercentileOp(theano.Op):
     def make_node(self, a, q):
         # cast q to theano variable
         if isinstance(q, (int, float)):
-            q = theano.gof.Constant(T.fscalar, q)
+            scalar_type = T.scalar().type
+            q = T.Constant(scalar_type, q)
 
         # set to all axes if none specified
         if self.axis is None:
