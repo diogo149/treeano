@@ -14,6 +14,7 @@ def as_fX(x):
         return np.array(x, dtype=fX)
     elif isinstance(x, np.ndarray):
         if x.dtype == np_fX:
+            # don't make a copy if not necessary
             return x
         else:
             return x.astype(fX)
