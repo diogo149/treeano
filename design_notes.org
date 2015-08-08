@@ -1049,6 +1049,20 @@
     - same thing w/ names + hyperparameters
     - remove nodeapi/nodeimpl distinction
 ** v2
+- graph containers
+  - containers.GraphNode
+    - takes in networkx graph
+      - need metadata of which nodes to send input to
+      - need metadata of which nodes to take output from
+  - containers.EdgeListNode
+    - can be very useful for defining recurrent architectures
+    - given:
+      - unordered list of nodes
+      - edges
+        - mostly pairs
+        - must have way of including to_key and from_key
+        - incoming edges from nodes not in graph are reference nodes
+        - outgoing edges from nodes not in graph are send to nodes
 - parameterize weight matrices
   - use cases:
     - weight sharing (transpose)
@@ -1679,6 +1693,9 @@
     - use MNIST, scan one vector at a time
       - https://github.com/IndicoDataSolutions/Passage/blob/master/examples/mnist.py
 - how to save state part-way through training
+- workflow for batch norm test time stats
+  - ie. compute layer-wise with fixed weights
+    - need to do it on a topological sort of the DAG
 - seems like a very reasonable assumption that training might involve arbitrary python code execution
   - eg. with deep q learning, might have to simulate a game
 - live plotting/monitoring
