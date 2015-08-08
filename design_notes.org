@@ -1049,6 +1049,17 @@
     - same thing w/ names + hyperparameters
     - remove nodeapi/nodeimpl distinction
 ** v2
+- parameterize weight matrices
+  - use cases:
+    - weight sharing (transpose)
+    - making weights a function of the input
+    - drop connect
+    - bayes by backprop
+  - issue:
+    - how to specify shape / initialization if weights are external
+  - could maybe have a "WeightNode"
+    - it could have input axes and output axes
+      - for both monitoring and initalization
 - util for getting inits from network
 - use new mean pooling operation: http://deeplearning.net/software/theano/library/tensor/signal/downsample.html
 - use joblib for serialization
@@ -1266,7 +1277,6 @@
       - shared variables are not named
         - can name them
         - ie. wrapper function: network.rng.binomial(name="blah", ...)
-- parameterize weight layers out of linear mapping / bias
 - more information when querying
   - will allow for more advanced filtering in the future
   - eg.
@@ -1496,6 +1506,8 @@
 ** canopy
 - monitor features
   - ability to save settings to localstorage
+  - ability to specify ys with a regex for keys
+    - rationale: to have charts with all of a certain family
   - exluding values outside of boundaries
   - choosing plot type
     - box plot
@@ -1507,6 +1519,30 @@
   - ways of answering the question "what is the best $OBJECTIVE in < $TIME"
     - maybe some smart filtering on each axis with summary stats
       - eg. min, 95% percentile, etc.
+- do we want canopy to be able to control ordering of the data?
+  - this would allow certain patterns
+    - eg.
+      - manipulating class balance
+      - annealing class ratio / weight
+      - changing sampling weight
+        - eg. AW-SGD
+      - storing metadata about each datapoint
+        - eg.
+          - for resampling
+          - for curriculum learning
+          - for storing gradient information
+            - eg. SFO
+  - this would also allow canopy to make data point sampling controllable by handlers
+    - eg. if thawing an old model, can also thaw the state of the data
+  - issues
+    - evaluating all of the data can be expensive (eg. preprocessing images), impossible (eg. infinite dataset), or undesirable to store in RAM (eg. images)
+  - alternatives
+    - split the dataset generation process into 2 parts?
+      - eg. generate metadata, generate data from metadata
+    - allow the workflow to take in data (like normal), create an object as the data that lazy evaluates the necessary fields
+      - eg. LazyImage["image"] calls a function to create the image
+    - abstraction over data that allows manipulation
+      - eg. DatasetContainer.sample(weights=weights)
 - workflows / hooks
   - training
   - distillation
