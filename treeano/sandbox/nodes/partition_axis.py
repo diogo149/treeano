@@ -1,6 +1,4 @@
 """
-TODO tests
-
 NOTE: concatenation seems very slow
 """
 
@@ -54,7 +52,8 @@ class PartitionAxisNode(treeano.NodeImpl):
 
 
 def MultiPool2DNode(name, **kwargs):
-    # FIXME make a node that verifies hyperparameters
+    # TODO tests
+    # TODO make a node that verifies hyperparameters
     return tn.HyperparameterNode(
         name,
         tn.ConcatenateNode(
