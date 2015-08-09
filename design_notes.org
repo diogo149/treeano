@@ -1080,6 +1080,13 @@
   - could maybe have a "WeightNode"
     - it could have input axes and output axes
       - for both monitoring and initalization
+  - need to separate computation of initial state of a weight from using the weight
+    - eg.
+      - separate weight usage into 2 parts
+        - preparing metadata for the weight
+          - shape, dtype
+        - using weight
+          - actual logic
 - util for getting inits from network
 - use new mean pooling operation: http://deeplearning.net/software/theano/library/tensor/signal/downsample.html
 - use joblib for serialization
@@ -1531,6 +1538,7 @@
   - https://github.com/shawntan/rnn-experiment/blob/master/CTC.ipynb
   - https://github.com/skaae/Lasagne-CTC
     - lasagne implementation
+    - seems to be untested-ish
     - based on: https://github.com/mohammadpz/CTC-Connectionist-Temporal-Classification
 ** canopy
 - monitor features
