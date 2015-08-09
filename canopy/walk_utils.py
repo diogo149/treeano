@@ -32,12 +32,19 @@ def _identity(e):
 def walk(obj,
          prewalk_fn=_identity,
          postwalk_fn=_identity,
-         protocol=pickle.HIGHEST_PROTOCOL):
+         protocol=pickle.HIGHEST_PROTOCOL,
+         cached_walk=True):
     """
     walks an arbitrary* python object using pickle.Pickler with a prewalk
     and postwalk function
 
     * maybe not arbitrary - but probably anything that can be pickled (:
+
+    cached_walk:
+    whether or not to use a more efficient implementation, that does not
+    involve repeatedly serializing and deserializing objects
+    - if truthy, does not make a copy of any object
+    - if falsey, makes a copy of objects at each level
     """
     parent_ids = set()
 
@@ -49,6 +56,9 @@ def walk(obj,
         down objects
         """
         ignore = [ignore_first_obj]
+
+        # only used if cached_walk is truthy
+        object_cache = {}
 
         def persistent_id(obj):
             if ignore[0]:
@@ -75,14 +85,23 @@ def walk(obj,
                 # pop id off the set of ids
                 parent_ids.remove(id(obj))
 
-                # TODO does this really need to be converted to a string
-                # seems like it does for python2?
-                # base64 encoding to avoid unsafe string errors
-                return base64.urlsafe_b64encode(
-                    pickle.dumps(postwalked, protocol=protocol))
+                if cached_walk:
+                    # must be a string
+                    persid = str(id(postwalked))
+                    object_cache[persid] = postwalked
+                    return persid
+                else:
+                    # TODO does this really need to be converted to a string
+                    # seems like it does for python2?
+                    # base64 encoding to avoid unsafe string errors
+                    return base64.urlsafe_b64encode(
+                        pickle.dumps(postwalked, protocol=protocol))
 
         def persistent_load(persid):
-            return pickle.loads(base64.urlsafe_b64decode(persid))
+            if cached_walk:
+                return object_cache.pop(persid)
+            else:
+                return pickle.loads(base64.urlsafe_b64decode(persid))
 
         src = io.BytesIO()
         pickler = pickle.Pickler(src)

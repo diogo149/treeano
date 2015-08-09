@@ -20,7 +20,10 @@ def postwalk_node(root_node, fn):
         else:
             return obj
 
-    return walk_utils.walk(root_node, postwalk_fn=postwalk_fn)
+    # make a copy so that we don't have to worry about mutating the
+    # architecture
+    node_copy = treeano.node_utils.copy_node(root_node)
+    return walk_utils.walk(node_copy, postwalk_fn=postwalk_fn)
 
 
 def suffix_node(root_node, suffix):
@@ -39,9 +42,7 @@ def suffix_node(root_node, suffix):
         node._name += suffix
         return node
 
-    # make a copy only once here
-    new_node = treeano.node_utils.copy_node(root_node)
-    return postwalk_node(new_node, copy_and_suffix)
+    return postwalk_node(root_node, copy_and_suffix)
 
 
 def format_node_name(root_node, format):
@@ -60,6 +61,4 @@ def format_node_name(root_node, format):
         node._name = format % node.name
         return node
 
-    # make a copy only once here
-    new_node = treeano.node_utils.copy_node(root_node)
-    return postwalk_node(new_node, copy_and_format)
+    return postwalk_node(root_node, copy_and_format)

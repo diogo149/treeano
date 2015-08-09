@@ -72,5 +72,4 @@ def test_evaluate_monitoring_variables():
     res = fn({"x": x})
     ans_key = "train_f:default"
     assert ans_key in res
-    np.testing.assert_allclose(res[ans_key],
-                               42 * x.sum())
+    np.testing.assert_allclose(res[ans_key], 42 * x.sum(), rtol=1e-5)
