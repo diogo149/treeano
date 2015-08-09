@@ -77,6 +77,38 @@ def squared_error(pred, target):
     return (pred - target) ** 2
 
 
+def binary_hinge_loss(pred, target):
+    """
+    assumes that t is in {0, 1}
+    """
+    # convert to -1/1
+    target = 2 * target - 1
+    return rectify(1 - target * pred)
+
+
+def binary_squared_hinge_loss(pred, target):
+    return T.sqr(binary_hinge_loss(pred, target))
+
+
+def multiclass_hinge_loss(pred, target):
+    """
+    Weston Watkins formulation
+
+    assumes that pred has shape (something, number of classes)
+    """
+    assert target.dtype == "int32"
+    assert target.ndim == 1
+    assert pred.dtype == fX
+    assert pred.ndim == 2
+    # NOTE: this uses AdvancedSubtensor, which may be slow!
+    target_pred = pred[T.arange(pred.shape[0]), target].dimshuffle(0, "x")
+    return rectify(pred - target_pred + 1)
+
+
+def multiclass_squared_hinge_loss(pred, target):
+    return T.sqr(multiclass_hinge_loss(pred, target))
+
+
 def categorical_crossentropy_i32(pred, target):
     """
     like theano.tensor.nnet.categorical_crossentropy, but with clearer

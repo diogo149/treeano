@@ -59,3 +59,35 @@ def test_find_axes():
     nt.assert_equal(axes(3, None, [1]), (0, 2))
     nt.assert_equal(axes(3, None, [0, 1]), (2,))
     axes_raises(3, [2], [1])
+
+
+def test_binary_hinge_loss():
+    x = np.array([[-1.5, -1, -0.5, 0, 0.5, 1, 1.5]] * 2, dtype=fX)
+    y = np.array([[0] * 7, [1] * 7], dtype=fX)
+    res = treeano.utils.binary_hinge_loss(T.constant(x),
+                                          T.constant(y)).eval()
+    ans = np.array([[0, 0, 0.5, 1, 1.5, 2, 2.5],
+                    [2.5, 2, 1.5, 1, 0.5, 0, 0]],
+                   dtype=fX)
+    np.testing.assert_equal(res, ans)
+
+
+def test_multiclass_hinge_loss():
+    x = np.array([[0, 1],
+                  [1, 0],
+                  [0.5, 1.5],
+                  [0, 0.5]] * 2,
+                 dtype=fX)
+    y = np.array([0] * 4 + [1] * 4, dtype="int32")
+    res = treeano.utils.multiclass_hinge_loss(T.constant(x),
+                                              T.constant(y)).eval()
+    ans = np.array([[1, 2],
+                    [1, 0],
+                    [1, 2],
+                    [1, 1.5],
+                    [0, 1],
+                    [2, 1],
+                    [0, 1],
+                    [0.5, 1]],
+                   dtype=fX)
+    np.testing.assert_equal(res, ans)
