@@ -1049,6 +1049,12 @@
     - same thing w/ names + hyperparameters
     - remove nodeapi/nodeimpl distinction
 ** v2
+- remove dependencies for nodes whose children are only for updates
+  - MAKE sure to document this and why it occurs, and why having dependencies for computing updates would be bad
+    - ie. mutate_update_deltas should not have dependencies between nodes
+  - use case:
+    - want to optimize a subtree of a network, but the cost is elsewhere
+      - cost cannot be a dependency of the update node, since the cost is computed after its output
 - graph containers
   - containers.GraphNode
     - takes in networkx graph
@@ -1153,6 +1159,12 @@
     - time transferring data to shared variable
     - add flag to not free memory afterwards
 ** RNNs
+- https://github.com/craffel/nntools/blob/recurrent/examples/recurrent.py
+  - see:
+    - how a mask is used
+    - the generated dataset
+- lasagne "Add recurrent layers" pull request
+  - https://github.com/Lasagne/Lasagne/pull/294/files
 - use batch_axis instead of batch_size
   - use symbolic shape to tile if batch size is None
 - some nodes will be broken with ScanNode
@@ -1517,6 +1529,9 @@
 - CTC layer
   - https://github.com/rakeshvar/rnn_ctc/blob/master/ctc.py
   - https://github.com/shawntan/rnn-experiment/blob/master/CTC.ipynb
+  - https://github.com/skaae/Lasagne-CTC
+    - lasagne implementation
+    - based on: https://github.com/mohammadpz/CTC-Connectionist-Temporal-Classification
 ** canopy
 - monitor features
   - ability to save settings to localstorage
@@ -1557,6 +1572,17 @@
       - eg. LazyImage["image"] calls a function to create the image
     - abstraction over data that allows manipulation
       - eg. DatasetContainer.sample(weights=weights)
+- should adding costs could be a canopy-level concern?
+  - use cases
+    - eg.
+      - all losses could be auxiliary losses
+      - provide a list of nodes to add DSN to
+  - pros
+    - removes a lot of cost forwarding ugliness
+    - could also handle optimizers and which nodes to apply them to
+    - could have a default "main" cost
+  - cons:
+    - adds a lot of magic
 - workflows / hooks
   - training
   - distillation
@@ -1692,6 +1718,7 @@
       - from https://github.com/IndicoDataSolutions/Passage
     - use MNIST, scan one vector at a time
       - https://github.com/IndicoDataSolutions/Passage/blob/master/examples/mnist.py
+  - https://github.com/jaberg/skdata/wiki/Data-Set-Modules
 - how to save state part-way through training
 - workflow for batch norm test time stats
   - ie. compute layer-wise with fixed weights
@@ -1709,7 +1736,7 @@
 - make python3 compatible
 - use metaclass for registering classes for serialization
   - see: https://github.com/lmjohns3/downhill/blob/master/downhill/util.py
-- look into drawing:
+- look into drawing network diagrams:
   - https://github.com/Lasagne/Lasagne/issues/174
     - https://github.com/ebenolson/Lasagne/blob/master/examples/draw_net.py
 - javascript interface to expand nodes
