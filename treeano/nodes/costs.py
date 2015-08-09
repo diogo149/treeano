@@ -91,6 +91,18 @@ class TotalCostNode(core.WrapperNodeImpl):
                 self._children.children),
              AggregatorNode(self.name + "_aggregator")])]
 
+    def compute_output(self, network, in_vw):
+        # output the children's output
+        super(TotalCostNode, self).compute_output(network, in_vw)
+        if utils.monitor(network):
+            # add monitoring
+            network.create_variable(
+                "cost",
+                variable=in_vw.variable,
+                shape=(),
+                tags={"monitor"},
+            )
+
 
 @core.register_node("auxiliary_cost")
 class AuxiliaryCostNode(core.WrapperNodeImpl):
