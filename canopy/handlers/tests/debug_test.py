@@ -117,3 +117,49 @@ def test_nanguardmode():
     raises_fn2(-6)
     raises_fn2(0)
     raises_fn2(6e10)
+
+
+def test_save_last_inputs_and_networks():
+
+    class StateDiffNode(treeano.NodeImpl):
+
+        def compute_output(self, network, in_vw):
+            foo_vw = network.create_variable(
+                "foo",
+                shape=(),
+                is_shared=True,
+                tags={"parameter", "weight"}
+            )
+            network.create_variable(
+                "default",
+                variable=abs(in_vw.variable - foo_vw.variable),
+                shape=()
+            )
+
+    network = tn.AdamNode(
+        "adam",
+        {"subtree": tn.SequentialNode(
+            "s",
+            [tn.InputNode("i", shape=()),
+             StateDiffNode("ss")]),
+         "cost": tn.ReferenceNode("r", reference="s")}
+    ).network()
+    # eagerly create shared variables
+    network.build()
+
+    saver = canopy.handlers.save_last_inputs_and_networks(5)
+    fn = canopy.handlers.handled_fn(
+        network,
+        [saver],
+        {"x": "i"},
+        {"out": "s"},
+        include_updates=True)
+
+    inputs = [{"x": treeano.utils.as_fX(np.random.randn())} for _ in range(10)]
+    outputs = [fn(i) for i in inputs]
+
+    nt.assert_equal(saver.inputs_, inputs[-5:])
+
+    for value_dict, i, o in zip(saver.value_dicts_, inputs[-5:], outputs[-5:]):
+        canopy.network_utils.load_value_dict(network, value_dict)
+        nt.assert_equal(fn(i), o)

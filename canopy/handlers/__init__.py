@@ -19,4 +19,5 @@ from monitor import (time_call,
                      evaluate_monitoring_variables)
 from misc import callback_with_input
 from debug import (output_nanguard,
-                   nanguardmode)
+                   nanguardmode,
+                   save_last_inputs_and_networks)

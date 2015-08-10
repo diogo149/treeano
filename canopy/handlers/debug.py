@@ -5,6 +5,7 @@ import numpy as np
 
 import treeano.theano_extensions.nanguardmode
 
+from .. import network_utils
 from . import base
 
 
@@ -86,3 +87,27 @@ class NanGuardMode(base.NetworkHandlerImpl):
         return kwargs
 
 nanguardmode = NanGuardMode
+
+
+class SaveLastInputsAndNetworks(base.NetworkHandlerImpl):
+
+    """
+    handler that keeps a history of inputs and network states (before calling
+    the function)
+    """
+
+    def __init__(self, num_to_save=5):
+        self.num_to_save = num_to_save
+        self.inputs_ = []
+        self.value_dicts_ = []
+
+    def __call__(self, state, in_dict, *args, **kwargs):
+        self.inputs_.append(in_dict)
+        self.value_dicts_.append(network_utils.to_value_dict(state.network))
+        if len(self.inputs_) > self.num_to_save:
+            self.inputs_.pop(0)
+        if len(self.value_dicts_) > self.num_to_save:
+            self.value_dicts_.pop(0)
+        return self._inner_handler(state, in_dict, *args, **kwargs)
+
+save_last_inputs_and_networks = SaveLastInputsAndNetworks
