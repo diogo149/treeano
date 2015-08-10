@@ -28,7 +28,7 @@ class ResultWriter(object):
     - live monitoring w/ a different process
     """
 
-    def __init__(self, dirname, pattern, remove_matched=True):
+    def __init__(self, dirname, pattern, remove_matched=False):
         """
         remove_matched:
         whether or not to remove the matched results from the output map
