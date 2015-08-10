@@ -159,6 +159,7 @@ class Conv2DNode(core.NodeImpl):
                             "filter_size",
                             "conv_stride",
                             "stride",
+                            "conv_pad",
                             "pad",
                             "untie_biases")
 
@@ -182,7 +183,8 @@ class Conv2DNode(core.NodeImpl):
                 stride=network.find_hyperparameter(["conv_stride",
                                                     "stride"],
                                                    (1, 1)),
-                pad=network.find_hyperparameter(["pad"],
+                pad=network.find_hyperparameter(["conv_pad",
+                                                 "pad"],
                                                 (0, 0)),
                 untie_biases=network.find_hyperparameter(["untie_biases"],
                                                          False),
@@ -203,6 +205,7 @@ class Conv2DDNNNode(core.NodeImpl):
                             "filter_size",
                             "conv_stride",
                             "stride",
+                            "conv_pad",
                             "pad",
                             "untie_biases",
                             "flip_filters",)
@@ -228,7 +231,8 @@ class Conv2DDNNNode(core.NodeImpl):
                 stride=network.find_hyperparameter(["conv_stride",
                                                     "stride"],
                                                    (1, 1)),
-                pad=network.find_hyperparameter(["pad"],
+                pad=network.find_hyperparameter(["conv_pad",
+                                                 "pad"],
                                                 (0, 0)),
                 untie_biases=network.find_hyperparameter(["untie_biases"],
                                                          False),
