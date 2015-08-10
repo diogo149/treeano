@@ -4,6 +4,7 @@ from __future__ import print_function, unicode_literals
 import time
 
 import numpy as np
+import theano.compile.nanguardmode
 
 from . import base
 
@@ -123,4 +124,33 @@ class OutputNanGuard(base.NetworkHandlerImpl):
         return res
 
 output_nanguard = OutputNanGuard
+
+
+class NanGuardMode(base.NetworkHandlerImpl):
+
+    """
+    handler that changes the mode to theano.compile.nanguardmode.NanGuardMode
+
+    http://deeplearning.net/software/theano/library/compile/nanguardmode.html
+    """
+
+    def __init__(self,
+                 nan_is_error=True,
+                 inf_is_error=True,
+                 big_is_error=True):
+        self.nan_is_error = nan_is_error
+        self.inf_is_error = inf_is_error
+        self.big_is_error = big_is_error
+
+    def transform_compile_function_kwargs(self, state, **kwargs):
+        # don't overwrite an existing mode
+        assert "mode" not in kwargs
+        kwargs["mode"] = theano.compile.nanguardmode.NanGuardMode(
+            nan_is_error=self.nan_is_error,
+            inf_is_error=self.inf_is_error,
+            big_is_error=self.big_is_error
+        )
+        return kwargs
+
+nanguardmode = NanGuardMode
 

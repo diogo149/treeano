@@ -16,5 +16,6 @@ from batch import (chunk_variables,
 from monitor import (time_call,
                      time_per_row,
                      evaluate_monitoring_variables,
-                     output_nanguard)
+                     output_nanguard,
+                     nanguardmode)
 from misc import callback_with_input

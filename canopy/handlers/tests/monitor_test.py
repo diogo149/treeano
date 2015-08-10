@@ -136,3 +136,48 @@ def test_output_nanguard():
                                    rtol=1e-5)
     else:
         assert False
+
+
+def test_nanguardmode():
+    def nanguardmode_fn(a):
+        class CustomNode(treeano.NodeImpl):
+
+            def compute_output(self, network, in_vw):
+                network.create_variable(
+                    "default",
+                    variable=in_vw.variable / a,
+                    shape=in_vw.shape
+                )
+
+        network = tn.SequentialNode(
+            "s",
+            [tn.InputNode("i", shape=()),
+             CustomNode("c")]
+        ).network()
+
+        return canopy.handlers.handled_fn(
+            network,
+            [canopy.handlers.nanguardmode()],
+            {"x": "i"},
+            {"out": "s"})
+
+    fn1 = nanguardmode_fn(3)
+    np.testing.assert_equal(fn1({"x": 3}), {"out": np.array(1)})
+    np.testing.assert_equal(fn1({"x": -6}), {"out": np.array(-2)})
+
+    @nt.raises(AssertionError)
+    def raises_fn1(x):
+        fn1({"x": x})
+
+    raises_fn1(6e10)
+
+    fn2 = nanguardmode_fn(0)
+
+    @nt.raises(AssertionError)
+    def raises_fn2(x):
+        fn2({"x": x})
+
+    raises_fn2(3)
+    raises_fn2(-6)
+    raises_fn2(0)
+    raises_fn2(6e10)
