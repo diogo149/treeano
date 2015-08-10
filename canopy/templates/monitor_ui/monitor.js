@@ -114,7 +114,7 @@ function movingAvg(n) {
 
 function loadMonitorData(callback) {
   $.get(
-    "/monitor.json",
+    "monitor.json",
     undefined,
     undefined,
     "text"
