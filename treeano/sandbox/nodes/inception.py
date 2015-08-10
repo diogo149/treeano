@@ -40,7 +40,7 @@ class InceptionNode(treeano.WrapperNodeImpl):
             [tl.Conv2DDNNNode(
                 self.name + "_1x1conv",
                 filter_size=(1, 1),
-                border_mode="same"),
+                pad="same"),
              canopy.node_utils.format_node_name(activation,
                                                 self.name + "_%s_1x1")])
         path_3x3 = tn.SequentialNode(
@@ -48,13 +48,13 @@ class InceptionNode(treeano.WrapperNodeImpl):
             [tl.Conv2DDNNNode(
                 self.name + "_3x3reduce",
                 filter_size=(1, 1),
-                border_mode="same"),
+                pad="same"),
              canopy.node_utils.format_node_name(activation,
                                                 self.name + "_%s_3x3reduce"),
              tl.Conv2DDNNNode(
                 self.name + "_3x3conv",
                 filter_size=(3, 3),
-                border_mode="same"),
+                pad="same"),
              canopy.node_utils.format_node_name(activation,
                                                 self.name + "_%s_3x3")])
         path_5x5 = tn.SequentialNode(
@@ -62,13 +62,13 @@ class InceptionNode(treeano.WrapperNodeImpl):
             [tl.Conv2DDNNNode(
                 self.name + "_5x5reduce",
                 filter_size=(1, 1),
-                border_mode="same"),
+                pad="same"),
              canopy.node_utils.format_node_name(activation,
                                                 self.name + "_%s_5x5reduce"),
              tl.Conv2DDNNNode(
                 self.name + "_5x5conv",
                 filter_size=(5, 5),
-                border_mode="same"),
+                pad="same"),
              canopy.node_utils.format_node_name(activation,
                                                 self.name + "_%s_5x5")])
         path_pool = tn.SequentialNode(
@@ -83,7 +83,7 @@ class InceptionNode(treeano.WrapperNodeImpl):
              tl.Conv2DDNNNode(
                 self.name + "_poolproj1x1",
                 filter_size=(1, 1),
-                border_mode="same"),
+                pad="same"),
              canopy.node_utils.format_node_name(
                  activation, self.name + "_%s_poolproj1x1")])
 

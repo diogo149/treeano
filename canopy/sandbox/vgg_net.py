@@ -78,7 +78,7 @@ def vgg_16_nodes(conv_only):
              tl.MaxPool2DNode("pool5"),
              # TODO add dense nodes
              ]),
-        border_mode="same",
+        pad="same",
         filter_size=(3, 3),
         pool_size=(2, 2),
     )

@@ -159,7 +159,7 @@ class Conv2DNode(core.NodeImpl):
                             "filter_size",
                             "conv_stride",
                             "stride",
-                            "border_mode",
+                            "pad",
                             "untie_biases")
 
     def compute_output(self, network, in_vw):
@@ -182,8 +182,8 @@ class Conv2DNode(core.NodeImpl):
                 stride=network.find_hyperparameter(["conv_stride",
                                                     "stride"],
                                                    (1, 1)),
-                border_mode=network.find_hyperparameter(["border_mode"],
-                                                        "valid"),
+                pad=network.find_hyperparameter(["pad"],
+                                                (0, 0)),
                 untie_biases=network.find_hyperparameter(["untie_biases"],
                                                          False),
                 nonlinearity=lasagne.nonlinearities.identity,
@@ -203,7 +203,7 @@ class Conv2DDNNNode(core.NodeImpl):
                             "filter_size",
                             "conv_stride",
                             "stride",
-                            "border_mode",
+                            "pad",
                             "untie_biases",
                             "flip_filters",)
 
@@ -228,8 +228,8 @@ class Conv2DDNNNode(core.NodeImpl):
                 stride=network.find_hyperparameter(["conv_stride",
                                                     "stride"],
                                                    (1, 1)),
-                border_mode=network.find_hyperparameter(["border_mode"],
-                                                        "valid"),
+                pad=network.find_hyperparameter(["pad"],
+                                                (0, 0)),
                 untie_biases=network.find_hyperparameter(["untie_biases"],
                                                          False),
                 flip_filters=network.find_hyperparameter(["flip_filters"],
