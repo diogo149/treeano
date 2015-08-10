@@ -4,7 +4,8 @@ from __future__ import print_function, unicode_literals
 import time
 
 import numpy as np
-import theano.compile.nanguardmode
+
+import treeano.theano_extensions.nanguardmode
 
 from . import base
 
@@ -145,7 +146,7 @@ class NanGuardMode(base.NetworkHandlerImpl):
     def transform_compile_function_kwargs(self, state, **kwargs):
         # don't overwrite an existing mode
         assert "mode" not in kwargs
-        kwargs["mode"] = theano.compile.nanguardmode.NanGuardMode(
+        kwargs["mode"] = treeano.theano_extensions.nanguardmode.NanGuardMode(
             nan_is_error=self.nan_is_error,
             inf_is_error=self.inf_is_error,
             big_is_error=self.big_is_error
