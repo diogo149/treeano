@@ -1102,6 +1102,8 @@
 - setup continous integration
 - make find_inits(additional_hyperparameter_names, default_inits) utility function
 - make node for each cost + auxiliary versions of cost + auxiliary version w/ dense node
+  - rationale: can have cost-specific monitoring
+    - eg. for hinge loss, the % of beyond-margin points
   - CategoricalCrossEntropyNode
     - CCENode
   - BinaryCrossEntropyNode
@@ -1556,6 +1558,10 @@
   - ways of answering the question "what is the best $OBJECTIVE in < $TIME"
     - maybe some smart filtering on each axis with summary stats
       - eg. min, 95% percentile, etc.
+- transforms
+  - make transforms work for nodes on their own
+  - remove_ancestors transform
+    - replaces entire tree with given node
 - do we want canopy to be able to control ordering of the data?
   - this would allow certain patterns
     - eg.
