@@ -4,6 +4,8 @@ from
 Covariate Shift"
 http://arxiv.org/abs/1502.03167
 """
+import warnings
+
 import toolz
 import numpy as np
 import theano
@@ -57,6 +59,7 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
         "consider_var_constant",)
 
     def compute_output(self, network, in_vw):
+        deterministic = network.find_hyperparameter(["deterministic"])
 
         use_log_moving_var = network.find_hyperparameter(
             ["use_log_moving_var"], DEFAULT_USE_LOG_MOVING_VAR)
@@ -209,6 +212,15 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
                 untransform_var(moving_var.variable),
                 stats_broadcastable)
         else:
+            if deterministic:
+                msg = ("Batch normalization does not use `deterministic` flag"
+                       " to control whether or not moving stats are used for"
+                       " computation. In this case `bn_use_moving_stats` is"
+                       "False, thus per-minibatch stats will be used and may"
+                       "be stochastic (depending on how minibatches are"
+                       "created), and not only a function of the input"
+                       "observation")
+                warnings.warn(msg)
             effective_mean = in_mean
             effective_var = in_var
 

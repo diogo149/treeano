@@ -1049,6 +1049,19 @@
     - same thing w/ names + hyperparameters
     - remove nodeapi/nodeimpl distinction
 ** v2
+- should there be utility functions for getting common hyperparameters?
+  - use cases:
+    - deterministic
+    - monitor
+  - pros
+    - more DRY
+    - less error prone
+      - eg. might misspell something
+  - cons
+    - more "magic"
+    - causes heterogeneous code
+      - quite often one will want to not use it (when they want the normal find_hyperparameter order to work)
+        - if network.find_hyperparameter(["deterministic", "enable_dropout"])
 - remove dependencies for nodes whose children are only for updates
   - MAKE sure to document this and why it occurs, and why having dependencies for computing updates would be bad
     - ie. mutate_update_deltas should not have dependencies between nodes
@@ -1096,7 +1109,6 @@
     - unsupervised training
     - training the classification layer
     - fine tuning the whole thing
-- add deterministic flag
 - compare caffe inception time to theano inception time
 - handled_function hook for providing a timer callback
 - setup continous integration
@@ -1378,8 +1390,6 @@
 - make sure shapes can handle None's for polymorphism
 - use assertions for outputs that should not be used
 - grep for FIXME's
-- try dropout network w/ train / test
-  - hyperparameter: have default of enable_dropout be deterministic
 - function to wrap lasagne layer boilerplate
   - input:
     - lazy wrapped variable

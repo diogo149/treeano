@@ -23,11 +23,12 @@ class DropoutNode(core.NodeImpl):
                             "p")
 
     def compute_output(self, network, in_vw):
+        deterministic = network.find_hyperparameter(["deterministic"])
         p = network.find_hyperparameter(["dropout_probability",
                                          "probability",
                                          "p"],
                                         0)
-        if p == 0:
+        if deterministic or p == 0:
             network.copy_variable(
                 name="default",
                 previous_variable=in_vw,
@@ -72,6 +73,7 @@ class GaussianDropoutNode(core.NodeImpl):
                             "p")
 
     def compute_output(self, network, in_vw):
+        deterministic = network.find_hyperparameter(["deterministic"])
         sigma = network.find_hyperparameter(["sigma"], None)
         if sigma is None:
             p = network.find_hyperparameter(["dropout_probability",
@@ -84,7 +86,7 @@ class GaussianDropoutNode(core.NodeImpl):
                 # derive gaussian dropout variance from bernoulli dropout
                 # probability
                 sigma = ((1 - p) / p) ** 0.5
-        if sigma == 0:
+        if deterministic or sigma == 0:
             network.copy_variable(
                 name="default",
                 previous_variable=in_vw,
@@ -124,11 +126,12 @@ class SpatialDropoutNode(core.NodeImpl):
                             "p")
 
     def compute_output(self, network, in_vw):
+        deterministic = network.find_hyperparameter(["deterministic"])
         p = network.find_hyperparameter(["dropout_probability",
                                          "probability",
                                          "p"],
                                         0)
-        if p == 0:
+        if deterministic or p == 0:
             network.copy_variable(
                 name="default",
                 previous_variable=in_vw,

@@ -28,6 +28,8 @@ class Network(object):
         if default_hyperparameters is None:
             default_hyperparameters = dict(
                 batch_axis=0,
+                deterministic=False,
+                monitor=True,
             )
         self.root_node = root_node
         self.node_state = {}

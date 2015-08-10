@@ -20,8 +20,7 @@ class RandomizedReLUNode(treeano.NodeImpl):
 
     def compute_output(self, network, in_vw):
         # gather hyperparameters
-        deterministic = network.find_hyperparameter(["deterministic"],
-                                                    False)
+        deterministic = network.find_hyperparameter(["deterministic"])
         l = network.find_hyperparameter(["alpha_lower"],
                                         3)
         u = network.find_hyperparameter(["alpha_upper"],

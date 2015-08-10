@@ -46,8 +46,7 @@ class StochasticPool2DNode(treeano.Wrapper0NodeImpl):
 
     def init_state(self, network):
         super(StochasticPool2DNode, self).init_state(network)
-        deterministic = network.find_hyperparameter(["deterministic"],
-                                                    False)
+        deterministic = network.find_hyperparameter(["deterministic"])
         pool_fn = functools.partial(stochastic_pool,
                                     deterministic=deterministic)
         network.set_hyperparameter(self.name + "_pool2d",
