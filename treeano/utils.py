@@ -230,7 +230,3 @@ def find_axes(network,
         return tuple(pos)
     else:
         return tuple([idx for idx in range(ndim) if idx not in neg])
-
-
-def monitor(network, default=True):
-    return network.find_hyperparameter(["monitor"], default)

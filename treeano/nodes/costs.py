@@ -94,7 +94,7 @@ class TotalCostNode(core.WrapperNodeImpl):
     def compute_output(self, network, in_vw):
         # output the children's output
         super(TotalCostNode, self).compute_output(network, in_vw)
-        if utils.monitor(network):
+        if network.find_hyperparameter(["monitor"]):
             # add monitoring
             network.create_variable(
                 "cost",
