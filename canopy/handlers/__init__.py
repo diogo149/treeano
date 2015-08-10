@@ -4,6 +4,7 @@ import nodes
 import batch
 import fn
 import monitor
+import debug
 
 from base import (NetworkHandlerAPI,
                   NetworkHandlerImpl)
@@ -15,7 +16,7 @@ from batch import (chunk_variables,
                    batch_pad)
 from monitor import (time_call,
                      time_per_row,
-                     evaluate_monitoring_variables,
-                     output_nanguard,
-                     nanguardmode)
+                     evaluate_monitoring_variables)
 from misc import callback_with_input
+from debug import (output_nanguard,
+                   nanguardmode)
