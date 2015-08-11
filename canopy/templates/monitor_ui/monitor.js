@@ -33,7 +33,7 @@ var defaultSettings = [
     },
     ys: [
       {
-        key: "valid_cost",
+        keys: ["valid_cost"],
         scale: "cost",
         color: "category10"
       }
@@ -65,12 +65,7 @@ var defaultSettings = [
     },
     ys: [
       {
-        key: "valid_cost",
-        scale: "cost",
-        color: "category10"
-      },
-      {
-        key: "train_cost",
+        keys: ["_cost"],
         scale: "cost",
         color: "category10"
       }
@@ -80,6 +75,7 @@ var defaultSettings = [
 
 
 var monitorData = [];
+var allKeys = [];
 var settings = defaultSettings;
 
 var $window = $(window);
@@ -131,6 +127,7 @@ function loadMonitorData(callback) {
         d._idx = idx;
         monitorData.push(d);
       }
+      allKeys = _.union.apply(null, _.map(monitorData, _.keys));
       if (!_.isUndefined(callback)) {
         callback();
       }
@@ -143,14 +140,30 @@ function loadMonitorData(callback) {
   );
 }
 
+function matchedKeys(patterns) {
+  /*
+   returns all of the keys of monitor data that match any of the input
+   list of strings, treated as regexps
+   */
+  var regexps = _.map(patterns, function(pattern) {
+    return new RegExp(pattern);
+  });
+  return _.filter(allKeys, function(key) {
+    return _.some(regexps, function(regexp) {
+      return key.match(regexp);
+    });
+  });
+}
+
 function makeScaleFn(scaleData) {
   return function(range) {
     var lower;
     var upper;
 
+    var scaleKeys = matchedKeys(scaleData.keys);
     var vals = _(monitorData)
           .map(function(d) {
-            return _.map(scaleData.keys, function(k) { return d[k]; });
+            return _.map(scaleKeys, function(k) { return d[k]; });
           })
           .flatten()
           .filter(_.isNumber)
@@ -292,56 +305,61 @@ function createChartView() {
       var dataToX = function(d) { return x(d[chartData.x.key]); };
 
       var legendData = [];
+      var relevantTooltipKeys = [chartData.x.key];
 
       var category10ColorScale = d3.scale.category10();
-      _.forEach(chartData.ys, function(yMap, yIdx) {
-        // TODO have each y have it's own window
-        var rollingMeanWindow = chartData.rollingMeanWindow;
-        var yScale = scales[yMap.scale](yRange);
-        var yVis = vis.append("g");
+      _.forEach(chartData.ys, function(yMap) {
+        var yKeys = matchedKeys(yMap.keys);
+        relevantTooltipKeys = _.union(relevantTooltipKeys, yKeys);
+        _.forEach(yKeys, function(yKey) {
+          // TODO have each y have it's own window
+          var rollingMeanWindow = chartData.rollingMeanWindow;
+          var yScale = scales[yMap.scale](yRange);
+          var yVis = vis.append("g");
 
-        var color;
-        switch (yMap.color) {
-        case "random":
-          color = "hsl(" + Math.random() * 360 + ",100%,50%)";
-          break;
-        case "category10":
-          color = category10ColorScale(yMap.key);
-          break;
-        default:
-          color = yMap.color;
-        }
-        var dataToY = function(d) { return yScale(d[yMap.key]); };
-        var ySelectors = [];
-        ySelectors.push(yVis.append("svg:path")
-                        .attr("class", "line")
-                        .attr("fill", "none")
-                        .attr("stroke", color)
-                        .attr("stroke-width", 2)
-                        .attr("d", d3.svg.line()
-                              .x(dataToX)
-                              .y(dataToY)
-                              .interpolate(movingAvg(rollingMeanWindow))));
-
-        // only show dots if not doing rolling mean
-        if (rollingMeanWindow === 1) {
-          var validPoints = _.filter(monitorData, function(d) {
-            return !(_.isNaN(dataToX(d)) || _.isNaN(dataToY(d)));
-          });
-          ySelectors.push(yVis.selectAll("circle.line")
-                          .data(validPoints)
-                        .enter().append("svg:circle")
+          var color;
+          switch (yMap.color) {
+          case "random":
+            color = "hsl(" + Math.random() * 360 + ",100%,50%)";
+            break;
+          case "category10":
+            color = category10ColorScale(yKey);
+            break;
+          default:
+            color = yMap.color;
+          }
+          var dataToY = function(d) { return yScale(d[yKey]); };
+          var ySelectors = [];
+          ySelectors.push(yVis.append("svg:path")
                           .attr("class", "line")
-                          .attr("fill", color)
-                          .attr("cx", dataToX)
-                          .attr("cy", dataToY)
-                          .attr("r", 3));
-        }
-        // add legend data
-        legendData.push({
-          key: yMap.key,
-          color: color,
-          selectors: ySelectors
+                          .attr("fill", "none")
+                          .attr("stroke", color)
+                          .attr("stroke-width", 2)
+                          .attr("d", d3.svg.line()
+                                .x(dataToX)
+                                .y(dataToY)
+                                .interpolate(movingAvg(rollingMeanWindow))));
+
+          // only show dots if not doing rolling mean
+          if (rollingMeanWindow === 1) {
+            var validPoints = _.filter(monitorData, function(d) {
+              return !(_.isNaN(dataToX(d)) || _.isNaN(dataToY(d)));
+            });
+            ySelectors.push(yVis.selectAll("circle.line")
+                            .data(validPoints)
+                          .enter().append("svg:circle")
+                            .attr("class", "line")
+                            .attr("fill", color)
+                            .attr("cx", dataToX)
+                            .attr("cy", dataToY)
+                            .attr("r", 3));
+          }
+          // add legend data
+          legendData.push({
+            key: yKey,
+            color: color,
+            selectors: ySelectors
+          });
         });
       });
 
@@ -381,7 +399,6 @@ function createChartView() {
         var jsonData;
         if (chartData.onlyRelevantTooltipKeys) {
           jsonData = {};
-          var relevantTooltipKeys = _.pluck(chartData.ys, "key").concat([chartData.x.key]);
           _.forEach(relevantTooltipKeys, function(k) {
             jsonData[k] = focusData[k];
           });
@@ -496,7 +513,6 @@ function createEditView() {
 function createDataView() {
   $mainView.empty();
   $mainView.append($("<h2/>").text("All keys:"));
-  var allKeys = _.union.apply(null, _.map(monitorData, _.keys));
   $mainView.append($("<pre/>").text(JSON.stringify(allKeys, undefined, 2)));
   $mainView.append($("<h2/>").text("All data:"));
   $mainView.append($("<pre/>").text(JSON.stringify(monitorData, undefined, 2)));
