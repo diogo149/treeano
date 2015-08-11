@@ -1057,6 +1057,8 @@
     - more DRY
     - less error prone
       - eg. might misspell something
+    - having optional conventions is almost practically the same thing as requiring it, since everyone will use it
+      - the main difference is that these abstractions can be implemented without changing the core of the library, which is nice
   - cons
     - more "magic"
     - causes heterogeneous code
