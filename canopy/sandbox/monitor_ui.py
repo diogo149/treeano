@@ -28,16 +28,33 @@ class ResultWriter(object):
     - live monitoring w/ a different process
     """
 
-    def __init__(self, dirname, pattern, remove_matched=False):
+    def __init__(self,
+                 dirname,
+                 pattern,
+                 remove_matched=False,
+                 symlink=False):
         """
         remove_matched:
         whether or not to remove the matched results from the output map
+
+        symlink:
+        whether or not to make a symlink instead of copying the html/js files
         """
         self.dirname = dirname
         self.pattern = pattern
         self.remove_matched = remove_matched
-
-        templates.copy_template("monitor_ui", dirname)
+        if symlink:
+            # create directory
+            os.mkdir(dirname)
+            # symlink javascript and html
+            for f in ["index.html", "monitor.js"]:
+                os.symlink(templates.template_path("monitor_ui", f),
+                           os.path.join(dirname, f))
+            # create monitor.json file
+            with open(os.path.join(dirname, "monitor.json"), "w") as f:
+                pass
+        else:
+            templates.copy_template("monitor_ui", dirname)
         self._json_path = os.path.join(self.dirname, "monitor.json")
         self._regex = re.compile(self.pattern)
 
