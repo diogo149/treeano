@@ -22,12 +22,10 @@ class OutputNanGuard(base.NetworkHandlerImpl):
     def __init__(self,
                  nan_is_error=True,
                  inf_is_error=True,
-                 big_is_error=True,
-                 action="error"):
+                 big_is_error=True):
         self.nan_is_error = nan_is_error
         self.inf_is_error = inf_is_error
         self.big_is_error = big_is_error
-        self.action = action
 
     def _handle_error(self, error_type, k, v):
         msg = dict(
@@ -36,20 +34,17 @@ class OutputNanGuard(base.NetworkHandlerImpl):
             key=k,
             value=v
         )
-        if self.action == "error":
-            raise Exception(msg)
-        elif self.action == "print":
-            print(msg)
-        else:
-            raise ValueError("incorrect action: %s" % self.action)
+        raise Exception(msg)
 
     def call(self, fn, *args, **kwargs):
         res = fn(*args, **kwargs)
         for k, v in res.items():
             if self.nan_is_error:
-                if np.any(np.isnan(v)):
+                if np.isnan(np.min(v)):
                     self._handle_error("nan", k, v)
             if self.inf_is_error:
+                # OPTIMIZE could do np.isinf(np.max(np.abs(x)))
+                # next check can also use np.max(np.abs(x)
                 if np.any(np.isinf(v)):
                     self._handle_error("inf", k, v)
             if self.big_is_error:
@@ -58,6 +53,52 @@ class OutputNanGuard(base.NetworkHandlerImpl):
         return res
 
 output_nanguard = OutputNanGuard
+
+
+class NetworkNanGuard(base.NetworkHandlerImpl):
+
+    """
+    handler that checks network shared variables for nan after each
+    function call and raises an exception if any contain nan
+    """
+
+    def __init__(self,
+                 nan_is_error=True,
+                 inf_is_error=True,
+                 big_is_error=True):
+        self.nan_is_error = nan_is_error
+        self.inf_is_error = inf_is_error
+        self.big_is_error = big_is_error
+
+    def _handle_error(self, error_type, k, v):
+        msg = dict(
+            msg="NetworkNanGuard error found!",
+            error_type=error_type,
+            key=k,
+            value=v
+        )
+        raise Exception(msg)
+
+    def __call__(self, state, *args, **kwargs):
+        res = super(NetworkNanGuard, self).__call__(state, *args, **kwargs)
+        value_dict = network_utils.to_value_dict(state.network)
+        # TODO refactor
+        # copy-pasted from OutputNanGuard
+        for k, v in value_dict.items():
+            if self.nan_is_error:
+                if np.isnan(np.min(v)):
+                    self._handle_error("nan", k, v)
+            if self.inf_is_error:
+                # OPTIMIZE could do np.isinf(np.max(np.abs(x)))
+                # next check can also use np.max(np.abs(x)
+                if np.any(np.isinf(v)):
+                    self._handle_error("inf", k, v)
+            if self.big_is_error:
+                if np.any(np.abs(v) > 1e10):
+                    self._handle_error("big", k, v)
+        return res
+
+network_nanguard = NetworkNanGuard
 
 
 class NanGuardMode(base.NetworkHandlerImpl):

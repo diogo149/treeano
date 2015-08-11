@@ -165,3 +165,34 @@ def test_save_last_inputs_and_networks():
                                 outputs[-5:]):
         canopy.network_utils.load_value_dict(network, value_dict)
         nt.assert_equal(fn(i), o)
+
+
+def test_network_nanguard():
+    class CustomNode(treeano.NodeImpl):
+        input_keys = ()
+
+        def compute_output(self, network):
+            network.create_variable(
+                "default",
+                is_shared=True,
+                shape=()
+            )
+
+    network = CustomNode("c").network()
+    # build eagerly
+    network.build()
+
+    fn = canopy.handlers.handled_fn(
+        network,
+        [canopy.handlers.network_nanguard()],
+        {},
+        {})
+
+    vw = network["c"].get_variable("default")
+    for x in [3, 4, 1e9, 9e9, -9e9, 0]:
+        vw.variable.set_value(treeano.utils.as_fX(x))
+        fn({})
+
+    for x in [np.inf, -np.inf, np.nan, 2e10]:
+        vw.variable.set_value(treeano.utils.as_fX(x))
+        nt.raises(Exception)(lambda x: fn(x))({})
