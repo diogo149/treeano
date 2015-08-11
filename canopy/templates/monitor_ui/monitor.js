@@ -202,10 +202,10 @@ function makeScaleFn(scaleData) {
     case "log":
       baseScale = d3.scale.log();
       if (lower === 0) {
-        // need to clamp to not compute very negative values
         lower += EPSILON;
-        baseScale.clamp(true);
       }
+      // need to clamp to not compute very negative values
+      baseScale.clamp(true);
       break;
     default:
       throw "Incorrect scale: " + scaleData.scale;
