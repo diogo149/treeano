@@ -60,6 +60,9 @@ class NetworkNanGuard(base.NetworkHandlerImpl):
     """
     handler that checks network shared variables for nan after each
     function call and raises an exception if any contain nan
+
+    NOTE: this may add a non-negligible amount of overhead (since it requires
+    GPU transfers after each function evaluation)
     """
 
     def __init__(self,
