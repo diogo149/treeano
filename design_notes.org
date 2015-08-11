@@ -1555,8 +1555,11 @@
 ** canopy
 - monitor features
   - ability to save settings to localstorage / cookie
-  - ability to specify ys with a regex for keys
-    - rationale: to have charts with all of a certain family
+  - allowing line styles
+    - ie.
+      - dotted lines
+        - http://www.d3noob.org/2013/01/making-dashed-line-in-d3js.html
+      - not just circles
   - exluding values outside of boundaries
   - choosing plot type
     - box plot
