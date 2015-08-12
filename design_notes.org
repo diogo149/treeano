@@ -1049,6 +1049,7 @@
     - same thing w/ names + hyperparameters
     - remove nodeapi/nodeimpl distinction
 ** v2
+- consistent shared variabling name bias/b, weight/W
 - should there be utility functions for getting common hyperparameters?
   - use cases:
     - deterministic
@@ -1321,6 +1322,7 @@
   - should rng state be global, part of the network, state of a node?
     - should not be global
       - this is a memory leak since the srng object saves the state_updates
+    - NOTE: be careful with monitoring, since the rng state is just some random bytes
   - where to put the serialized state?
     - problems:
       - shared variables are not named
