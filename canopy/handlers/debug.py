@@ -109,6 +109,8 @@ class NanGuardMode(base.NetworkHandlerImpl):
     """
     handler that changes the mode to theano.compile.nanguardmode.NanGuardMode
 
+    warning: takes more memory and is causes run-time to be very very slow
+
     http://deeplearning.net/software/theano/library/compile/nanguardmode.html
     """
 
@@ -140,17 +142,30 @@ class SaveLastInputsAndNetworks(base.NetworkHandlerImpl):
     the function)
     """
 
-    def __init__(self, num_to_save=5):
-        self.num_to_save = num_to_save
+    def __init__(self, num_inputs_to_save=5, num_value_dicts_to_save=None):
+        """
+        num_inputs_to_save:
+        the number of inputs to the network to save
+
+        num_value_dicts_to_save:
+        the number of value dictionaries of the network to save
+        """
+        # TODO split into 2 handlers that independently save inputs
+        # and value dicts
+        self.num_inputs_to_save = num_inputs_to_save
+        if num_value_dicts_to_save is None:
+            num_value_dicts_to_save = num_inputs_to_save
+        self.num_value_dicts_to_save = num_value_dicts_to_save
         self.inputs_ = []
         self.value_dicts_ = []
 
     def __call__(self, state, in_dict, *args, **kwargs):
         self.inputs_.append(in_dict)
+        # TODO optimize when num_value_dicts_to_save == 0
         self.value_dicts_.append(network_utils.to_value_dict(state.network))
-        if len(self.inputs_) > self.num_to_save:
+        if len(self.inputs_) > self.num_inputs_to_save:
             self.inputs_.pop(0)
-        if len(self.value_dicts_) > self.num_to_save:
+        if len(self.value_dicts_) > self.num_value_dicts_to_save:
             self.value_dicts_.pop(0)
         return self._inner_handler(state, in_dict, *args, **kwargs)
 

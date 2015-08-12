@@ -179,7 +179,7 @@ def test_network_nanguard():
             )
 
     network = CustomNode("c").network()
-    # build eagerly
+    # build eagerly to share weights
     network.build()
 
     fn = canopy.handlers.handled_fn(
