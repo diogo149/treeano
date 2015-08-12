@@ -41,6 +41,13 @@ class SoftmaxNode(BaseActivationNode):
         return T.nnet.softmax(in_vw.variable)
 
 
+@core.register_node("stable_softmax")
+class StableSoftmaxNode(BaseActivationNode):
+
+    def activation(self, network, in_vw):
+        return utils.stable_softmax(in_vw.variable)
+
+
 @core.register_node("tanh")
 class TanhNode(BaseActivationNode):
 
