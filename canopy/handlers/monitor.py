@@ -1,5 +1,8 @@
 import time
 
+import numpy as np
+
+from .. import network_utils
 from . import base
 
 
@@ -52,6 +55,9 @@ class EvaluateMonitoringVariables(base.NetworkHandlerImpl):
     """
     handler that additionally evaluates all monitoring variables, storing them
     in an output map with the input format
+
+    fmt:
+    eg. "train_%s", "valid_%s"
     """
 
     def __init__(self, fmt):
@@ -68,4 +74,32 @@ class EvaluateMonitoringVariables(base.NetworkHandlerImpl):
 
 evaluate_monitoring_variables = EvaluateMonitoringVariables
 
+
+class MonitorNetworkState(base.NetworkHandlerImpl):
+
+    """
+    handler that monitors shared variables in the network, storing them
+    in an output map with the input format
+
+    fmt:
+    first %s corresponds to key, second corresponds to statistic
+    eg. "network_%s_%s"
+    """
+
+    def __init__(self, fmt="network_%s_%s"):
+        self.fmt = fmt
+
+    def __call__(self, state, *args, **kwargs):
+        res = super(MonitorNetworkState, self).__call__(state, *args, **kwargs)
+        value_dict = network_utils.to_value_dict(state.network)
+        for k, v in value_dict.items():
+            abs_v = np.abs(v)
+            res[self.fmt % (k, "abs->max")] = np.max(abs_v)
+            # res[self.fmt % (k, "abs->mean")] = np.mean(abs_v)
+            # res[self.fmt % (k, "abs->min")] = np.min(abs_v)
+            res[self.fmt % (k, "mean")] = np.mean(v)
+            res[self.fmt % (k, "std")] = np.std(v)
+        return res
+
+monitor_network_state = MonitorNetworkState
 

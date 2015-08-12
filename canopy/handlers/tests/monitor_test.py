@@ -73,3 +73,32 @@ def test_evaluate_monitoring_variables():
     ans_key = "train_f:default"
     assert ans_key in res
     np.testing.assert_allclose(res[ans_key], 42 * x.sum(), rtol=1e-5)
+
+
+def test_monitor_network_state():
+
+    class CustomNode(treeano.NodeImpl):
+        input_keys = ()
+
+        def compute_output(self, network):
+            network.create_variable(
+                "default",
+                is_shared=True,
+                shape=()
+            )
+
+    network = CustomNode("c").network()
+    # build eagerly to share weights
+    network.build()
+
+    fn = canopy.handlers.handled_fn(
+        network,
+        [canopy.handlers.monitor_network_state()],
+        {},
+        {})
+
+    res = fn({})
+    # assert that there is a key that has "mean" in it
+    assert any("mean" in k for k in res.keys())
+    # assert that there is a key that has "std" in it
+    assert any("std" in k for k in res.keys())
