@@ -18,7 +18,8 @@ from monitor import (time_call,
                      time_per_row,
                      evaluate_monitoring_variables,
                      monitor_network_state)
-from misc import callback_with_input
+from misc import (callback_with_input,
+                  exponential_polyak_averaging)
 from debug import (output_nanguard,
                    network_nanguard,
                    nanguardmode,
