@@ -260,19 +260,34 @@ class MaxPool2DNode(core.NodeImpl):
                             "ignore_border")
 
     def compute_output(self, network, in_vw):
+        pool_size = network.find_hyperparameter(["pool_size"])
+        stride = network.find_hyperparameter(["pool_stride",
+                                              "stride"],
+                                             None)
+        ignore_border = network.find_hyperparameter(["ignore_border"],
+                                                    False)
+        if ((stride is not None)
+                and (stride != pool_size)
+                and (not ignore_border)):
+            # as of 20150813
+            # for more information, see:
+            # https://groups.google.com/forum/#!topic/lasagne-users/t_rMTLAtpZo
+            msg = ("Setting stride not equal to pool size and not ignoring"
+                   " border results in using a slower (cpu-based)"
+                   " implementation")
+            # making this an assertion instead of a warning to make sure it
+            # is done
+            assert False, msg
         wrap_lasagne_node(
             network=network,
             in_vw=in_vw,
             param_kwargs={},
             constructor=lasagne.layers.MaxPool2DLayer,
             kwargs=dict(
-                pool_size=network.find_hyperparameter(["pool_size"]),
-                stride=network.find_hyperparameter(["pool_stride",
-                                                    "stride"],
-                                                   None),
+                pool_size=pool_size,
+                stride=stride,
                 pad=network.find_hyperparameter(["pad"], (0, 0)),
-                ignore_border=network.find_hyperparameter(["ignore_border"],
-                                                          False),
+                ignore_border=ignore_border,
             )
         )
 
