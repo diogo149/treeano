@@ -61,7 +61,8 @@ from updates import (UpdateScaleNode,
                      NesterovMomentumNode,
                      NAGNode,
                      WeightDecayNode,
-                     AdamNode)
+                     AdamNode,
+                     AdaMaxNode)
 from costs import (AggregatorNode,
                    ElementwiseCostNode,
                    TotalCostNode,

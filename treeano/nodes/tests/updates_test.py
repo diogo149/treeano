@@ -55,6 +55,10 @@ def test_adam_node():
     tn.test_utils.check_updates_node(tn.AdamNode)
 
 
+def test_adamax_node():
+    tn.test_utils.check_updates_node(tn.AdaMaxNode)
+
+
 def test_nag_node():
     tn.test_utils.check_updates_node(tn.NAGNode, learning_rate=0.01)
 

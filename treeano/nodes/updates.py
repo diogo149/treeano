@@ -265,7 +265,7 @@ class AdamNode(StandardUpdatesNode):
         alpha_t = alpha * v_unbias_term / m_unbias_term
 
         for parameter_vw, grad in zip(parameter_vws, grads):
-            # 1st moment
+            # biased 1st moment estimate
             # moving average of gradient
             m_vw = network.create_variable(
                 "adam_m(%s)" % parameter_vw.name,
@@ -296,6 +296,103 @@ class AdamNode(StandardUpdatesNode):
 
             update_deltas[m] = new_m - m
             update_deltas[v] = new_v - v
+            update_deltas[parameter_vw.variable] = parameter_delta
+
+        return update_deltas
+
+
+@core.register_node("adamax")
+class AdaMaxNode(StandardUpdatesNode):
+
+    """
+    node that provides updates via AdaMax update rule
+    based on "Adam: A Method for Stochastic Optimization" v8
+    (http://arxiv.org/abs/1412.6980)
+    """
+
+    hyperparameter_names = ("adamax_learning_rate",
+                            "adamax_alpha",
+                            "learning_rate",
+                            "adamax_beta1",
+                            "beta1",
+                            "adamax_beta2",
+                            "beta2",
+                            "adamax_epsilon",
+                            "epsilon")
+
+    def _new_update_deltas(self, network, parameter_vws, grads):
+        # alpha / stepsize / learning rate are all the same thing
+        # using alpha because that is what is used in the paper
+        alpha = network.find_hyperparameter(["adamax_learning_rate",
+                                             "adamax_alpha",
+                                             "learning_rate"],
+                                            0.002)
+        beta1 = network.find_hyperparameter(["adamax_beta1",
+                                             "beta1"],
+                                            0.9)
+        beta2 = network.find_hyperparameter(["adamax_beta2",
+                                             "beta2"],
+                                            0.999)
+        epsilon = network.find_hyperparameter(["adamax_epsilon",
+                                               "epsilon"],
+                                              1e-8)
+        inits = list(toolz.concat(network.find_hyperparameters(
+            ["inits"],
+            [])))
+
+        update_deltas = core.UpdateDeltas()
+
+        # keep count state only once
+        t_vw = network.create_variable(
+            "adamax_count",
+            shape=(),
+            is_shared=True,
+            tags={"state"},
+            inits=inits,
+        )
+        t = t_vw.variable
+        new_t = t + 1
+        update_deltas[t] = new_t - t
+
+        # compute some values only once
+        # unbias terms to take into account initializing with 0
+        m_unbias_term = 1 - beta1 ** new_t
+        alpha_t = alpha / m_unbias_term
+
+        for parameter_vw, grad in zip(parameter_vws, grads):
+            # biased 1st moment estimate
+            # moving average of gradient
+            m_vw = network.create_variable(
+                "adamax_m(%s)" % parameter_vw.name,
+                shape=parameter_vw.shape,
+                is_shared=True,
+                tags={"state"},
+                inits=inits,
+            )
+            # exponentially weighted infinity norm
+            u_vw = network.create_variable(
+                "adamax_u(%s)" % parameter_vw.name,
+                shape=parameter_vw.shape,
+                is_shared=True,
+                tags={"state"},
+                inits=inits,
+            )
+
+            m = m_vw.variable
+            u = u_vw.variable
+
+            # new value for 1st moment estimate
+            new_m = beta1 * m + (1 - beta1) * grad
+            # new value for 2nd moment estimate
+            new_u = T.maximum(beta2 * u, abs(grad))
+
+            # NOTE: AdaMax doesn't have the epsilon term in the denominator,
+            # but not having it seems to lead to numerical instability
+            # (ie. dividing by 0)
+            parameter_delta = - alpha_t * new_m / (new_u + epsilon)
+
+            update_deltas[m] = new_m - m
+            update_deltas[u] = new_u - u
             update_deltas[parameter_vw.variable] = parameter_delta
 
         return update_deltas
