@@ -71,8 +71,7 @@ from stochastic import (DropoutNode,
                         GaussianDropoutNode,
                         SpatialDropoutNode)
 from composite import (DenseNode,
-                       DenseCombineNode,
-                       AuxiliaryDenseSoftmaxCCENode)
+                       DenseCombineNode)
 from debug import (PrintNode)
 
 from test_utils import check_serialization
