@@ -1147,6 +1147,9 @@
         - eg. multiple handled networks, multiple handled functions
       - except when serializing/deserializing
 ** canopy.handlers
+- canopy.handlers.conditional.handle_every
+  - instead of taking a function, takes in a handler, and only sometimes does the __call__ method of the handler
+  - add TODO to take in a list of handlers instead of a single handler
 - build
   - run in different process (w/ different GPU)
     - https://groups.google.com/forum/#!msg/theano-users/niQ8j_TNoqM/Y5_1ETIc3WUJ
@@ -1157,17 +1160,13 @@
   - stopping conditions
     - time
     - # iterations
-  - logging
-  - padding
-    - eg. minibatch
-    - in handlers.batch
   - passing extra input to the network (curriculum learning)
   - saving model
-  - polyak averaging
   - validation
     - assert shape of numpy array is same as that of the input variable
   - pre/post processing input/output
   - compile with nan detection mode
+    - NOTE: we already have code for a nan detection mode, but having this as a template would probably be useful
     - http://deeplearning.net/software/theano/tutorial/debug_faq.html
       - search for detect_nan
       - filter out str(node).startswith("GpuAllocEmpty(")
