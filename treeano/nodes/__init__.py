@@ -10,6 +10,7 @@ import stochastic
 import scan
 import composite
 import recurrent
+import monitor
 import debug
 import toy
 import test_utils
