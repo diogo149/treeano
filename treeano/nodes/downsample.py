@@ -15,7 +15,7 @@ class FeaturePoolNode(core.NodeImpl):
                             "pool_function")
 
     def compute_output(self, network, in_vw):
-        k = network.find_hyperparameter(["num_pieces"])
+        k = network.find_hyperparameter(["num_pieces"], 2)
         pool_fn = network.find_hyperparameter(["pool_function"])
         axis = network.find_hyperparameter(
             ["feature_pool_axis",
