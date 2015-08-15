@@ -46,6 +46,7 @@ in_valid = {"x": X_valid, "y": y_valid}
 
 # - the batch size can be provided as `None` to make the network
 #   work for multiple different batch sizes
+from treeano.sandbox.nodes.monitor_update_ratio import MonitorUpdateRatioNode
 model = tn.HyperparameterNode(
     "model",
     tn.SequentialNode(
@@ -69,11 +70,11 @@ with_updates = tn.HyperparameterNode(
     "with_updates",
     tn.AdamNode(
         "adam",
-        {"subtree": model,
+        {"subtree": MonitorUpdateRatioNode("updateratio", model),
          "cost": tn.TotalCostNode("cost", {
              "pred": tn.ReferenceNode("pred_ref", reference="model"),
              "target": tn.InputNode("y", shape=(None,), dtype="int32")},
-         )}),
+        )}),
     cost_function=treeano.utils.categorical_crossentropy_i32,
 )
 network = with_updates.network()
