@@ -259,6 +259,7 @@ class AdamNode(StandardUpdatesNode):
 
         # compute some values only once
         # unbias terms to take into account initializing with 0
+        # NOTE: unbias terms assume constant beta1/beta2
         m_unbias_term = 1 - beta1 ** new_t
         v_unbias_term = T.sqrt(1 - beta2 ** new_t)
         epsilon_hat = epsilon * v_unbias_term
