@@ -265,7 +265,7 @@ class MaxPool2DNode(core.NodeImpl):
                                               "stride"],
                                              None)
         ignore_border = network.find_hyperparameter(["ignore_border"],
-                                                    False)
+                                                    True)
         if ((stride is not None)
                 and (stride != pool_size)
                 and (not ignore_border)):
