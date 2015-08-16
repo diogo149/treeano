@@ -73,6 +73,7 @@ from stochastic import (DropoutNode,
                         SpatialDropoutNode)
 from composite import (DenseNode,
                        DenseCombineNode)
+from monitor import (MonitorVarianceNode)
 from debug import (PrintNode)
 
 from test_utils import check_serialization

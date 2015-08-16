@@ -56,9 +56,6 @@ class MonitorUpdateRatioNode(treeano.Wrapper1NodeImpl):
             delta = update_deltas[vw.variable]
             for stat in statistics:
                 assert isinstance(stat, str)
-                import sys
-                sys.stderr.write("FOO self.name: %s\n" % self.name)
-
                 name = "%s_%s" % (vw.name, stat)
                 stat_fn = self.statistic_to_fn(stat)
                 # computing the value of the stat after the update instead of
