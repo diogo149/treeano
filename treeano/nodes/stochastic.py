@@ -7,7 +7,7 @@ from theano.sandbox.rng_mrg import MRG_RandomStreams
 from .. import core
 from .. import utils
 
-floatX = theano.config.floatX
+fX = theano.config.floatX
 
 
 # TODO: Refactor to extract shared logic from these nodes.
@@ -51,7 +51,7 @@ class DropoutNode(core.NodeImpl):
             bernoulli_prob = 1 - p
             mask = rescale_factor * srng.binomial(mask_shape,
                                                   p=bernoulli_prob,
-                                                  dtype=floatX)
+                                                  dtype=fX)
             network.create_variable(
                 "default",
                 variable=in_vw.variable * mask,
@@ -103,7 +103,7 @@ class GaussianDropoutNode(core.NodeImpl):
                 mask_shape = in_vw.variable.shape
             # TODO save this state so that we can seed the rng
             srng = MRG_RandomStreams()
-            mask = srng.normal(mask_shape, avg=1.0, std=sigma, dtype=floatX)
+            mask = srng.normal(mask_shape, avg=1.0, std=sigma, dtype=fX)
             network.create_variable(
                 "default",
                 variable=in_vw.variable * mask,
@@ -157,7 +157,7 @@ class SpatialDropoutNode(core.NodeImpl):
             bernoulli_prob = 1 - p
             mask = rescale_factor * srng.binomial(mask_shape,
                                                   p=bernoulli_prob,
-                                                  dtype=floatX)
+                                                  dtype=fX)
             mask = mask.dimshuffle(0, 1, 'x', 'x')
             network.create_variable(
                 "default",
