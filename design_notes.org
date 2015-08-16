@@ -1147,6 +1147,25 @@
         - eg. multiple handled networks, multiple handled functions
       - except when serializing/deserializing
 ** canopy.handlers
+- don't use __call__ for handlers
+  - some kinds of handlers don't need state
+  - for more modularity, we should separate out the kinds of handlers:
+    - eg.
+      - pre-call handlers
+        - manipulating input
+      - post-call handlers
+        - manipulating output
+        - eg.
+          - saving monitoring data
+      - no-network-state pre+post
+        - eg.
+          - timing
+  - then the other handlers can overwrite __call__ in the most appropriate way
+    - eg.
+      - pre-call handlers are just functions on input kwargs
+      - post-call handlers are just functions on result
+      - no-network-state pre+post can be a context manager
+        - eg. ~with time_call(...)~ or as a handler
 - canopy.handlers.conditional.handle_every
   - instead of taking a function, takes in a handler, and only sometimes does the __call__ method of the handler
   - add TODO to take in a list of handlers instead of a single handler
@@ -1261,6 +1280,10 @@
   - conclusion:
     - for now, use the ScanAwareReferenceNode seems like the best solution
     - because it is compatible with the single output design, we can do this later
+- implement
+  - LSTM / GRU
+    - https://github.com/fchollet/keras/blob/master/keras/layers/recurrent.py
+    - https://github.com/mila-udem/blocks/blob/master/blocks/bricks/recurrent.py
 ** shape calculation
 - try test_value's with scan
 - maybe have shape be a symbolic scalar - that way equality checks can be done
@@ -1271,30 +1294,25 @@
   - can make them theano variables, and have a completely separate theano graph for batch sizes
 - figure out how to make recurrent node's not require batch size
   - would be cool to have symbolic shapes work
+- auto shape computation
+  - use FAST_COMPILE mode, and do .shape symbolically, in case it can be optimized
+  - can use compute_test_value for shape computation
+  - eg. T.zeros((3,4,5)).shape.tag.test_value
 ** misc
+- TheanoExpressionNode()
+  - input:
+    - output
+      - as a variable
+      - or dict from name to variables
+    - input (from the graph)
+      - as a variable
+      - maybe a dict from to_key to variables
+  - pre-requisites:
+    - auto-shape calculation, to make it easy
 - ipython notebook template with common actions
   - eg.
     - visualization
       - error analysis
-- don't use __call__ for handlers
-  - some kinds of handlers don't need state
-  - for more modularity, we should separate out the kinds of handlers:
-    - eg.
-      - pre-call handlers
-        - manipulating input
-      - post-call handlers
-        - manipulating output
-        - eg.
-          - saving monitoring data
-      - no-network-state pre+post
-        - eg.
-          - timing
-  - then the other handlers can overwrite __call__ in the most appropriate way
-    - eg.
-      - pre-call handlers are just functions on input kwargs
-      - post-call handlers are just functions on result
-      - no-network-state pre+post can be a context manager
-        - eg. ~with time_call(...)~ or as a handler
 - simpler way of reshaping
   - eg. I want to divide this dim by 2 and multiply this dim by 2
 - add way to filter parameters and only apply updates to a subset
@@ -1303,9 +1321,6 @@
     - l2 weight decay
     - any update node
   - one might argue that one could choose which nodes to wrap, but some nodes might have multiple parameters
-- lazy way of storing new values instead of update deltas
-  - pros
-    - saves a few nodes in graph
 - percentile tests fail for floatX=float64
 - generalize / share code between stochastic:
   - dropout
@@ -1332,15 +1347,6 @@
   - eg.
     - weight initialization
     - getting hyperparameter
-- SymbolicHyperparameterNode("foo", hyperparameters=["learning_rate", "momentum"])
-  - creates symbol variables for hyperparameters
-- scaled tanh
-  - 1.7159 * tanh(2/3 * x)
-- add inception layer treeano/sandbox/nodes/
-- auto shape computation
-  - use FAST_COMPILE mode, and do .shape symbolically, in case it can be optimized
-  - can use compute_test_value for shape computation
-  - eg. T.zeros((3,4,5)).shape.tag.test_value
 - new parameter tags:
   - updates_state
     - rationale: might want to reset it
@@ -1359,9 +1365,6 @@
   - that way learning is 100% serializable
 - ability to serialize only a subtree
   - that way training state (eg. updates) doesn't have to be serialized
-- create hyperparameter annealing
-  - save hp as shared state
-  - plug in an annealing algorithm
 - add testing files in examples/ to test cases
 - have children container verify every element is of type NodeAPI
 - rename UpdateScaleNode to MultiplyUpdatesNode
@@ -1383,22 +1386,8 @@
 - change terminology to not refer to variable wrappers as variables
 - relativenetwork
   - add __repr__
-  - add .W .b syntax shortcut for accessing state
-  - add get_state set_state which does not overlap with current_variables
-- implement
-  - LSTM / GRU
-    - https://github.com/fchollet/keras/blob/master/keras/layers/recurrent.py
-    - https://github.com/mila-udem/blocks/blob/master/blocks/bricks/recurrent.py
 - cache gradient computation
-- make sure shapes can handle None's for polymorphism
 - use assertions for outputs that should not be used
-- grep for FIXME's
-- function to wrap lasagne layer boilerplate
-  - input:
-    - lazy wrapped variable
-    - layer constructor
-    - kwargs for constructor
-  - output: lazy wrapped variable
 - test:
   - find_variables
   - preallocatedinitialization
@@ -1408,14 +1397,6 @@
   - using a stateful class and a hyperparameternode is very wrong
     - just a hack
   - want to represent the parameters of the initialization as hyperparameters and have them be clone-able/inspect-able
-- wrap lasagne
-  - update code
-  - initialization
-  - layers
-- custom wrapper around variables
-  - if shape is not given, print warning and calculate
-    - theano.function([x, y], [x], on_unused_input="ignore")(2, 3)
-- make insides of update algorithms inspectable (eg. intermediates in nesterov momentum)
 - redesign from_key, to_key graph
   - rationale:
     - the edge is currently stores as something like (from_name, to_name, {from_key: xxx, to_key: xxx})
@@ -1429,6 +1410,11 @@
   - cons
     - might be complex to understand
     - defining hyperparameters in more than one place
+- lazy way of storing new values instead of update deltas
+  - ie. if you have new_value, no need to store new_value - old_value to only add old_value back in
+  - pros
+    - saves a few nodes in graph
+- grep for FIXME's
 ** debugging
 - name all theano variables
   - https://groups.google.com/forum/#!msg/theano-users/QoXZZxP5uHE/Krptqwktp7sJ
