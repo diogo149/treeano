@@ -52,6 +52,7 @@ model = tn.HyperparameterNode(
     tn.SequentialNode(
         "seq",
         [tn.InputNode("x", shape=(None, 28 * 28)),
+         tn.MonitorVarianceNode("mv0"),
          tn.DenseNode("fc1"),
          tn.MonitorVarianceNode("mv1"),
          tn.ReLUNode("relu1"),
