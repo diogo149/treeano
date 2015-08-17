@@ -486,7 +486,7 @@ function createChartView() {
 
     };
 
-    loadMonitorData(refreshChart);
+    refreshChart();
   });
 
   $tabs.tabs({event: "mouseover"});
