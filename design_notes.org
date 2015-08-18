@@ -1049,6 +1049,9 @@
     - same thing w/ names + hyperparameters
     - remove nodeapi/nodeimpl distinction
 ** v2
+- another reason to have hyperparameters when creating children:
+  - removing the bias from FC/conv layers
+    - since it doesn't do anything with batch norm
 - consistent shared variabling name bias/b, weight/W
 - should there be utility functions for getting common hyperparameters?
   - use cases:
