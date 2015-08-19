@@ -359,7 +359,7 @@ class MeanPool2DDNNNode(core.NodeImpl):
 class LocalResponseNormalization2DNode(core.NodeImpl):
 
     """
-    node wrapping lasagne's Pool2DDNNLayer with mode = average_exc_pad
+    node wrapping lasagne's LocalResponseNormalization2DLayer
     """
 
     hyperparameter_names = ("lrn_alpha",
