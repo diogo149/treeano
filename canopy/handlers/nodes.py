@@ -34,6 +34,8 @@ class OverrideHyperparameters(base.NetworkHandlerImpl):
         self.hyperparameters = kwargs
 
     def transform_network(self, network):
+        # FIXME make this a transform
+
         def update_fn(override_hyperparameters):
             return toolz.merge(override_hyperparameters,
                                self.hyperparameters)
