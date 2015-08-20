@@ -99,7 +99,9 @@ def walk(obj,
 
         def persistent_load(persid):
             if cached_walk:
-                return object_cache.pop(persid)
+                # NOTE: shouldn't pop here since an object can be cached
+                # multiple times
+                return object_cache[persid]
             else:
                 return pickle.loads(base64.urlsafe_b64decode(persid))
 
