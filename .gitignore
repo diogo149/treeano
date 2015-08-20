@@ -55,3 +55,6 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# used for monitor ui examples
+monitor_dir/

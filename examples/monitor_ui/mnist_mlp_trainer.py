@@ -122,7 +122,7 @@ train_fn = canopy.handled_fn(
 # ################################# training #################################
 
 import canopy.sandbox.monitor_ui
-result_writer = canopy.sandbox.monitor_ui.ResultWriter(dirname="monitor",
+result_writer = canopy.sandbox.monitor_ui.ResultWriter(dirname="monitor_dir",
                                                        pattern="")
 
 print("Starting training...")
