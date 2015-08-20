@@ -16,6 +16,7 @@ output
 weight
 bias
 parameter
+hyperparameter
 monitor
 state
 """.split())

@@ -9,6 +9,7 @@ import costs
 import stochastic
 import scan
 import composite
+import hyperparameter
 import recurrent
 import monitor
 import debug
@@ -73,6 +74,8 @@ from stochastic import (DropoutNode,
                         SpatialDropoutNode)
 from composite import (DenseNode,
                        DenseCombineNode)
+from hyperparameter import (VariableHyperparameterNode,
+                            OutputHyperparameterNode)
 from monitor import (MonitorVarianceNode)
 from debug import (PrintNode)
 

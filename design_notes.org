@@ -1049,6 +1049,7 @@
     - same thing w/ names + hyperparameters
     - remove nodeapi/nodeimpl distinction
 ** v2
+- if variables are needed before init_state, then variablehyperparameternode might break
 - another reason to have hyperparameters when creating children:
   - removing the bias from FC/conv layers
     - since it doesn't do anything with batch norm

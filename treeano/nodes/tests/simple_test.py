@@ -5,7 +5,7 @@ import numpy as np
 import theano
 import theano.tensor as T
 
-import treeano.core
+import treeano
 import treeano.nodes as tn
 
 fX = theano.config.floatX

@@ -1,3 +1,5 @@
+import numbers
+
 import numpy as np
 import theano
 import theano.tensor as T
@@ -33,6 +35,18 @@ def is_shared_variable(x):
 
 def is_variable(x):
     return is_nonshared_variable(x) or is_shared_variable(x)
+
+
+def is_number(x):
+    return isinstance(x, numbers.Number)
+
+
+def is_integral(x):
+    return isinstance(x, numbers.Integral)
+
+
+def is_ndarray(x):
+    return isinstance(x, np.ndarray)
 
 
 def all_equal(seq):
