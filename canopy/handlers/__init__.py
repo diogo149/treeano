@@ -11,7 +11,8 @@ from base import (NetworkHandlerAPI,
 from fn import (handled_fn)
 from conditional import (call_after_every)
 from nodes import (with_hyperparameters,
-                   override_hyperparameters)
+                   override_hyperparameters,
+                   schedule_hyperparameter)
 from batch import (chunk_variables,
                    batch_pad)
 from monitor import (time_call,

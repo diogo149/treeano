@@ -56,7 +56,40 @@ def remove_parent(network, names, **kwargs):
                 return child
         return node
 
-    return fns.transform_root_node_postwalk(network, inner, **kwargs)
+    res = fns.transform_root_node_postwalk(network, inner, **kwargs)
+    # all of the given names should be part of the network
+    assert len(mutable_names) == 0, mutable_names
+    return res
+
+
+def add_parent(network,
+               name,
+               parent_constructor,
+               parent_name,
+               parent_kwargs,
+               **kwargs):
+    """
+    adds a parent between the given node and its current parent
+
+    name:
+    name of the node to add the parent to
+    """
+    found = [False]
+
+    def inner(node):
+        if node.name == name:
+            found[0] = True
+            return parent_constructor(
+                parent_name,
+                node,
+                **parent_kwargs
+            )
+        else:
+            return node
+
+    res = fns.transform_root_node_postwalk(network, inner, **kwargs)
+    assert found[0], "%s not found" % name
+    return res
 
 
 def add_hyperparameters(network, name, hyperparameters, **kwargs):

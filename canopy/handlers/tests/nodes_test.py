@@ -91,3 +91,25 @@ def test_override_hyperparameters3():
         {"out": "c"}
     )
     np.testing.assert_equal(fn2({})["out"], x2)
+
+
+def test_schedule_hyperparameter():
+    network = tn.OutputHyperparameterNode("a", hyperparameter="foo").network()
+
+    def schedule(in_dict, out_dict):
+        if out_dict is None:
+            return 100
+        else:
+            return treeano.utils.as_fX(np.random.rand() * out_dict["out"])
+
+    fn = canopy.handled_fn(network,
+                           [canopy.handlers.schedule_hyperparameter("foo",
+                                                                    schedule)],
+                           {},
+                           {"out": "a"})
+    prev = fn({})["out"]
+    nt.assert_equal(prev, 100)
+    for _ in range(10):
+        curr = fn({})["out"]
+        assert curr < prev
+        prev = curr
