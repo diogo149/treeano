@@ -63,6 +63,10 @@ def rectify(x, negative_coefficient=0):
     return f1 * x + f2 * abs(x)
 
 
+def root_mean_square(x, axis=None):
+    return T.sqrt(T.mean(T.sqr(x), axis=axis))
+
+
 def stable_softmax(x):
     """
     numerical stabilization to avoid f32 overflow
