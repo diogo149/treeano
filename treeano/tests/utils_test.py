@@ -91,3 +91,12 @@ def test_multiclass_hinge_loss():
                     [0.5, 1]],
                    dtype=fX)
     np.testing.assert_equal(res, ans)
+
+
+def test_root_mean_square():
+    x = np.array([[3, 4],
+                  [6, 8],
+                  [1, 1]], dtype=fX)
+    res = treeano.utils.root_mean_square(x, axis=1).eval()
+    ans = np.array([5 / np.sqrt(2), 10 / np.sqrt(2), 1], dtype=fX)
+    np.testing.assert_allclose(ans, res)
