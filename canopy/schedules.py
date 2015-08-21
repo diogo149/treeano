@@ -46,18 +46,19 @@ class DiscreteSchedule(object):
     def __init__(self, schedule):
         """
         takes in a schedule of the format list of tuples of iteration and
-        hyperparameter value at that iteration
+        hyperparameter value at that iteration (the iteration is the final
+        iteration at that hyperparameter value), followed by the value after
+        the last number of iterations
         eg.
-        DiscreteSchedule([(1, 0.1),
+        DiscreteSchedule([(3, 0.1),
                           (1000, 0.01),
-                          (1200, 0.001)])
+                          0.001],)
 
         NOTES:
         - count is 1-indexed
-        - anything before the first pair is assumed to be constant
-        - anything after the last pair is assumed to be constant
         """
-        for p1, p2 in zip(schedule, schedule[1:]):
+        # make a copy since we will mutate it
+        for p1, p2 in zip(schedule, schedule[1:-1]):
             # not sorting the schedule automatically because it would be
             # harder to read/understand in the client's code
             assert p1[0] < p2[0], "Sort your schedule!"
@@ -66,7 +67,7 @@ class DiscreteSchedule(object):
 
     def __call__(self, in_dict, previous_output_dict):
         self.num_ += 1
-        for n, v in reversed(self.schedule):
-            if self.num_ >= n:
+        for n, v in self.schedule[:-1]:
+            if self.num_ <= n:
                 return v
-        return v
+        return self.schedule[-1]

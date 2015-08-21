@@ -32,7 +32,7 @@ def test_piecewise_linear_schedule():
 def test_discrete_schedule():
     s = canopy.schedules.DiscreteSchedule([(2, 10),
                                            (4, 15),
-                                           (7, -2)])
-    ans = np.array([10, 10, 10, 15, 15, 15, -2, -2, -2, -2])
+                                           -2])
+    ans = np.array([10, 10, 15, 15, -2, -2, -2, -2, -2, -2])
     res = np.array([s(None, None) for _ in range(10)])
     np.testing.assert_allclose(ans, res)
