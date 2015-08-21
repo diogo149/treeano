@@ -100,3 +100,31 @@ def test_root_mean_square():
     res = treeano.utils.root_mean_square(x, axis=1).eval()
     ans = np.array([5 / np.sqrt(2), 10 / np.sqrt(2), 1], dtype=fX)
     np.testing.assert_allclose(ans, res)
+
+
+def test_is_float_ndarray():
+    assert not treeano.utils.is_float_ndarray(3)
+    assert not treeano.utils.is_float_ndarray([True])
+    assert not treeano.utils.is_float_ndarray([42])
+    assert not treeano.utils.is_float_ndarray(42.0)
+    assert treeano.utils.is_float_ndarray(theano.shared(42.0).get_value())
+    # NOTE: not including dscalar, because warn_float64 might be set
+    for x in [T.scalar(), T.fscalar()]:
+        assert treeano.utils.is_float_ndarray(x.eval({x: 42}))
+    assert treeano.utils.is_float_ndarray(np.random.randn(42))
+    assert treeano.utils.is_float_ndarray(
+        np.random.randn(42).astype(np.float32))
+    assert treeano.utils.is_float_ndarray(
+        np.random.randn(42).astype(np.float64))
+
+
+def test_is_int_ndarray():
+    assert not treeano.utils.is_int_ndarray(3)
+    assert not treeano.utils.is_int_ndarray([True])
+    assert not treeano.utils.is_int_ndarray([42])
+    assert not treeano.utils.is_int_ndarray(42.0)
+    for x in [T.iscalar(), T.lscalar()]:
+        assert treeano.utils.is_int_ndarray(x.eval({x: 42}))
+    assert treeano.utils.is_int_ndarray(np.random.randint(42, size=(4, 5)))
+    assert treeano.utils.is_int_ndarray(
+        np.random.randint(42, size=(4, 5)).astype(np.int32))

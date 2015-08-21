@@ -49,6 +49,14 @@ def is_ndarray(x):
     return isinstance(x, np.ndarray)
 
 
+def is_float_ndarray(x):
+    return is_ndarray(x) and issubclass(x.dtype.type, np.floating)
+
+
+def is_int_ndarray(x):
+    return is_ndarray(x) and issubclass(x.dtype.type, numbers.Integral)
+
+
 def all_equal(seq):
     """
     whether or not all elements of a sequence are equal
