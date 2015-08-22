@@ -36,3 +36,8 @@ def test_discrete_schedule():
     ans = np.array([10, 10, 15, 15, -2, -2, -2, -2, -2, -2])
     res = np.array([s(None, None) for _ in range(10)])
     np.testing.assert_allclose(ans, res)
+
+    s = canopy.schedules.DiscreteSchedule([-2])
+    ans = np.array([-2, -2, -2, -2, -2])
+    res = np.array([s(None, None) for _ in range(5)])
+    np.testing.assert_allclose(ans, res)
