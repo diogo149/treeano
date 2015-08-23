@@ -157,6 +157,26 @@ class ExponentialSchedule(object):
         return val
 
 
+class HalfLifeSchedule(object):
+
+    def __init__(self, initial, half_life):
+        """
+        halves the value that is output every half_life iterations
+
+        the same as an ExponentialSchedule, with a potentially easier
+        to reason about hyperparameter
+        """
+        self.initial = initial
+        self.half_life = half_life
+        self.num_ = 0
+
+    def __call__(self, in_dict, previous_output_dict):
+        val = self.initial * 0.5 ** (self.num_ / self.half_life)
+        # add afterwards, so that initial value equals initial
+        self.num_ += 1
+        return val
+
+
 class MultiStageSchedule(object):
 
     def __init__(self, schedules):

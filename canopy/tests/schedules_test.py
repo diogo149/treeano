@@ -78,6 +78,13 @@ def test_exponential_schedule():
     np.testing.assert_allclose(ans, res)
 
 
+def test_half_life_schedule():
+    s = canopy.schedules.HalfLifeSchedule(1, 2)
+    ans = np.array([1, np.sqrt(0.5), 0.5, np.sqrt(0.125), 0.25])
+    res = np.array([s(None, None) for _ in range(5)])
+    np.testing.assert_allclose(ans, res)
+
+
 def test_multi_stage_schedule():
     s = canopy.schedules.MultiStageSchedule(
         [(2, canopy.schedules.FixedSchedule(2)),
