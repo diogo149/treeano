@@ -207,3 +207,19 @@ class MultiStageSchedule(object):
             if self.num_ <= n:
                 return s(in_dict, previous_output_dict)
         return self.schedules[-1](in_dict, previous_output_dict)
+
+
+class PiecewiseLogLinearSchedule(object):
+
+    def __init__(self, schedule):
+        """
+        takes in a schedule of the format list of tuples of iteration and
+        hyperparameter value at that iteration
+        """
+        self.schedule = schedule
+        self.sub_schedule_ = PiecewiseLinearSchedule(
+            [(n, np.log(v)) for n, v in schedule])
+
+    def __call__(self, in_dict, previous_output_dict):
+        res = self.sub_schedule_(in_dict, previous_output_dict)
+        return np.exp(res)

@@ -93,3 +93,11 @@ def test_multi_stage_schedule():
     ans = np.array([2, 2, 3, 6, 12, 1, 1, 1, 1, 1])
     res = np.array([s(None, None) for _ in range(10)])
     np.testing.assert_allclose(ans, res)
+
+
+def test_piecewise_log_linear_schedule():
+    s = canopy.schedules.PiecewiseLogLinearSchedule([(2, 1.0),
+                                                     (5, 1e-3)])
+    ans = np.array([1, 1, 1e-1, 1e-2, 1e-3, 1e-3, 1e-3, 1e-3, 1e-3, 1e-3])
+    res = np.array([s(None, None) for _ in range(10)])
+    np.testing.assert_allclose(ans, res)
