@@ -1546,15 +1546,6 @@
     - seems to be untested-ish
     - based on: https://github.com/mohammadpz/CTC-Connectionist-Temporal-Classification
 ** canopy
-- issue with schedule hyperparameter:
-  - currently implemented as a handler
-  - values can affect test time
-    - eg. leak alpha of leaky relu
-  - we want consistent values at test time
-    - ie. use the same value at train and test
-    - at least some of the time
-      - because this is only sometimes, we need a way to enable it manually
-  - but don't want to update the schedule state at test time
 - monitor features
   - ability to save settings to localstorage / cookie
   - allowing line styles
