@@ -130,6 +130,13 @@ class Network(object):
             node = self.root_node
         return RelativeNetwork(self, node)
 
+    def __contains__(self, node_name):
+        """
+        sugar for checking if a node name is in the graph
+        """
+        self.build()
+        return node_name in self.graph.name_to_node
+
     def __getitem__(self, node_name):
         """
         sugar for accessing nodes in a graph
