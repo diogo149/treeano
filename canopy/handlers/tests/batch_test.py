@@ -10,6 +10,7 @@ import canopy
 
 fX = theano.config.floatX
 
+
 def test_split_input():
     network = tn.SequentialNode(
         "seq",
@@ -34,7 +35,7 @@ def test_split_input():
     np.testing.assert_equal(fn2({"x": np.zeros((18, 2), dtype=fX)})["out"],
                             np.ones((18, 2), dtype=fX) * 3)
 
-    
+
 def test_chunk_variables():
     network = tn.SequentialNode(
         "seq",
