@@ -16,9 +16,9 @@ class CallbackWithInput(base.NetworkHandlerImpl):
     def __init__(self, callback):
         self.callback = callback
 
-    def call(self, fn, in_map, *args, **kwargs):
-        res = fn(in_map, *args, **kwargs)
-        self.callback(res, in_map)
+    def call(self, fn, in_dict, *args, **kwargs):
+        res = fn(in_dict, *args, **kwargs)
+        self.callback(in_dict, res)
         return res
 
 callback_with_input = CallbackWithInput

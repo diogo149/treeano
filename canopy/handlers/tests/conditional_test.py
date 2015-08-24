@@ -14,8 +14,8 @@ fX = theano.config.floatX
 def test_call_after_every():
     vals = []
 
-    def save_val(in_dict):
-        vals.append(in_dict["out"])
+    def save_val(in_dict, result_dict):
+        vals.append(result_dict["out"])
 
     network = tn.InputNode("i", shape=()).network()
     fn = canopy.handlers.handled_fn(

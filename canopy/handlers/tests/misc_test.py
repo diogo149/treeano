@@ -14,8 +14,8 @@ fX = theano.config.floatX
 def test_callback_with_input():
     vals = []
 
-    def save_sum(res_map, in_map):
-        vals.append(res_map["out"] + in_map["x"])
+    def save_sum(in_dict, result_dict):
+        vals.append(result_dict["out"] + in_dict["x"])
 
     network = tn.InputNode("i", shape=()).network()
     fn = canopy.handlers.handled_fn(

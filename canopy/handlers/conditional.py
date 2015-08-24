@@ -13,12 +13,12 @@ class CallAfterEvery(base.NetworkHandlerImpl):
         self.callback = callback
         self.count = 0
 
-    def call(self, fn, *args, **kwargs):
-        res = fn(*args, **kwargs)
+    def call(self, fn, in_dict, *args, **kwargs):
+        res = fn(in_dict, *args, **kwargs)
         self.count += 1
         if (self.count % self.iters) == 0:
             # WARNING: dict may be mutated here
-            self.callback(res)
+            self.callback(in_dict, res)
         return res
 
 call_after_every = CallAfterEvery
