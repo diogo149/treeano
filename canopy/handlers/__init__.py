@@ -14,7 +14,8 @@ from nodes import (with_hyperparameters,
                    override_hyperparameters,
                    schedule_hyperparameter,
                    use_scheduled_hyperparameter)
-from batch import (chunk_variables,
+from batch import (split_input,
+                   chunk_variables,
                    batch_pad)
 from monitor import (time_call,
                      time_per_row,
