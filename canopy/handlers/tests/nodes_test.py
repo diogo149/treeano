@@ -113,3 +113,23 @@ def test_schedule_hyperparameter():
         curr = fn({})["out"]
         assert curr < prev
         prev = curr
+
+
+def test_schedule_hyperparameter_very_leaky_relu():
+    network = tn.SequentialNode(
+        "s",
+        [tn.InputNode("i", shape=()),
+         tn.VeryLeakyReLUNode("r")]
+    ).network()
+
+    def schedule(in_dict, out_dict):
+        return 10
+
+    fn = canopy.handled_fn(
+        network,
+        [canopy.handlers.schedule_hyperparameter("leak_alpha",
+                                                 schedule)],
+        {"x": "i"},
+        {"out": "s"})
+    res = fn({"x": -2})["out"]
+    nt.assert_equal(res, -20)

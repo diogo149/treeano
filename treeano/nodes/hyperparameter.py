@@ -45,9 +45,10 @@ class VariableHyperparameterNode(core.Wrapper1NodeImpl):
             return super(VariableHyperparameterNode, self).get_hyperparameter(
                 network, name)
 
-        hyperparameter = network.find_hyperparameter(["hyperparameter"])
+        rel_network = network[self.name]
+        hyperparameter = rel_network.find_hyperparameter(["hyperparameter"])
         if name == hyperparameter:
-            return network[self.name].get_variable("hyperparameter").variable
+            return rel_network.get_variable("hyperparameter").variable
         else:
             return super(VariableHyperparameterNode, self).get_hyperparameter(
                 network, name)

@@ -40,3 +40,16 @@ def test_output_hyperparameter_node():
     fn = network.function([("a", "hyperparameter")], ["b"])
     x = 253
     nt.assert_equal(fn(x), [x])
+
+
+def test_variable_hyperparameter_node_double():
+    network = tn.VariableHyperparameterNode(
+        "a",
+        tn.VariableHyperparameterNode(
+            "b",
+            tn.OutputHyperparameterNode("c", hyperparameter="foo"),
+            hyperparameter="bar"),
+        hyperparameter="foo").network()
+    fn = network.function([("a", "hyperparameter")], ["c"])
+    x = 253
+    nt.assert_equal(fn(x), [x])
