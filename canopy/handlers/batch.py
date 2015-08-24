@@ -9,6 +9,59 @@ import treeano
 
 from . import base
 
+class SplitInput(base.NetworkHandlerImpl):
+    
+    """
+    Splits the input into multiple smaller inputs along axis 0,
+    applies the inner function, and concatenates the results.
+    
+    Size of input must be a mulitple of split_size.
+
+    scalar_merge:
+    how scalar outputs should be merged together
+    
+    """
+
+    def __init__(self, 
+                 split_size,
+                 keys,
+                 scalar_merge="mean"):
+        self.split_size = split_size
+        self.keys = keys
+        if scalar_merge == "mean":
+            scalar_merge = np.mean
+        self.scalar_merge = scalar_merge
+    
+    def call(self, fn, in_dict, *args, **kwargs):
+        input_size = None
+        for input_key in self.keys:
+            input_val = in_dict[input_key]
+            if input_size is None:
+                input_size = len(input_val)
+            else:
+                assert len(input_val) == input_size
+        assert input_size is not None
+        results = []
+        # optimization to prevent copying and simply pass computation through 
+        # when splitting is a no-op
+        if input_size == self.split_size:
+            return fn(in_dict, *args, **kwargs)
+        for i in range(int(np.ceil(input_size / self.split_size))):
+            inner_map = dict(in_dict)
+            for key in self.keys:
+                inner_map[key] = in_dict[key][i * self.split_size : (i+1) * self.split_size]
+            result = fn(inner_map, *args, **kwargs)
+            results.append(result)
+        res = {}
+        for key in results[0].keys():  # assumes at least 1 split
+            outputs = [r[key] for r in results]
+            if outputs[0].shape:
+                res[key] = np.concatenate(outputs)
+            else:
+                res[key] = self.scalar_merge(outputs)
+        return res
+
+split_input = SplitInput
 
 class ChunkVariables(base.NetworkHandlerImpl):
 
