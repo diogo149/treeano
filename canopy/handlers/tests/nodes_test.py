@@ -133,3 +133,34 @@ def test_schedule_hyperparameter_very_leaky_relu():
         {"out": "s"})
     res = fn({"x": -2})["out"]
     nt.assert_equal(res, -20)
+
+
+def test_use_scheduled_hyperparameter():
+    network1 = tn.OutputHyperparameterNode("a", hyperparameter="foo").network()
+    network2 = tn.SequentialNode(
+        "s",
+        [tn.OutputHyperparameterNode("a", hyperparameter="foo"),
+         tn.MultiplyConstantNode("m", value=42)]).network()
+
+    schedule = canopy.schedules.PiecewiseLinearSchedule([(1, 1), (10, 10)])
+    sh_handler = canopy.handlers.schedule_hyperparameter("foo", schedule)
+
+    fn2 = canopy.handled_fn(
+        network2,
+        [canopy.handlers.use_scheduled_hyperparameter(sh_handler)],
+        {},
+        {"out": "s"})
+
+    def callback(in_dict, result_dict):
+        result_dict["out2"] = fn2(in_dict)["out"]
+
+    fn1 = canopy.handled_fn(network1,
+                            [sh_handler,
+                             canopy.handlers.call_after_every(1, callback)],
+                            {},
+                            {"out": "a"})
+
+    res = fn1({})
+    nt.assert_equal(res, {"out": 1, "out2": 42})
+    res = fn1({})
+    nt.assert_equal(res, {"out": 2, "out2": 84})

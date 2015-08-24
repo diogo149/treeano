@@ -54,7 +54,7 @@ class OverrideHyperparameters(base.NetworkHandlerImpl):
 override_hyperparameters = OverrideHyperparameters
 
 
-class ScheduledHyperparameter(base.NetworkHandlerImpl):
+class ScheduleHyperparameter(base.NetworkHandlerImpl):
 
     def __init__(self,
                  hyperparameter,
@@ -89,8 +89,12 @@ class ScheduledHyperparameter(base.NetworkHandlerImpl):
         """
         self.hyperparameter = hyperparameter
         self.schedule = schedule
+        if node_name is None:
+            node_name = "scheduled:%s" % hyperparameter
         self.node_name = node_name
         self.target_node_name = target_node_name
+        if input_key is None:
+            input_key = node_name
         self.input_key = input_key
         self.shape = shape
         self.dtype = dtype
@@ -98,21 +102,15 @@ class ScheduledHyperparameter(base.NetworkHandlerImpl):
 
     def transform_network(self, network):
         if self.target_node_name is None:
-            self.target_node_name_ = network.root_node.name
+            target_node_name = network.root_node.name
         else:
-            self.target_node_name_ = self.target_node_name
-
-        if self.node_name is None:
-            self.node_name_ = "%s_%s" % (self.target_node_name_,
-                                         self.hyperparameter)
-        else:
-            self.node_name_ = self.node_name
+            target_node_name = self.target_node_name
 
         return transforms.add_parent(
             network=network,
-            name=self.target_node_name_,
+            name=target_node_name,
             parent_constructor=tn.VariableHyperparameterNode,
-            parent_name=self.node_name_,
+            parent_name=self.node_name,
             parent_kwargs=dict(
                 hyperparameter=self.hyperparameter,
                 dtype=self.dtype,
@@ -121,21 +119,42 @@ class ScheduledHyperparameter(base.NetworkHandlerImpl):
         )
 
     def transform_compile_function_kwargs(self, state, **kwargs):
-        if self.input_key is None:
-            self.input_key_ = self.node_name_
-        else:
-            self.input_key_ = self.input_key
-
-        assert self.input_key_ not in kwargs["inputs"]
-        kwargs["inputs"][self.input_key_] = (self.node_name_, "hyperparameter")
+        assert self.input_key not in kwargs["inputs"]
+        kwargs["inputs"][self.input_key] = (self.node_name, "hyperparameter")
         return kwargs
 
     def call(self, fn, in_dict, *args, **kwargs):
+        assert self.input_key not in in_dict
         hyperparameter_value = self.schedule(in_dict, self.previous_result_)
-        in_dict[self.input_key_] = np.array(hyperparameter_value,
-                                            dtype=self.dtype)
+        in_dict[self.input_key] = np.array(hyperparameter_value,
+                                           dtype=self.dtype)
         res = fn(in_dict, *args, **kwargs)
         self.previous_result_ = res
         return res
 
-schedule_hyperparameter = ScheduledHyperparameter
+schedule_hyperparameter = ScheduleHyperparameter
+
+
+class UseScheduledHyperparameter(base.NetworkHandlerImpl):
+
+    """
+    allows a network to use the scheduled hyperparameter of a different
+    network
+
+    use case:
+    - having a validation network use the same parameter as a training
+      network
+    """
+
+    def __init__(self, schedule_hyperparameter_handler):
+        assert isinstance(schedule_hyperparameter_handler,
+                          ScheduleHyperparameter)
+        self.shh = schedule_hyperparameter_handler
+
+    def transform_network(self, network):
+        return self.shh.transform_network(network)
+
+    def transform_compile_function_kwargs(self, state, **kwargs):
+        return self.shh.transform_compile_function_kwargs(state, **kwargs)
+
+use_scheduled_hyperparameter = UseScheduledHyperparameter
