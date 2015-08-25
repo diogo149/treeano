@@ -256,6 +256,7 @@ class MaxPool2DNode(core.NodeImpl):
     hyperparameter_names = ("pool_size",
                             "pool_stride",
                             "stride",
+                            "pool_pad",
                             "pad",
                             "ignore_border")
 
@@ -286,7 +287,7 @@ class MaxPool2DNode(core.NodeImpl):
             kwargs=dict(
                 pool_size=pool_size,
                 stride=stride,
-                pad=network.find_hyperparameter(["pad"], (0, 0)),
+                pad=network.find_hyperparameter(["pool_pad", "pad"], (0, 0)),
                 ignore_border=ignore_border,
             )
         )
@@ -302,6 +303,7 @@ class MaxPool2DDNNNode(core.NodeImpl):
     hyperparameter_names = ("pool_size",
                             "pool_stride",
                             "stride",
+                            "pool_pad",
                             "pad")
 
     def compute_output(self, network, in_vw):
@@ -316,7 +318,7 @@ class MaxPool2DDNNNode(core.NodeImpl):
                 stride=network.find_hyperparameter(["pool_stride",
                                                     "stride"],
                                                    None),
-                pad=network.find_hyperparameter(["pad"], (0, 0)),
+                pad=network.find_hyperparameter(["pool_pad", "pad"], (0, 0)),
             )
         )
 
@@ -331,6 +333,7 @@ class MeanPool2DDNNNode(core.NodeImpl):
     hyperparameter_names = ("pool_size",
                             "pool_stride",
                             "stride",
+                            "pool_pad",
                             "pad")
 
     def compute_output(self, network, in_vw):
@@ -348,7 +351,7 @@ class MeanPool2DDNNNode(core.NodeImpl):
                 stride=network.find_hyperparameter(["pool_stride",
                                                     "stride"],
                                                    None),
-                pad=network.find_hyperparameter(["pad"], (0, 0)),
+                pad=network.find_hyperparameter(["pool_pad", "pad"], (0, 0)),
             )
         )
 
