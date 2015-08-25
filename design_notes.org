@@ -924,7 +924,21 @@
 - a batch_axis is None, then there is no minibatch (doing single element at a time)
 - shapes should be tuples
 - batch axis is the same throughout the network
-* random notes
+* misc
+** Should I use this?
+- Do you not know what a neural network is? Use [[http://scikit-learn.org/stable/][scikit-learn]].
+- Do you want to use only the tried and tested elements of deep learning? Use [[http://caffe.berkeleyvision.org/][Caffe]].
+- Do you want to create novel architectures? Use [[https://github.com/Lasagne/Lasagne][Lasagne]].
+- Do you want to create novel architectures that are inelegant to do in Lasagne? Use [[https://github.com/Lasagne/Lasagne][Lasagne]].
+- Have you created these novel architectures that are inelegent to do in Lasagne? If you can live with it, keep using [[https://github.com/Lasagne/Lasagne][Lasagne]].
+- Are they inelegent because they are recurrent? Try [[https://github.com/mila-udem/blocks][blocks]].
+- Still not satisfied? Maybe this is a good fit. (:
+** What's with the name?
+- DAGano doesn't have the same ring to it
+- architectures are constructed as immutable trees, and this allows you to customize the behavior of subtrees instead of manipulating a single global network
+  - principle of locality: it's more likely that you'll want close-by nodes to behave similarly - thus having subnetworks makes sense
+  - immutability is a good means of managing complexity - thus a tree makes sense
+** random notes
 - model everything as a "layer"
   - including loss/objective
   - maybe even represent gradient descent updater as layer node
