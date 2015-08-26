@@ -1063,9 +1063,17 @@
     - same thing w/ names + hyperparameters
     - remove nodeapi/nodeimpl distinction
 ** v2
+- nodes should have a setter for name
+  - if can't be abstract, should have an assertion error
+  - make sure ._name (or whatever it is) is not accessed
+- maybe: nodes should provide depdendencies for traversal
+  - eg. "I need my parents' compute_output for my architecture_children"
+  - so traversals can be in alternate orders
+    - issue: what if generated children have init_long_range_dependencies
 - if variables are needed before init_state, then variablehyperparameternode might break
-- another reason to have hyperparameters when creating children:
-  - removing the bias from FC/conv layers
+- maybe: hyperparameters when constructing tree
+  - so that batch norm node can control which of those children nodes should be created
+  - removing the bias from FC/conv layers with batch norm
     - since it doesn't do anything with batch norm
 - consistent shared variabling name bias/b, weight/W
 - should there be utility functions for getting common hyperparameters?
