@@ -85,7 +85,7 @@ class GaussianDropoutNode(core.NodeImpl):
             else:
                 # derive gaussian dropout variance from bernoulli dropout
                 # probability
-                sigma = ((1 - p) / p) ** 0.5
+                sigma = T.sqrt(p / (1 - p))
         if deterministic or sigma == 0:
             network.copy_variable(
                 name="default",
