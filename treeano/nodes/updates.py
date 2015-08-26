@@ -113,7 +113,8 @@ class SGDNode(StandardUpdatesNode):
 
     def _new_update_deltas(self, network, parameter_vws, grads):
         learning_rate = network.find_hyperparameter(["sgd_learning_rate",
-                                                     "learning_rate"])
+                                                     "learning_rate"],
+                                                    0.1)
         return core.UpdateDeltas({vw.variable: -learning_rate * grad
                                   for vw, grad in zip(parameter_vws,
                                                       grads)})
