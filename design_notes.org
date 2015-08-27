@@ -1069,15 +1069,16 @@
     - issue: what if generated children have init_long_range_dependencies
 - ability to search for arbitrary things
   - eg. updates
+- maybe: hyperparameters when constructing tree
+  - so that batch norm node can control which of those children nodes should be created
+  - removing the bias from FC/conv layers with batch norm
+    - since it doesn't do anything with batch norm
+- maybe: remove polymorphism over batch axis, etc.
 ** v2
 - nodes should have a setter for name
   - if can't be abstract, should have an assertion error
   - make sure ._name (or whatever it is) is not accessed
 - if variables are needed before init_state, then variablehyperparameternode might break
-- maybe: hyperparameters when constructing tree
-  - so that batch norm node can control which of those children nodes should be created
-  - removing the bias from FC/conv layers with batch norm
-    - since it doesn't do anything with batch norm
 - consistent shared variabling name bias/b, weight/W
 - should there be utility functions for getting common hyperparameters?
   - use cases:
