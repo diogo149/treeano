@@ -1062,14 +1062,17 @@
     - explicitly add additional data that shows how to read that data
     - same thing w/ names + hyperparameters
     - remove nodeapi/nodeimpl distinction
-** v2
-- nodes should have a setter for name
-  - if can't be abstract, should have an assertion error
-  - make sure ._name (or whatever it is) is not accessed
+** big changes
 - maybe: nodes should provide depdendencies for traversal
   - eg. "I need my parents' compute_output for my architecture_children"
   - so traversals can be in alternate orders
     - issue: what if generated children have init_long_range_dependencies
+- ability to search for arbitrary things
+  - eg. updates
+** v2
+- nodes should have a setter for name
+  - if can't be abstract, should have an assertion error
+  - make sure ._name (or whatever it is) is not accessed
 - if variables are needed before init_state, then variablehyperparameternode might break
 - maybe: hyperparameters when constructing tree
   - so that batch norm node can control which of those children nodes should be created
