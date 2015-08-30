@@ -220,14 +220,14 @@ class LinearMappingNode(core.NodeImpl):
                             "inits",
                             "output_dim")
 
-    def compute_output(self, network, in_var):
+    def compute_output(self, network, in_vw):
         inits = list(toolz.concat(network.find_hyperparameters(
             ["linear_mapping_inits",
              "inits"],
             [])))
         output_dim = network.find_hyperparameter(["output_dim"])
-        weight_shape = (in_var.shape[-1], output_dim)
-        output_shape = tuple(in_var.shape[:-1]) + (output_dim, )
+        weight_shape = (in_vw.shape[-1], output_dim)
+        output_shape = tuple(in_vw.shape[:-1]) + (output_dim, )
         W = network.create_variable(
             name="weight",
             is_shared=True,
@@ -237,7 +237,7 @@ class LinearMappingNode(core.NodeImpl):
         )
         network.create_variable(
             name="default",
-            variable=T.dot(in_var.variable, W.variable),
+            variable=T.dot(in_vw.variable, W.variable),
             shape=output_shape,
             tags={"output"},
         )
