@@ -1075,6 +1075,29 @@
     - since it doesn't do anything with batch norm
 - maybe: remove polymorphism over batch axis, etc.
 ** v2
+- parameterize weight matrices
+  - use cases:
+    - weight sharing (transpose)
+    - making weights a function of the input
+    - drop connect
+    - bayes by backprop
+  - issue:
+    - how to specify shape / initialization if weights are external
+  - could maybe have a "WeightNode"
+    - it could have input axes and output axes
+      - for both monitoring and initalization
+  - need to separate computation of initial state of a weight from using the weight
+    - eg.
+      - separate weight usage into 2 parts
+        - preparing metadata for the weight
+          - shape, dtype
+        - using weight
+          - actual logic
+  - what if nodes could create children during compute_output?
+    - the shape/dtype could be passed in as a hyperparameter
+    - issue:
+      - children cannot init_long_range_dependencies to a done node
+      - children cannot init_state and change dependencies to a done node
 - nodes should have a setter for name
   - if can't be abstract, should have an assertion error
   - make sure ._name (or whatever it is) is not accessed
@@ -1115,26 +1138,7 @@
         - must have way of including to_key and from_key
         - incoming edges from nodes not in graph are reference nodes
         - outgoing edges from nodes not in graph are send to nodes
-- parameterize weight matrices
-  - use cases:
-    - weight sharing (transpose)
-    - making weights a function of the input
-    - drop connect
-    - bayes by backprop
-  - issue:
-    - how to specify shape / initialization if weights are external
-  - could maybe have a "WeightNode"
-    - it could have input axes and output axes
-      - for both monitoring and initalization
-  - need to separate computation of initial state of a weight from using the weight
-    - eg.
-      - separate weight usage into 2 parts
-        - preparing metadata for the weight
-          - shape, dtype
-        - using weight
-          - actual logic
 - util for getting inits from network
-- use new mean pooling operation: http://deeplearning.net/software/theano/library/tensor/signal/downsample.html
 - use joblib for serialization
   - rationale: much more efficient for numpy arrays
 - multistage training
@@ -1143,7 +1147,6 @@
     - training the classification layer
     - fine tuning the whole thing
 - compare caffe inception time to theano inception time
-- handled_function hook for providing a timer callback
 - setup continous integration
 - make find_inits(additional_hyperparameter_names, default_inits) utility function
 - make node for each cost + auxiliary versions of cost + auxiliary version w/ dense node
@@ -1745,19 +1748,6 @@
       - starting with easy values
   - polyak averaging
     - training hook?
-- blocks callback hooks
-  - before_training : bool - is invoked before training.
-  - before_first_epoch : bool - is invoked before the first epoch.
-  - before_epoch : bool - is invoked before every epoch.
-  - on_resumption : bool, optional - is invoked when training is resumed.
-  - on_interrupt : bool, optional - is invoked when training is interrupted.
-  - after_epoch : bool - is invoked after every epoch.
-  - after_batch: bool - is invoked after every batch.
-  - after_training : bool - is invoked after training.
-  - after_n_epochs : int, optional - if not None, invoked when `after_n_epochs` epochs are done
-  - every_n_epochs : int, optional - if not None, invoked after every n-th epoch.
-  - after_n_batches : int, optional - if not None, invoked when `after_n_batches` batches are processed.
-  - every_n_batches : int, optional - if not None, invoked after every n-th batch.
 - datasets
   - RNN
     - Blogger Dataset: http://www.cs.biu.ac.il/~koppel/blogs/blogs.zip (Age and gender data)
