@@ -39,10 +39,10 @@ class SimpleBatchNormalizationNode(treeano.NodeImpl):
     def compute_output(self, network, in_vw):
         epsilon = network.find_hyperparameter(["epsilon"], 1e-8)
         mean = in_vw.mean(axis=1, keepdims=True)
-        std = in_vw.var(axis=1, keepdims=True)
+        std = T.sqrt(in_vw.var(axis=1, keepdims=True) + epsilon)
         gamma = self._make_param(network, in_vw, "gamma")
         beta = self._make_param(network, in_vw, "beta")
-        return (in_vw - mean) / (std + epsilon) * (gamma + 1) + beta
+        return (in_vw - mean) / std * (gamma + 1) + beta
 
 
 @treeano.register_node("advanced_batch_normalization")
