@@ -13,3 +13,4 @@ WARNING: Treeano changes extremely frequently with breaking features. Furthermor
   - pygraphviz
   - scikit-learn (for the examples)
   - nose (for tests)
+  - scikit-image (for spatial transformer)

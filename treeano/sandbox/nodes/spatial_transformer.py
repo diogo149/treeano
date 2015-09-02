@@ -10,10 +10,12 @@ based on:
 """
 
 import numpy as np
+import skimage.transform
 import theano
 import theano.tensor as T
 import treeano
 import treeano.nodes as tn
+import canopy
 
 
 fX = theano.config.floatX
@@ -38,7 +40,7 @@ def target_grid(output_shape):
     return grid.astype(fX)
 
 
-def affine_warp_coordinates(theta, grid):
+def affine_matrix_batch(theta):
     # create identity with shape (1, 2, 3)
     # - the 1 is for broadcasting that dimension to batch_size
     affine_identity = np.array([[[1, 0, 0],
@@ -47,9 +49,12 @@ def affine_warp_coordinates(theta, grid):
     # reshape theta to (batch_size, 2, 3)
     theta_reshaped = theta.reshape((-1, 2, 3))
     # add in identity matrix, since that is a good default
-    transform_matrix = affine_identity + theta_reshaped
+    return affine_identity + theta_reshaped
+
+
+def affine_warp_coordinates(transform_matrix_batch, grid):
     # apply affine matrix
-    new_points = transform_matrix.dot(grid)
+    new_points = transform_matrix_batch.dot(grid)
     x = new_points[:, 0]
     y = new_points[:, 1]
     return x, y
@@ -134,16 +139,25 @@ class AffineSpatialTransformerNode(treeano.Wrapper1NodeImpl):
         output_shape = network.find_hyperparameter(["output_shape"])
         assert len(output_shape) == 2
 
+        theta = theta_vw.variable
         # calculate grid in homogeneous coordinates (x[t],y[t],1)
         grid = target_grid(output_shape)
+        # calculate affine transform matrix for each element in the batch
+        affine_parameters = affine_matrix_batch(theta)
         # map target coords to source coords: x[t],y[t] -> x[s],y[s]
-        x_s, y_s = affine_warp_coordinates(theta_vw.variable, grid)
+        x_s, y_s = affine_warp_coordinates(affine_parameters, grid)
         # get new image
         out_var = warp_bilinear_interpolation(in_vw.variable,
                                               x_s,
                                               y_s,
                                               *output_shape)
 
+        network.create_variable(
+            "affine_parameters",
+            variable=affine_parameters,
+            shape=(in_vw.shape[0], 2, 3),
+            tags={},
+        )
         network.create_variable(
             "default",
             variable=out_var,
@@ -152,7 +166,6 @@ class AffineSpatialTransformerNode(treeano.Wrapper1NodeImpl):
         )
 
 
-# FIXME copy-pasted from above
 @treeano.register_node("translation_and_scale_spatial_transformer")
 class TranslationAndScaleSpatialTransformerNode(treeano.Wrapper1NodeImpl):
 
@@ -176,10 +189,13 @@ class TranslationAndScaleSpatialTransformerNode(treeano.Wrapper1NodeImpl):
 
         theta = theta_vw.variable.dot(
             translation_and_scale_to_affine.reshape(3, 6))
+        # FIXME copy-pasted from above - refactor to avoid duplication
         # calculate grid in homogeneous coordinates (x[t],y[t],1)
         grid = target_grid(output_shape)
+        # calculate affine transform matrix for each element in the batch
+        affine_parameters = affine_matrix_batch(theta)
         # map target coords to source coords: x[t],y[t] -> x[s],y[s]
-        x_s, y_s = affine_warp_coordinates(theta, grid)
+        x_s, y_s = affine_warp_coordinates(affine_parameters, grid)
         # get new image
         out_var = warp_bilinear_interpolation(in_vw.variable,
                                               x_s,
@@ -187,8 +203,90 @@ class TranslationAndScaleSpatialTransformerNode(treeano.Wrapper1NodeImpl):
                                               *output_shape)
 
         network.create_variable(
+            "affine_parameters",
+            variable=affine_parameters,
+            shape=(in_vw.shape[0], 2, 3),
+            tags={},
+        )
+        network.create_variable(
             "default",
             variable=out_var,
             shape=in_vw.shape[:2] + output_shape,
             tags={"output"},
         )
+
+
+class MonitorAffineParameters(canopy.handlers.NetworkHandlerImpl):
+
+    """
+    handler that monitors the affine parameters of an
+    AffineSpatialTransformerNode's localization network
+    """
+
+    def __init__(self,
+                 node_name,
+                 fmt="affine_parameters_%s_%s_%s",
+                 input_key=None):
+        """
+        node_name:
+        name of the affine spatial transformer node
+
+        input_key:
+        key to store the params with in the result dict
+
+        fmt:
+        format for the names of the monitor variables
+        """
+        self.node_name = node_name
+        if input_key is None:
+            input_key = "affine_parameters_%s" % node_name
+        self.input_key = input_key
+        self.fmt = fmt
+
+    def transform_compile_function_kwargs(self, state, **kwargs):
+        assert self.input_key not in kwargs["outputs"]
+        kwargs["outputs"][self.input_key] = (self.node_name,
+                                             "affine_parameters")
+        return kwargs
+
+    def call(self, fn, *args, **kwargs):
+        res = fn(*args, **kwargs)
+        # batch size x 2 x 3 tensor
+        affine_parameters = res.pop(self.input_key)
+
+        at = skimage.transform.AffineTransform()
+        rotation = []
+        shear = []
+        translation0 = []
+        translation1 = []
+        scale0 = []
+        scale1 = []
+        for m in affine_parameters:
+            at.params[:2, :3] = m
+            rotation.append(at.rotation)
+            shear.append(at.shear)
+            translation0.append(at.translation[0])
+            translation1.append(at.translation[1])
+            scale0.append(at.scale[0])
+            scale1.append(at.scale[1])
+
+        for param_name, param_list in [
+                ("rotation", rotation),
+                ("shear", shear),
+                # FIXME check if this corresponds to x and y
+                ("x_translation", translation0),
+                ("y_translation", translation1),
+                ("x_scale", scale0),
+                ("y_scale", scale1),
+        ]:
+            def key_fn(metric):
+                return self.fmt % (self.node_name, param_name, metric)
+
+            p = np.array(param_list)
+            res[key_fn("mean")] = p.mean()
+            res[key_fn("std")] = p.std()
+            # abs_p = np.abs(p)
+            # res[key_fn("abs->mean")] = abs_p.mean()
+        return res
+
+monitor_affine_parameters = MonitorAffineParameters
