@@ -21,6 +21,30 @@ fX = theano.config.floatX
 DEFAULT_USE_LOG_MOVING_VAR = True
 
 
+@treeano.register_node("simple_batch_normalization")
+class SimpleBatchNormalizationNode(treeano.NodeImpl):
+
+    hyperparameter_names = ("epsilon", "inits")
+
+    def _make_param(self, network, in_vw, name):
+        inits = list(toolz.concat(network.find_hyperparameters(["inits"], [])))
+        return network.create_variable(
+            name=name,
+            is_shared=True,
+            shape=(in_vw.shape[0]) + in_vw.shape[2:],
+            tags={"parameter"},
+            inits=inits,
+        ).variable.dimshuffle(0, "x", *range(1, in_vw.ndim - 1))
+
+    def compute_output(self, network, in_vw):
+        epsilon = network.find_hyperparameter(["epsilon"], 1e-8)
+        mean = in_vw.mean(axis=1, keepdims=True)
+        std = in_vw.var(axis=1, keepdims=True)
+        gamma = self._make_param(network, in_vw, "gamma")
+        beta = self._make_param(network, in_vw, "beta")
+        return (in_vw - mean) / (std + epsilon) * (gamma + 1) + beta
+
+
 @treeano.register_node("advanced_batch_normalization")
 class AdvancedBatchNormalizationNode(treeano.NodeImpl):
 
