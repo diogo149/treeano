@@ -7,4 +7,3 @@ setup(
     version=treeano_version,
     packages=["treeano", "canopy"]
 )
-
