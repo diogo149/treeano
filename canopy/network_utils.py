@@ -1,3 +1,5 @@
+from __future__ import division, absolute_import
+from __future__ import print_function, unicode_literals
 import treeano
 
 
@@ -28,6 +30,8 @@ def load_value_dict(network,
         keys = value_keys
     else:
         keys = set(value_dict.keys()) & set(shared_dict.keys())
+
+    loaded = 0
     for k in keys:
         shared = shared_dict[k]
         old_val = shared.get_value()
@@ -38,6 +42,8 @@ def load_value_dict(network,
         else:
             assert old_val.shape == new_val.shape
         shared.set_value(new_val)
+        loaded += 1
+    print("loaded %d keys of value dict")
 
 
 def to_preallocated_init(network):
