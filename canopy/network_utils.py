@@ -43,7 +43,7 @@ def load_value_dict(network,
             assert old_val.shape == new_val.shape
         shared.set_value(new_val)
         loaded += 1
-    print("loaded %d keys of value dict")
+    print("loaded %d keys of value dict" % loaded)
 
 
 def to_preallocated_init(network):
