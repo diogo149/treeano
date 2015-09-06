@@ -29,7 +29,8 @@ def _smart_add(x, y):
 
 def _smart_mul(x, y):
     """
-    0-aware multiply, to prevent computation graph from getting very large
+    0- and 1- aware multiply, to prevent computation graph from getting very
+    large
     """
     if x == 0 or y == 0:
         return 0
