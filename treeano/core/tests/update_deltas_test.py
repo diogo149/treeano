@@ -105,3 +105,9 @@ def test_update_deltas_smart_add():
     assert ud[x] is s
     ud += 0
     assert ud[x] is s
+
+
+def test_update_deltas_to_updates_zero_update():
+    x = theano.shared(0, name="x")
+    ud = treeano.core.UpdateDeltas({x: 0})
+    assert len(ud.to_updates()) == 0

@@ -56,7 +56,8 @@ class UpdateDeltas(object):
     def to_updates(self):
         updates = []
         for var, delta in self.deltas.items():
-            updates.append((var, var + delta))
+            if delta != 0:
+                updates.append((var, var + delta))
         # sorting updates by name so that the order is deterministic
         updates.sort(key=lambda pair: pair[0].name)
         return updates
