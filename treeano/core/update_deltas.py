@@ -14,8 +14,30 @@ def _smart_reduce(op, iterable):
     else:
         return reduce(op, iterable[1:], iterable[0])
 
-_sum = functools.partial(_smart_reduce, operator.add)
-_product = functools.partial(_smart_reduce, operator.mul)
+
+def _smart_add(x, y):
+    """
+    0-aware add, to prevent computation graph from getting very large
+    """
+    if x == 0:
+        return y
+    elif y == 0:
+        return x
+    else:
+        return x + y
+
+
+def _smart_mul(x, y):
+    """
+    0-aware multiply, to prevent computation graph from getting very large
+    """
+    if x == 0 or y == 0:
+        return 0
+    else:
+        return x * y
+
+_sum = functools.partial(_smart_reduce, _smart_add)
+_product = functools.partial(_smart_reduce, _smart_mul)
 
 
 class UpdateDeltas(object):
@@ -69,7 +91,7 @@ class UpdateDeltas(object):
                                                  self.deltas,
                                                  other.deltas))
         else:
-            return self.apply(lambda x: x + other)
+            return self.apply(lambda x: _smart_add(x, other))
 
     def __iadd__(self, other):
         """
@@ -80,7 +102,7 @@ class UpdateDeltas(object):
                                            self.deltas,
                                            other.deltas)
         else:
-            self.iapply(lambda x: x + other)
+            self.iapply(lambda x: _smart_add(x, other))
         return self
 
     def __mul__(self, other):
@@ -97,7 +119,7 @@ class UpdateDeltas(object):
                                                  self.deltas,
                                                  other.deltas))
         else:
-            return self.apply(lambda x: x * other)
+            return self.apply(lambda x: _smart_mul(x, other))
 
     def __imul__(self, other):
         """
@@ -109,7 +131,7 @@ class UpdateDeltas(object):
                                            self.deltas,
                                            other.deltas)
         else:
-            self.iapply(lambda x: x * other)
+            self.iapply(lambda x: _smart_mul(x, other))
         return self
 
     def __getitem__(self, key):
