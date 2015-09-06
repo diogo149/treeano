@@ -1,4 +1,5 @@
 import theano
+import theano.tensor as T
 import treeano
 
 
@@ -77,3 +78,21 @@ def test_update_deltas_imul1():
     ud1 *= 2
     assert ud1[x] == 6
     assert ud2[x] == 6
+
+
+def test_update_deltas_smart_mul():
+    x = theano.shared(0, name="x")
+    s = T.scalar()
+    ud = treeano.core.UpdateDeltas({x: s})
+    assert ud[x] is s
+    ud *= 0
+    assert ud[x] == 0
+
+
+def test_update_deltas_smart_add():
+    x = theano.shared(0, name="x")
+    s = T.scalar()
+    ud = treeano.core.UpdateDeltas({x: s})
+    assert ud[x] is s
+    ud += 0
+    assert ud[x] is s
