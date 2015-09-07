@@ -31,18 +31,61 @@ class SimpleBatchNormalizationNode(treeano.NodeImpl):
         return network.create_variable(
             name=name,
             is_shared=True,
-            shape=(in_vw.shape[0]) + in_vw.shape[2:],
+            shape=(in_vw.shape[1],),
             tags={"parameter"},
             inits=inits,
-        ).variable.dimshuffle(0, "x", *range(1, in_vw.ndim - 1))
+        ).variable.dimshuffle("x", 0, *(["x"] * (in_vw.ndim - 2)))
 
     def compute_output(self, network, in_vw):
+        in_var = in_vw.variable
         epsilon = network.find_hyperparameter(["epsilon"], 1e-8)
-        mean = in_vw.mean(axis=1, keepdims=True)
-        std = T.sqrt(in_vw.var(axis=1, keepdims=True) + epsilon)
+        axis = tuple([i for i in range(in_vw.ndim) if i != 1])
+        mean = in_var.mean(axis=axis, keepdims=True)
+        std = T.sqrt(in_var.var(axis=axis, keepdims=True) + epsilon)
         gamma = self._make_param(network, in_vw, "gamma")
         beta = self._make_param(network, in_vw, "beta")
-        return (in_vw - mean) / std * (gamma + 1) + beta
+        network.create_variable(
+            name="default",
+            # NOTE: 20150907 it is faster to combine gamma + std
+            # before broadcasting
+            variable=(in_var - mean) * ((gamma + 1) / std) + beta,
+            shape=in_vw.shape,
+            tags={"output"},
+        )
+
+
+@treeano.register_node("no_scale_batch_normalization")
+class NoScaleBatchNormalizationNode(treeano.NodeImpl):
+
+    # TODO copy-pasted from above
+
+    hyperparameter_names = ("epsilon", "inits")
+
+    def _make_param(self, network, in_vw, name):
+        inits = list(toolz.concat(network.find_hyperparameters(["inits"], [])))
+        return network.create_variable(
+            name=name,
+            is_shared=True,
+            shape=(in_vw.shape[1],),
+            tags={"parameter"},
+            inits=inits,
+        ).variable.dimshuffle("x", 0, *(["x"] * (in_vw.ndim - 2)))
+
+    def compute_output(self, network, in_vw):
+        in_var = in_vw.variable
+        epsilon = network.find_hyperparameter(["epsilon"], 1e-8)
+        axis = tuple([i for i in range(in_vw.ndim) if i != 1])
+        mean = in_var.mean(axis=axis, keepdims=True)
+        std = T.sqrt(in_var.var(axis=axis, keepdims=True) + epsilon)
+        beta = self._make_param(network, in_vw, "beta")
+        network.create_variable(
+            name="default",
+            # NOTE: 20150907 it is faster to divide by std before
+            # broadcasting than to just divide by std
+            variable=(in_var - mean) * (1 / std) + beta,
+            shape=in_vw.shape,
+            tags={"output"},
+        )
 
 
 @treeano.register_node("advanced_batch_normalization")
