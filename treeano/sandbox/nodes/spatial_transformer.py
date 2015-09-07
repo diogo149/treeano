@@ -217,6 +217,58 @@ class TranslationAndScaleSpatialTransformerNode(treeano.Wrapper1NodeImpl):
         )
 
 
+@treeano.register_node("rotate_shear_stretch_spatial_transformer")
+class RotateShearStretchSpatialTransformerNode(treeano.Wrapper1NodeImpl):
+
+    input_keys = ("default", "final_child_output")
+    hyperparameter_names = ("output_shape",)
+
+    def compute_output(self, network, in_vw, theta_vw):
+        output_shape = network.find_hyperparameter(["output_shape"])
+        assert len(output_shape) == 2
+
+        # create a matrix to convert 3 input parameters into the 6
+        # parameters for an affine transform
+        # FIXME this is incorrect, and does allow scaling
+        params_to_affine = np.zeros((3, 2, 3), dtype=fX)
+        # for parameters x, y, and z, convert to the following matrix:
+        # x y 0
+        # z 0 0
+        # paramater 0 becomes top-left corner
+        params_to_affine[0, 0, 0] = 1
+        # parameter 1 becomes bottom-left corner
+        params_to_affine[1, 1, 0] = 1
+        # parameter 2 becomes top-middle
+        params_to_affine[2, 0, 1] = 1
+
+        theta = theta_vw.variable.dot(params_to_affine.reshape(3, 6))
+        # FIXME copy-pasted from above - refactor to avoid duplication
+        # calculate grid in homogeneous coordinates (x[t],y[t],1)
+        grid = target_grid(output_shape)
+        # calculate affine transform matrix for each element in the batch
+        affine_parameters = affine_matrix_batch(theta)
+        # map target coords to source coords: x[t],y[t] -> x[s],y[s]
+        x_s, y_s = affine_warp_coordinates(affine_parameters, grid)
+        # get new image
+        out_var = warp_bilinear_interpolation(in_vw.variable,
+                                              x_s,
+                                              y_s,
+                                              *output_shape)
+
+        network.create_variable(
+            "affine_parameters",
+            variable=affine_parameters,
+            shape=(in_vw.shape[0], 2, 3),
+            tags={},
+        )
+        network.create_variable(
+            "default",
+            variable=out_var,
+            shape=in_vw.shape[:2] + output_shape,
+            tags={"output"},
+        )
+
+
 class MonitorAffineParameters(canopy.handlers.NetworkHandlerImpl):
 
     """
