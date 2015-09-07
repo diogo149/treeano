@@ -74,13 +74,13 @@ valid_fn = canopy.handled_fn(
     {"cost": "cost", "pred": "pred"})
 
 
-def validate(in_map):
+def validate(in_dict, results_dict):
     valid_out = valid_fn(in_valid)
     probabilities = valid_out["pred"]
     predicted_classes = np.argmax(probabilities, axis=1)
-    in_map["valid_cost"] = valid_out["cost"]
-    in_map["valid_time"] = valid_out["valid_time"]
-    in_map["valid_accuracy"] = sklearn.metrics.accuracy_score(
+    results_dict["valid_cost"] = valid_out["cost"]
+    results_dict["valid_time"] = valid_out["valid_time"]
+    results_dict["valid_accuracy"] = sklearn.metrics.accuracy_score(
         y_valid, predicted_classes)
 
 train_fn = canopy.handled_fn(
