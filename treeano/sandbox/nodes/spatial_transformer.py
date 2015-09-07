@@ -79,6 +79,7 @@ def warp_bilinear_interpolation(orig_img, x, y, out_height, out_width):
     # Clip indices to ensure they are not out of bounds.
     max_x = width_f - 1
     max_y = height_f - 1
+    # TODO add monitoring to out of bounds points
     x0 = T.clip(x, 0, max_x)
     x1 = T.clip(x + 1, 0, max_x)
     y0 = T.clip(y, 0, max_y)
