@@ -23,19 +23,19 @@ class Network(object):
                  root_node,
                  override_hyperparameters=None,
                  default_hyperparameters=None):
-        if override_hyperparameters is None:
-            override_hyperparameters = dict()
-        if default_hyperparameters is None:
-            default_hyperparameters = dict(
-                batch_axis=0,
-                deterministic=False,
-                monitor=True,
-            )
         self.root_node = root_node
         self.node_state = {}
         self.update_deltas = UpdateDeltas()
-        self.override_hyperparameters = override_hyperparameters
-        self.default_hyperparameters = default_hyperparameters
+        self.override_hyperparameters = dict()
+        self.default_hyperparameters = dict(
+            batch_axis=0,
+            deterministic=False,
+            monitor=True,
+        )
+        if override_hyperparameters is not None:
+            self.override_hyperparameters.update(override_hyperparameters)
+        if default_hyperparameters is not None:
+            self.default_hyperparameters.update(default_hyperparameters)
 
     @property
     def is_built(self):
