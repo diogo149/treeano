@@ -94,7 +94,9 @@ def test_override_hyperparameters3():
 
 
 def test_schedule_hyperparameter():
-    network = tn.OutputHyperparameterNode("a", hyperparameter="foo").network()
+    network = tn.OutputHyperparameterNode("a", hyperparameter="foo").network(
+        default_hyperparameters=dict(foo=101)
+    )
 
     def schedule(in_dict, out_dict):
         if out_dict is None:
@@ -108,6 +110,7 @@ def test_schedule_hyperparameter():
                            {},
                            {"out": "a"})
     prev = fn({})["out"]
+    assert prev != 101
     nt.assert_equal(prev, 100)
     for _ in range(10):
         curr = fn({})["out"]
@@ -135,11 +138,15 @@ def test_schedule_hyperparameter_very_leaky_relu():
 
 
 def test_use_scheduled_hyperparameter():
-    network1 = tn.OutputHyperparameterNode("a", hyperparameter="foo").network()
+    network1 = tn.OutputHyperparameterNode("a", hyperparameter="foo").network(
+        default_hyperparameters=dict(foo=101)
+    )
     network2 = tn.SequentialNode(
         "s",
         [tn.OutputHyperparameterNode("a", hyperparameter="foo"),
-         tn.MultiplyConstantNode("m", value=42)]).network()
+         tn.MultiplyConstantNode("m", value=42)]).network(
+             default_hyperparameters=dict(foo=101)
+    )
 
     schedule = canopy.schedules.PiecewiseLinearSchedule([(1, 1), (10, 10)])
     sh_handler = canopy.handlers.schedule_hyperparameter(schedule, "foo")
