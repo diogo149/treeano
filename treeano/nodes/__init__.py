@@ -75,6 +75,7 @@ from stochastic import (DropoutNode,
 from composite import (DenseNode,
                        DenseCombineNode)
 from hyperparameter import (VariableHyperparameterNode,
+                            SharedHyperparameterNode,
                             OutputHyperparameterNode)
 from monitor import (MonitorVarianceNode)
 from debug import (PrintNode)
