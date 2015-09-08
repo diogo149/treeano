@@ -282,7 +282,7 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
             if deterministic:
                 msg = ("Batch normalization does not use `deterministic` flag"
                        " to control whether or not moving stats are used for"
-                       " computation. In this case `bn_use_moving_stats` is"
+                       " computation. In this case `bn_use_moving_stats` is "
                        "False, thus per-minibatch stats will be used and may"
                        "be stochastic (depending on how minibatches are"
                        "created), and not only a function of the input"
