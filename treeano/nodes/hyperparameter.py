@@ -36,7 +36,7 @@ class VariableHyperparameterNode(core.Wrapper1NodeImpl):
             shape=shape,
             dtype=dtype,
             is_shared=False,
-            tags={"hyperparameter"},
+            tags={"hyperparameter", "monitor"},
         )
 
     def get_hyperparameter(self, network, name):
@@ -51,6 +51,62 @@ class VariableHyperparameterNode(core.Wrapper1NodeImpl):
             return rel_network.get_variable("hyperparameter").variable
         else:
             return super(VariableHyperparameterNode, self).get_hyperparameter(
+                network, name)
+
+
+@core.register_node("shared_hyperparameter")
+class SharedHyperparameterNode(core.Wrapper1NodeImpl):
+
+    """
+    provides a theano variable for the given hyperparameter to its children,
+    but also keeps the last value as a shared variable
+
+    use case:
+    - loading a network that was saved while the hyperparameter was changing
+    """
+    # FIXME a lot copy pasted from VariableHyperparameterNode
+
+    hyperparameter_names = ("hyperparameter", "dtype", "shape")
+
+    def init_state(self, network):
+        # perform default
+        super(SharedHyperparameterNode, self).init_state(network)
+        # also create variable
+        dtype = network.find_hyperparameter(["dtype"], fX)
+        shape = network.find_hyperparameter(["shape"], ())
+        # TODO take in optional initial value instead of dtype/shape
+        raw_vw = network.create_variable(
+            "raw_hyperparameter",
+            shape=shape,
+            dtype=dtype,
+            is_shared=True,
+            tags={"state"},
+        )
+        # create a copy of the shared variable, so we can use this to
+        # update the variable
+        network.copy_variable(
+            name="hyperparameter",
+            previous_variable=raw_vw,
+            tags={"hyperparameter", "monitor"},
+        )
+
+    def new_update_deltas(self, network):
+        raw = network.get_variable("raw_hyperparameter").variable
+        actual = network.get_variable("hyperparameter").variable
+        return core.UpdateDeltas.from_updates({raw: actual})
+
+    def get_hyperparameter(self, network, name):
+        if name == "hyperparameter":
+            # prevent infinite loop
+            return super(SharedHyperparameterNode, self).get_hyperparameter(
+                network, name)
+
+        rel_network = network[self.name]
+        hyperparameter = rel_network.find_hyperparameter(["hyperparameter"])
+        if name == hyperparameter:
+            return rel_network.get_variable("hyperparameter").variable
+        else:
+            return super(SharedHyperparameterNode, self).get_hyperparameter(
                 network, name)
 
 
