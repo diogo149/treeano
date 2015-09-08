@@ -97,10 +97,10 @@ train_fn = canopy.handled_fn(
     network,
     [canopy.handlers.time_call(key="total_time"),
      canopy.handlers.schedule_hyperparameter(
-         "learning_rate",
          canopy.schedules.PiecewiseLinearSchedule([(10, 2e-3),
                                                    (15, 2e-4),
-                                                   (20, 2e-5)])),
+                                                   (20, 2e-5)]),
+         hyperparameter="learning_rate"),
      canopy.handlers.call_after_every(1, validate),
      canopy.handlers.time_call(key="train_time"),
      canopy.handlers.chunk_variables(batch_size=BATCH_SIZE,

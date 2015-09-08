@@ -103,8 +103,8 @@ def test_schedule_hyperparameter():
             return treeano.utils.as_fX(np.random.rand() * out_dict["out"])
 
     fn = canopy.handled_fn(network,
-                           [canopy.handlers.schedule_hyperparameter("foo",
-                                                                    schedule)],
+                           [canopy.handlers.schedule_hyperparameter(schedule,
+                                                                    "foo")],
                            {},
                            {"out": "a"})
     prev = fn({})["out"]
@@ -127,8 +127,7 @@ def test_schedule_hyperparameter_very_leaky_relu():
 
     fn = canopy.handled_fn(
         network,
-        [canopy.handlers.schedule_hyperparameter("leak_alpha",
-                                                 schedule)],
+        [canopy.handlers.schedule_hyperparameter(schedule, "leak_alpha")],
         {"x": "i"},
         {"out": "s"})
     res = fn({"x": -2})["out"]
@@ -143,7 +142,7 @@ def test_use_scheduled_hyperparameter():
          tn.MultiplyConstantNode("m", value=42)]).network()
 
     schedule = canopy.schedules.PiecewiseLinearSchedule([(1, 1), (10, 10)])
-    sh_handler = canopy.handlers.schedule_hyperparameter("foo", schedule)
+    sh_handler = canopy.handlers.schedule_hyperparameter(schedule, "foo")
 
     fn2 = canopy.handled_fn(
         network2,

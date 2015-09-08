@@ -57,8 +57,8 @@ override_hyperparameters = OverrideHyperparameters
 class ScheduleHyperparameter(base.NetworkHandlerImpl):
 
     def __init__(self,
-                 hyperparameter,
                  schedule,
+                 hyperparameter=None,
                  node_name=None,
                  target_node_name=None,
                  input_key=None,
@@ -67,16 +67,16 @@ class ScheduleHyperparameter(base.NetworkHandlerImpl):
         """
         WARNING: saves a copy of the previous output
 
-        hyperparameter:
-        name of the hyperparameter to provide
-
         schedule:
         a function that takes in the current input dictionary and the previous
         output dictionary (or None for the initial value) and returns a new
         value for the hyperparameter
 
+        hyperparameter:
+        name of the hyperparameter to provide
+
         node_name:
-        name of the VariableHyperparameterNode to create
+        name of the SharedHyperparameterNode to create
         (default: generates one)
 
         target_node_name:
@@ -90,6 +90,7 @@ class ScheduleHyperparameter(base.NetworkHandlerImpl):
         self.hyperparameter = hyperparameter
         self.schedule = schedule
         if node_name is None:
+            assert hyperparameter is not None
             node_name = "scheduled:%s" % hyperparameter
         self.node_name = node_name
         self.target_node_name = target_node_name
@@ -101,6 +102,12 @@ class ScheduleHyperparameter(base.NetworkHandlerImpl):
         self.previous_result_ = None
 
     def transform_network(self, network):
+        # don't add node if it already exists
+        if self.node_name in network:
+            return network
+
+        assert self.hyperparameter is not None
+
         if self.target_node_name is None:
             target_node_name = network.root_node.name
         else:
@@ -109,7 +116,7 @@ class ScheduleHyperparameter(base.NetworkHandlerImpl):
         return transforms.add_parent(
             network=network,
             name=target_node_name,
-            parent_constructor=tn.VariableHyperparameterNode,
+            parent_constructor=tn.SharedHyperparameterNode,
             parent_name=self.node_name,
             parent_kwargs=dict(
                 hyperparameter=self.hyperparameter,
