@@ -1075,6 +1075,12 @@
     - since it doesn't do anything with batch norm
 - maybe: remove polymorphism over batch axis, etc.
 ** v2
+- shared variables always require "inits"
+  - why?
+    - to resume state
+    - to share between networks
+  - is there a way to make this less redundant?
+  - I've been bitten by this bug multiple times
 - parameterize weight matrices
   - use cases:
     - weight sharing (transpose)
