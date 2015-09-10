@@ -87,10 +87,6 @@ class VariableWrapper(object):
                 msg=("if inits is None, then this shared variable cannot be "
                      "shared or loaded"),
             )
-            if len(self.inits) == 0:
-                warnings.warn("Giving a shared variable no inits doesn't allow"
-                              " it to be loaded afterwards, or shared between "
-                              "networks")
 
     def verify_tags(self, tags):
         for tag in tags:
