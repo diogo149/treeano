@@ -7,6 +7,7 @@ nodes specific to dealing with hyperparameters
 from __future__ import division, absolute_import
 from __future__ import print_function, unicode_literals
 
+import toolz
 import theano
 import theano.tensor as T
 
@@ -66,7 +67,7 @@ class SharedHyperparameterNode(core.Wrapper1NodeImpl):
     """
     # FIXME a lot copy pasted from VariableHyperparameterNode
 
-    hyperparameter_names = ("hyperparameter", "dtype", "shape")
+    hyperparameter_names = ("hyperparameter", "dtype", "shape", "inits")
 
     def init_state(self, network):
         # perform default
@@ -74,12 +75,16 @@ class SharedHyperparameterNode(core.Wrapper1NodeImpl):
         # also create variable
         dtype = network.find_hyperparameter(["dtype"], fX)
         shape = network.find_hyperparameter(["shape"], ())
+        inits = list(toolz.concat(network.find_hyperparameters(
+            ["inits"],
+            [])))
         # TODO take in optional initial value instead of dtype/shape
         raw_vw = network.create_variable(
             "raw_hyperparameter",
             shape=shape,
             dtype=dtype,
             is_shared=True,
+            inits=inits,
             tags={"state"},
         )
         # create a copy of the shared variable, so we can use this to
