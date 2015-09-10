@@ -84,7 +84,8 @@ def test_monitor_network_state():
             network.create_variable(
                 "default",
                 is_shared=True,
-                shape=()
+                shape=(),
+                inits=[]
             )
 
     network = CustomNode("c").network()

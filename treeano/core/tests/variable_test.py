@@ -22,7 +22,8 @@ def test_variable1():
 def test_variable2():
     s = treeano.core.variable.VariableWrapper("foo",
                                               shape=(3, 4, 5),
-                                              is_shared=True)
+                                              is_shared=True,
+                                              inits=[])
     assert s.value.sum() == 0
     x = np.random.randn(3, 4, 5).astype(theano.config.floatX)
     s.value = x

@@ -72,6 +72,7 @@ def test_toy_updater_node():
                 shape=shape,
                 is_shared=True,
                 tags=["state"],
+                inits=[],
             )
             init_value = np.arange(
                 np.prod(shape)

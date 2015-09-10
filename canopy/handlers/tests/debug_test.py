@@ -128,7 +128,8 @@ def test_save_last_inputs_and_networks():
                 "foo",
                 shape=(),
                 is_shared=True,
-                tags={"parameter", "weight"}
+                tags={"parameter", "weight"},
+                inits=[]
             )
             network.create_variable(
                 "default",
@@ -175,7 +176,8 @@ def test_network_nanguard():
             network.create_variable(
                 "default",
                 is_shared=True,
-                shape=()
+                shape=(),
+                inits=[]
             )
 
     network = CustomNode("c").network()
