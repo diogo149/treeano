@@ -57,7 +57,6 @@ class VariableWrapper(object):
             is_shared=self.is_shared_,
 
         )
-        pass
 
     def validate(self):
         shape = self.shape_
@@ -80,6 +79,10 @@ class VariableWrapper(object):
             assert dtype == variable.dtype
         if tags is not None:
             self.verify_tags(set(tags))
+        if is_shared:
+            # if inits is None, then this shared variable cannot be shared
+            # or loaded
+            assert self.inits is not None
 
     def verify_tags(self, tags):
         for tag in tags:
