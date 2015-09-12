@@ -23,12 +23,12 @@ class AggregatorNode(core.NodeImpl):
 
     hyperparameter_names = ("aggregator",)
 
-    def compute_output(self, network, in_var):
+    def compute_output(self, network, in_vw):
         aggregator = network.find_hyperparameter(["aggregator"], "mean")
         aggregator_fn = AGGREGATORS.get(aggregator, aggregator)
         network.create_variable(
             "default",
-            variable=aggregator_fn(in_var.variable),
+            variable=aggregator_fn(in_vw.variable),
             shape=(),
             tags={"output"}
         )

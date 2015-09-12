@@ -20,10 +20,10 @@ class TileNode(core.NodeImpl):
 
     hyperparameter_names = ("reps",)
 
-    def compute_output(self, network, in_var):
+    def compute_output(self, network, in_vw):
         reps = network.find_hyperparameter(["reps"])
-        shape = in_var.shape
-        v = in_var.variable
+        shape = in_vw.shape
+        v = in_vw.variable
         network.create_variable(
             "default",
             variable=T.tile(v, reps),
@@ -43,19 +43,19 @@ class ToOneHotNode(core.NodeImpl):
                             "cast_int32",
                             "dtype")
 
-    def compute_output(self, network, in_var):
+    def compute_output(self, network, in_vw):
         nb_class = network.find_hyperparameter(["nb_class"])
         cast_int32 = network.find_hyperparameter(["cast_int32"], False)
         dtype = network.find_hyperparameter(["dtype"], None)
 
-        v = in_var.variable
+        v = in_vw.variable
         if cast_int32:
             v = v.astype("int32")
 
         network.create_variable(
             "default",
             variable=T.extra_ops.to_one_hot(v, nb_class=nb_class, dtype=dtype),
-            shape=in_var.shape + (nb_class,),
+            shape=in_vw.shape + (nb_class,),
             tags={"output"},
         )
 

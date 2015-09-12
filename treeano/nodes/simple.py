@@ -159,7 +159,7 @@ class AddBiasNode(core.NodeImpl):
                             "broadcastable_axes",
                             "broadcastable",)
 
-    def compute_output(self, network, in_var):
+    def compute_output(self, network, in_vw):
         inits = list(toolz.concat(network.find_hyperparameters(
             ["bias_inits",
              "inits"],
@@ -180,14 +180,14 @@ class AddBiasNode(core.NodeImpl):
                 else:
                     # by default, broadcast over minibatch axis, if any
                     broadcastable_axes = [batch_axis]
-            broadcastable = [False] * in_var.ndim
+            broadcastable = [False] * in_vw.ndim
             for axis in broadcastable_axes:
                 broadcastable[axis] = True
 
-        assert len(broadcastable) == in_var.ndim
+        assert len(broadcastable) == in_vw.ndim
         shape = tuple([1 if is_broadcastable else size
                        for is_broadcastable, size in zip(broadcastable,
-                                                         in_var.shape)])
+                                                         in_vw.shape)])
         b = network.create_variable(
             name="bias",
             is_shared=True,
@@ -202,8 +202,8 @@ class AddBiasNode(core.NodeImpl):
             b_var = T.patternbroadcast(b_var, broadcastable)
         network.create_variable(
             name="default",
-            variable=(in_var.variable + b_var),
-            shape=in_var.shape,
+            variable=(in_vw.variable + b_var),
+            shape=in_vw.shape,
             tags={"output"},
         )
 
@@ -252,16 +252,16 @@ class ApplyNode(core.NodeImpl):
 
     hyperparameter_names = ("fn", "shape_fn")
 
-    def compute_output(self, network, in_var):
+    def compute_output(self, network, in_vw):
         fn = network.find_hyperparameter(["fn"])
         shape_fn = network.find_hyperparameter(["shape_fn"], None)
         if shape_fn is None:
             shape = None
         else:
-            shape = shape_fn(in_var.shape)
+            shape = shape_fn(in_vw.shape)
         network.create_variable(
             name="default",
-            variable=fn(in_var.variable),
+            variable=fn(in_vw.variable),
             shape=shape,
             tags={"output"},
         )
@@ -276,12 +276,12 @@ class AddConstantNode(core.NodeImpl):
 
     hyperparameter_names = ("value", )
 
-    def compute_output(self, network, in_var):
+    def compute_output(self, network, in_vw):
         value = network.find_hyperparameter(["value"])
         network.create_variable(
             name="default",
-            variable=in_var.variable + value,
-            shape=in_var.shape,
+            variable=in_vw.variable + value,
+            shape=in_vw.shape,
             tags={"output"},
         )
 
@@ -295,11 +295,11 @@ class MultiplyConstantNode(core.NodeImpl):
 
     hyperparameter_names = ("value", )
 
-    def compute_output(self, network, in_var):
+    def compute_output(self, network, in_vw):
         value = network.find_hyperparameter(["value"])
         network.create_variable(
             name="default",
-            variable=in_var.variable * value,
-            shape=in_var.shape,
+            variable=in_vw.variable * value,
+            shape=in_vw.shape,
             tags={"output"},
         )
