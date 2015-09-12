@@ -20,7 +20,7 @@ class ScanInputNode(core.NodeImpl):
     for replacement in a ScanNode.
     """
 
-    def compute_output(self, network, in_var):
+    def compute_output(self, network, in_vw):
         scan_axis = network.find_hyperparameter(["scan_axis"], 1)
 
         def remove_scan_axis(in_val):
@@ -37,8 +37,8 @@ class ScanInputNode(core.NodeImpl):
         network.create_variable(
             name="default",
             is_shared=False,
-            shape=remove_scan_axis(in_var.shape),
-            broadcastable=remove_scan_axis(in_var.broadcastable),
+            shape=remove_scan_axis(in_vw.shape),
+            broadcastable=remove_scan_axis(in_vw.broadcastable),
             tags={"input"},
         )
 
