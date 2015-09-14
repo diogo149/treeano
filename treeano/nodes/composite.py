@@ -13,8 +13,6 @@ from .. import core
 from . import simple
 from . import containers
 from . import combine
-from . import costs
-from . import activations
 
 
 def _flatten_1d_or_2d(v):
