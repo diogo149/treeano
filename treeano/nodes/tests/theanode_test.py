@@ -21,6 +21,10 @@ def test_reshape_node_serialization():
     tn.check_serialization(tn.ReshapeNode("a"))
 
 
+def test_dimshuffle_node_serialization():
+    tn.check_serialization(tn.DimshuffleNode("a"))
+
+
 def test_gradient_reversal_node_serialization():
     tn.check_serialization(tn.GradientReversalNode("a"))
 
@@ -65,3 +69,17 @@ def test_reshape_node():
     res = fn(x)[0]
     np.testing.assert_allclose(res,
                                x.reshape(5, 12))
+
+
+def test_dimshuffle_node():
+    network = tn.SequentialNode(
+        "s",
+        [tn.InputNode("in", shape=(3, 4, 5)),
+         tn.DimshuffleNode("r", pattern=(1, "x", 0, 2))]
+    ).network()
+    fn = network.function(["in"], ["s"])
+    x = np.random.randn(3, 4, 5).astype(fX)
+    ans = T.constant(x).dimshuffle(1, "x", 0, 2).eval()
+    res = fn(x)[0]
+    np.testing.assert_equal(res.shape, ans.shape)
+    np.testing.assert_equal(res, ans)

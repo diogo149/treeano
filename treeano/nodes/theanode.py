@@ -91,6 +91,28 @@ class ReshapeNode(core.NodeImpl):
         )
 
 
+@core.register_node("dimshuffle")
+class DimshuffleNode(core.NodeImpl):
+
+    """
+    like dimshuffle
+    """
+
+    hyperparameter_names = ("pattern",)
+
+    def compute_output(self, network, in_vw):
+        pattern = network.find_hyperparameter(["pattern"])
+        out_var = in_vw.variable.dimshuffle(*pattern)
+        out_shape = tuple([1 if i == "x" else in_vw.shape[i]
+                           for i in pattern])
+        network.create_variable(
+            "default",
+            variable=out_var,
+            shape=out_shape,
+            tags={"output"}
+        )
+
+
 @core.register_node("gradient_reversal")
 class GradientReversalNode(core.NodeImpl):
 

@@ -30,6 +30,7 @@ from simple import (ReferenceNode,
 from theanode import (TileNode,
                       ToOneHotNode,
                       ReshapeNode,
+                      DimshuffleNode,
                       GradientReversalNode)
 from combine import (BaseChildrenCombineNode,
                      BaseInputCombineNode,
