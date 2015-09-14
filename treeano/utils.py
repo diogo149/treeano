@@ -199,6 +199,9 @@ def local_computation_output_shape(input_shape,
                                    local_sizes,
                                    strides,
                                    pads):
+    """
+    compute output shape for conv/pool/etc.
+    """
     output_shape = list(input_shape)
     for axis, local_size, stride, pad in zip(axes,
                                              local_sizes,
