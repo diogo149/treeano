@@ -27,7 +27,7 @@ class UpdateDropoutNode(treeano.Wrapper1NodeImpl):
         rescale_updates = network.find_hyperparameter(["rescale_updates"],
                                                       False)
         keep_prob = 1 - p
-        rescale_factor = 1 / (1 - p)
+        rescale_factor = 1 / keep_prob
         srng = MRG_RandomStreams()
         # TODO parameterize search tags (to affect not only "parameters"s)
         vws = network.find_vws_in_subtree(tags={"parameter"},
