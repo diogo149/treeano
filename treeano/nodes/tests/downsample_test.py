@@ -9,6 +9,68 @@ import treeano.nodes as tn
 fX = theano.config.floatX
 
 
+def test_pool_output_shape():
+    def test_same(input_shape, local_sizes, strides, pads, ignore_border):
+        res = tn.downsample.pool_output_shape(
+            input_shape,
+            (2, 3),
+            local_sizes,
+            strides,
+            pads,
+            ignore_border,
+        )
+        from theano.tensor.signal.downsample import max_pool_2d
+        ans = max_pool_2d(
+            T.constant(np.random.randn(*input_shape).astype(fX)),
+            ds=local_sizes,
+            st=strides,
+            ignore_border=ignore_border,
+            padding=pads,
+        ).shape.eval()
+        print ans, res
+        np.testing.assert_equal(ans, res)
+
+    test_same((3, 4, 5, 6), (2, 3), (1, 1), (0, 0), False)
+    test_same((3, 4, 5, 6), (2, 3), (2, 2), (0, 0), False)
+    test_same((3, 4, 1, 1), (2, 3), (2, 2), (0, 0), False)
+    test_same((3, 4, 5, 6), (2, 3), (1, 1), (0, 0), True)
+    test_same((3, 4, 5, 6), (2, 3), (2, 2), (0, 0), True)
+    test_same((3, 4, 1, 1), (2, 3), (2, 2), (0, 0), True)
+
+
+def test_pool_output_shape_pool_2d_node():
+    def test_same(input_shape, local_sizes, strides, pads, ignore_border):
+        res = tn.downsample.pool_output_shape(
+            input_shape,
+            (2, 3),
+            local_sizes,
+            strides,
+            pads,
+            ignore_border,
+        )
+        # pool2d node assumes 0 padding
+        assert pads == (0, 0)
+        # pool2d node assumes ignoring border
+        assert ignore_border
+        network = tn.SequentialNode(
+            "s",
+            [tn.ConstantNode("c",
+                             value=np.random.randn(*input_shape).astype(fX)),
+             tn.Pool2DNode("p",
+                           pool_function=T.mean,
+                           pool_size=local_sizes,
+                           stride=strides,
+                           )]
+        ).network()
+        ans = network["p"].get_variable("default").variable.shape.eval()
+        print ans, res
+        np.testing.assert_equal(ans, res)
+
+    test_same((3, 4, 5, 6), (2, 3), (1, 1), (0, 0), True)
+    test_same((3, 4, 5, 6), (2, 3), (2, 2), (0, 0), True)
+    test_same((3, 4, 1, 1), (2, 3), (2, 2), (0, 0), True)
+
+
 def test_feature_pool_node_serialization():
     tn.check_serialization(tn.FeaturePoolNode("a"))
 
