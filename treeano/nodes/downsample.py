@@ -193,6 +193,28 @@ def SumPool2DNode(*args, **kwargs):
     return Pool2DNode(*args, mode="sum", **kwargs)
 
 
+@core.register_node("global_pool_2d")
+class GlobalPool2DNode(core.NodeImpl):
+
+    """
+    pools all 2D spatial locations into a single value with a given "mode"
+    """
+
+    hyperparameter_names = ("mode",)
+
+    def compute_output(self, network, in_vw):
+        mode = network.find_hyperparameter(["mode"])
+        out_shape = in_vw.shape[:2]
+        pool_size = in_vw.shape[2:]
+        out_var = max_pool_2d(in_vw.variable, ds=pool_size, mode=mode)
+        network.create_variable(
+            "default",
+            variable=out_var,
+            shape=out_shape,
+            tags={"output"},
+        )
+
+
 @core.register_node("custom_pool_2d")
 class CustomPool2DNode(core.NodeImpl):
 
