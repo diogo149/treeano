@@ -124,7 +124,7 @@ class MaxoutNode(core.Wrapper0NodeImpl):
 class Pool2DNode(core.NodeImpl):
 
     """
-    pooling node that takes in a specified "mode"
+    2D pooling node that takes in a specified "mode"
     """
 
     hyperparameter_names = ("mode",

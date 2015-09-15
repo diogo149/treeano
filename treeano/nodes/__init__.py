@@ -4,6 +4,7 @@ import combine
 import containers
 import activations
 import downsample
+import dnn
 import updates
 import costs
 import stochastic
@@ -65,6 +66,9 @@ from downsample import (FeaturePoolNode,
                         GlobalSumPool2DNode,
                         CustomPool2DNode,
                         CustomGlobalPoolNode)
+from dnn import (DnnPoolNode,
+                 DnnMeanPoolNode,
+                 DnnMaxPoolNode)
 from updates import (UpdateScaleNode,
                      StandardUpdatesNode,
                      SGDNode,
