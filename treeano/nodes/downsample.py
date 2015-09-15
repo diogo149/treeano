@@ -7,14 +7,13 @@ from .. import core
 from .. import utils
 
 
-def pool_length(input_size,
-                pool_size,
-                stride,
-                pad,
-                ignore_border):
+def pool_output_length(input_size,
+                       pool_size,
+                       stride,
+                       pad,
+                       ignore_border):
     """
-    calculates the output size along a single axis for a convolutional or
-    pooling operation
+    calculates the output size along a single axis for a pooling operation
     """
     if input_size is None:
         return None
@@ -51,11 +50,11 @@ def pool_output_shape(input_shape,
                                             pool_shape,
                                             strides,
                                             pads):
-        output_shape[axis] = pool_length(input_shape[axis],
-                                         pool_size,
-                                         stride,
-                                         pad,
-                                         ignore_border)
+        output_shape[axis] = pool_output_length(input_shape[axis],
+                                                pool_size,
+                                                stride,
+                                                pad,
+                                                ignore_border)
     return tuple(output_shape)
 
 
