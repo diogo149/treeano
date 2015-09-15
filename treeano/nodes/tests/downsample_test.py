@@ -88,7 +88,7 @@ def test_mean_pool_2d_node_serialization():
 
 
 def test_global_pool_node_serialization():
-    tn.check_serialization(tn.GlobalPoolNode("a"))
+    tn.check_serialization(tn.CustomGlobalPoolNode("a"))
 
 
 def test_maxout_hyperparameters():
@@ -155,7 +155,7 @@ def test_global_pool_node():
     network = tn.SequentialNode(
         "s",
         [tn.InputNode("i", shape=(6, 5, 4, 3)),
-         tn.GlobalPoolNode("gp", pool_function=T.mean)]
+         tn.CustomGlobalPoolNode("gp", pool_function=T.mean)]
     ).network()
     fn = network.function(["i"], ["s"])
     x = np.random.randn(6, 5, 4, 3).astype(fX)

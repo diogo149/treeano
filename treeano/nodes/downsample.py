@@ -250,11 +250,11 @@ class CustomPool2DNode(core.NodeImpl):
         )
 
 
-@core.register_node("global_pool")
-class GlobalPoolNode(core.NodeImpl):
+@core.register_node("custom_global_pool")
+class CustomGlobalPoolNode(core.NodeImpl):
 
     """
-    pools all spatial locations into a single value
+    pools all spatial locations into a single value with a custom pool function
     """
 
     hyperparameter_names = ("pool_function",)

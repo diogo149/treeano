@@ -60,7 +60,7 @@ from downsample import (FeaturePoolNode,
                         MaxPool2DNode,
                         SumPool2DNode,
                         CustomPool2DNode,
-                        GlobalPoolNode)
+                        CustomGlobalPoolNode)
 from updates import (UpdateScaleNode,
                      StandardUpdatesNode,
                      SGDNode,
