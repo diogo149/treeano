@@ -9,6 +9,13 @@ import treeano.nodes as tn
 fX = theano.config.floatX
 
 
+def test_maximum():
+    assert treeano.utils.is_variable(treeano.utils.maximum(T.scalar(), 3))
+    assert treeano.utils.is_variable(treeano.utils.maximum(3, T.scalar()))
+    assert not treeano.utils.is_variable(treeano.utils.maximum(2, 3))
+    assert not treeano.utils.is_variable(treeano.utils.maximum(2, np.ones(3)))
+
+
 def test_stable_softmax():
     x = theano.shared(np.random.randn(50, 50).astype(fX))
     s1 = T.nnet.softmax(x).eval()

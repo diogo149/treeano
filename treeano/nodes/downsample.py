@@ -6,6 +6,55 @@ from .. import core
 from .. import utils
 
 
+def pool_length(input_size,
+                pool_size,
+                stride,
+                pad,
+                ignore_border):
+    """
+    calculates the output size along a single axis for a convolutional or
+    pooling operation
+    """
+    if input_size is None:
+        return None
+
+    if ignore_border:
+        without_stride = input_size + 2 * pad - pool_size + 1
+        # equivalent to np.ceil(without_stride / stride)
+        pre_max = (without_stride + stride - 1) // stride
+        output_size = utils.maximum(pre_max, 1)
+    else:
+        if stride >= pool_size:
+            output_size = (input_size + stride - 1) // stride
+        else:
+            pre_max = (input_size - pool_size + stride - 1) // stride
+            output_size = 1 + utils.maximum(0, pre_max)
+
+    return output_size
+
+
+def pool_output_shape(input_shape,
+                      axes,
+                      pool_shape,
+                      strides,
+                      pads,
+                      ignore_border=True):
+    """
+    compute output shape for conv/pool/etc.
+    """
+    output_shape = list(input_shape)
+    for axis, pool_size, stride, pad in zip(axes,
+                                            pool_shape,
+                                            strides,
+                                            pads):
+        output_shape[axis] = pool_length(input_shape[axis],
+                                         pool_size,
+                                         stride,
+                                         pad,
+                                         ignore_border)
+    return tuple(output_shape)
+
+
 @core.register_node("feature_pool")
 class FeaturePoolNode(core.NodeImpl):
 
@@ -93,14 +142,16 @@ class Pool2DNode(core.NodeImpl):
         # calculate shapes
         shape_kwargs = dict(
             axes=pooling_axes,
-            local_sizes=pool_size,
+            pool_shape=pool_size,
             strides=stride,
             pads=pads,
         )
-        out_shape = utils.local_computation_output_shape(
-            input_shape=in_vw.shape, **shape_kwargs)
-        symbolic_out_shape = utils.local_computation_output_shape(
-            input_shape=in_vw.symbolic_shape(), **shape_kwargs)
+        out_shape = pool_output_shape(
+            input_shape=in_vw.shape,
+            **shape_kwargs)
+        symbolic_out_shape = pool_output_shape(
+            input_shape=in_vw.symbolic_shape(),
+            **shape_kwargs)
 
         # compute output
         neibs = images2neibs(ten4=in_vw.variable,
