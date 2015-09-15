@@ -55,8 +55,11 @@ from activations import (BaseActivationNode,
                          VeryLeakyReLUNode)
 from downsample import (FeaturePoolNode,
                         MaxoutNode,
-                        CustomPool2DNode,
+                        Pool2DNode,
                         MeanPool2DNode,
+                        MaxPool2DNode,
+                        SumPool2DNode,
+                        CustomPool2DNode,
                         GlobalPoolNode)
 from updates import (UpdateScaleNode,
                      StandardUpdatesNode,

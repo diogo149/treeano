@@ -1,6 +1,7 @@
 import theano
 import theano.tensor as T
 from theano.tensor.nnet.neighbours import images2neibs
+from theano.tensor.signal.downsample import max_pool_2d
 
 from .. import core
 from .. import utils
@@ -42,6 +43,9 @@ def pool_output_shape(input_shape,
     """
     compute output shape for conv/pool/etc.
     """
+    if strides is None:
+        strides = pool_shape
+
     output_shape = list(input_shape)
     for axis, pool_size, stride, pad in zip(axes,
                                             pool_shape,
@@ -116,8 +120,85 @@ class MaxoutNode(core.Wrapper0NodeImpl):
                                    T.max)
 
 
+@core.register_node("pool_2d")
+class Pool2DNode(core.NodeImpl):
+
+    """
+    pooling node that takes in a specified "mode"
+    """
+
+    hyperparameter_names = ("mode",
+                            "pool_size",
+                            "pool_stride",
+                            "stride",
+                            "pool_pad",
+                            "pad",
+                            "ignore_border")
+
+    def compute_output(self, network, in_vw):
+        mode = network.find_hyperparameter(["mode"])
+        pool_size = network.find_hyperparameter(["pool_size"])
+        stride = network.find_hyperparameter(["pool_stride",
+                                              "stride"],
+                                             None)
+        pad = network.find_hyperparameter(["pool_pad", "pad"], (0, 0))
+        ignore_border = network.find_hyperparameter(["ignore_border"],
+                                                    True)
+        if ((stride is not None)
+                and (stride != pool_size)
+                and (not ignore_border)):
+            # as of 20150813
+            # for more information, see:
+            # https://groups.google.com/forum/#!topic/lasagne-users/t_rMTLAtpZo
+            msg = ("Setting stride not equal to pool size and not ignoring"
+                   " border results in using a slower (cpu-based)"
+                   " implementation")
+            # making this an assertion instead of a warning to make sure it
+            # is done
+            assert False, msg
+
+        out_shape = pool_output_shape(
+            input_shape=in_vw.shape,
+            axes=(2, 3),
+            pool_shape=pool_size,
+            strides=stride,
+            pads=pad)
+        out_var = max_pool_2d(in_vw.variable,
+                              ds=pool_size,
+                              st=stride,
+                              ignore_border=ignore_border,
+                              padding=pad,
+                              mode=mode)
+
+        network.create_variable(
+            "default",
+            variable=out_var,
+            shape=out_shape,
+            tags={"output"},
+        )
+
+
+def MeanPool2DNode(*args, **kwargs):
+    """
+    NOTE: this average does not include padding
+    """
+    return Pool2DNode(*args, mode="average_exc_pad", **kwargs)
+
+
+def MaxPool2DNode(*args, **kwargs):
+    return Pool2DNode(*args, mode="max", **kwargs)
+
+
+def SumPool2DNode(*args, **kwargs):
+    return Pool2DNode(*args, mode="sum", **kwargs)
+
+
 @core.register_node("custom_pool_2d")
 class CustomPool2DNode(core.NodeImpl):
+
+    """
+    2D pooling node that allows providing a custom pool function
+    """
 
     hyperparameter_names = ("pool_function",
                             "pool_size",
@@ -167,22 +248,6 @@ class CustomPool2DNode(core.NodeImpl):
             shape=out_shape,
             tags={"output"},
         )
-
-
-@core.register_node("mean_pool_2d")
-class MeanPool2DNode(core.Wrapper0NodeImpl):
-
-    hyperparameter_names = filter(lambda x: x != "pool_function",
-                                  CustomPool2DNode.hyperparameter_names)
-
-    def architecture_children(self):
-        return [CustomPool2DNode(self.name + "_pool2d")]
-
-    def init_state(self, network):
-        super(MeanPool2DNode, self).init_state(network)
-        network.set_hyperparameter(self.name + "_pool2d",
-                                   "pool_function",
-                                   T.mean)
 
 
 @core.register_node("global_pool")

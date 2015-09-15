@@ -118,9 +118,37 @@ def test_mean_pool_2d_node():
     x = np.arange(16).astype(fX).reshape(1, 1, 4, 4)
     ans = np.array([[[[0 + 1 + 4 + 5, 2 + 3 + 6 + 7],
                       [8 + 9 + 12 + 13, 10 + 11 + 14 + 15]]]], dtype=fX) / 4
-    np.testing.assert_equal(fn(x)[0], ans)
-    nt.assert_equal(network["m"].get_variable("default").shape,
-                    ans.shape)
+    np.testing.assert_equal(ans, fn(x)[0])
+    nt.assert_equal(ans.shape,
+                    network["m"].get_variable("default").shape)
+
+
+def test_max_pool_2d_node():
+    network = tn.SequentialNode(
+        "s",
+        [tn.InputNode("i", shape=(1, 1, 4, 4)),
+         tn.MaxPool2DNode("m", pool_size=(2, 2))]).network()
+    fn = network.function(["i"], ["m"])
+    x = np.arange(16).astype(fX).reshape(1, 1, 4, 4)
+    ans = np.array([[[[5, 7],
+                      [13, 15]]]], dtype=fX)
+    np.testing.assert_equal(ans, fn(x)[0])
+    nt.assert_equal(ans.shape,
+                    network["m"].get_variable("default").shape)
+
+
+def test_sum_pool_2d_node():
+    network = tn.SequentialNode(
+        "s",
+        [tn.InputNode("i", shape=(1, 1, 4, 4)),
+         tn.SumPool2DNode("m", pool_size=(2, 2))]).network()
+    fn = network.function(["i"], ["m"])
+    x = np.arange(16).astype(fX).reshape(1, 1, 4, 4)
+    ans = np.array([[[[0 + 1 + 4 + 5, 2 + 3 + 6 + 7],
+                      [8 + 9 + 12 + 13, 10 + 11 + 14 + 15]]]], dtype=fX)
+    np.testing.assert_equal(ans, fn(x)[0])
+    nt.assert_equal(ans.shape,
+                    network["m"].get_variable("default").shape)
 
 
 def test_global_pool_node():
