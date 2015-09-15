@@ -151,7 +151,7 @@ def test_sum_pool_2d_node():
                     network["m"].get_variable("default").shape)
 
 
-def test_global_pool_node():
+def test_custom_global_pool_node():
     network = tn.SequentialNode(
         "s",
         [tn.InputNode("i", shape=(6, 5, 4, 3)),
