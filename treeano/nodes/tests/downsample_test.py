@@ -164,3 +164,18 @@ def test_custom_global_pool_node():
                                fn(x)[0],
                                rtol=1e-5,
                                atol=1e-7)
+
+
+def test_global_mean_pool_2d_node():
+    network = tn.SequentialNode(
+        "s",
+        [tn.InputNode("i", shape=(6, 5, 4, 3)),
+         tn.GlobalMeanPool2DNode("gp")]
+    ).network()
+    fn = network.function(["i"], ["s"])
+    x = np.random.randn(6, 5, 4, 3).astype(fX)
+    ans = x.mean(axis=(2, 3))
+    np.testing.assert_allclose(ans,
+                               fn(x)[0],
+                               rtol=1e-5,
+                               atol=1e-7)

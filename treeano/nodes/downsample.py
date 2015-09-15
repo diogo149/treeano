@@ -216,6 +216,21 @@ class GlobalPool2DNode(core.NodeImpl):
         )
 
 
+def GlobalMeanPool2DNode(*args, **kwargs):
+    """
+    NOTE: this average does not include padding
+    """
+    return GlobalPool2DNode(*args, mode="average_exc_pad", **kwargs)
+
+
+def GlobalMaxPool2DNode(*args, **kwargs):
+    return GlobalPool2DNode(*args, mode="max", **kwargs)
+
+
+def GlobalSumPool2DNode(*args, **kwargs):
+    return GlobalPool2DNode(*args, mode="sum", **kwargs)
+
+
 @core.register_node("custom_pool_2d")
 class CustomPool2DNode(core.NodeImpl):
 
