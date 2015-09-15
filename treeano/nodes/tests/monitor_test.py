@@ -22,4 +22,4 @@ def test_monitor_variance_node():
     x = np.random.randn(3, 4, 5).astype(fX)
     ans = x.var()
     fn = network.function(["x"], [vw.variable])
-    np.testing.assert_equal(fn(x), [ans])
+    np.testing.assert_allclose(fn(x), [ans], rtol=1e-5)

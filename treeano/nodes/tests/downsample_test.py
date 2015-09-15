@@ -132,6 +132,7 @@ def test_global_pool_node():
     fn = network.function(["i"], ["s"])
     x = np.random.randn(6, 5, 4, 3).astype(fX)
     ans = x.mean(axis=(2, 3))
-    np.testing.assert_allclose(fn(x)[0],
-                               ans,
-                               rtol=1e-5)
+    np.testing.assert_allclose(ans,
+                               fn(x)[0],
+                               rtol=1e-5,
+                               atol=1e-7)
