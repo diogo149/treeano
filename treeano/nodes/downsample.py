@@ -116,8 +116,8 @@ class MaxoutNode(core.Wrapper0NodeImpl):
                                    T.max)
 
 
-@core.register_node("pool_2d")
-class Pool2DNode(core.NodeImpl):
+@core.register_node("custom_pool_2d")
+class CustomPool2DNode(core.NodeImpl):
 
     hyperparameter_names = ("pool_function",
                             "pool_size",
@@ -173,10 +173,10 @@ class Pool2DNode(core.NodeImpl):
 class MeanPool2DNode(core.Wrapper0NodeImpl):
 
     hyperparameter_names = filter(lambda x: x != "pool_function",
-                                  Pool2DNode.hyperparameter_names)
+                                  CustomPool2DNode.hyperparameter_names)
 
     def architecture_children(self):
-        return [Pool2DNode(self.name + "_pool2d")]
+        return [CustomPool2DNode(self.name + "_pool2d")]
 
     def init_state(self, network):
         super(MeanPool2DNode, self).init_state(network)

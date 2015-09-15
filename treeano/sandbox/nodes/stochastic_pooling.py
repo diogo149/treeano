@@ -38,11 +38,11 @@ def stochastic_pool(neibs, axis, deterministic):
 class StochasticPool2DNode(treeano.Wrapper0NodeImpl):
 
     hyperparameter_names = (filter(lambda x: x != "pool_function",
-                                   tn.Pool2DNode.hyperparameter_names)
+                                   tn.CustomPool2DNode.hyperparameter_names)
                             + ("deterministic",))
 
     def architecture_children(self):
-        return [tn.Pool2DNode(self.name + "_pool2d")]
+        return [tn.CustomPool2DNode(self.name + "_pool2d")]
 
     def init_state(self, network):
         super(StochasticPool2DNode, self).init_state(network)

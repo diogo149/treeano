@@ -38,7 +38,7 @@ def test_pool_output_shape():
     test_same((3, 4, 1, 1), (2, 3), (2, 2), (0, 0), True)
 
 
-def test_pool_output_shape_pool_2d_node():
+def test_pool_output_shape_custom_pool_2d_node():
     def test_same(input_shape, local_sizes, strides, pads, ignore_border):
         res = tn.downsample.pool_output_shape(
             input_shape,
@@ -56,11 +56,11 @@ def test_pool_output_shape_pool_2d_node():
             "s",
             [tn.ConstantNode("c",
                              value=np.random.randn(*input_shape).astype(fX)),
-             tn.Pool2DNode("p",
-                           pool_function=T.mean,
-                           pool_size=local_sizes,
-                           stride=strides,
-                           )]
+             tn.CustomPool2DNode("p",
+                                 pool_function=T.mean,
+                                 pool_size=local_sizes,
+                                 stride=strides,
+                                 )]
         ).network()
         ans = network["p"].get_variable("default").variable.shape.eval()
         print ans, res
@@ -79,8 +79,8 @@ def test_maxout_node_serialization():
     tn.check_serialization(tn.MaxoutNode("a"))
 
 
-def test_pool_2d_node_serialization():
-    tn.check_serialization(tn.Pool2DNode("a"))
+def test_custom_pool_2d_node_serialization():
+    tn.check_serialization(tn.CustomPool2DNode("a"))
 
 
 def test_mean_pool_2d_node_serialization():
