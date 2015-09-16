@@ -72,7 +72,9 @@ from dnn import (DnnPoolNode,
                  DnnMeanPoolNode,
                  DnnMaxPoolNode,
                  DnnConv2DNode,
-                 DnnConv3DNode)
+                 DnnConv3DNode,
+                 DnnConv2DWithBiasNode,
+                 DnnConv3DWithBiasNode)
 from updates import (UpdateScaleNode,
                      StandardUpdatesNode,
                      SGDNode,
