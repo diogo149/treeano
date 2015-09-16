@@ -122,3 +122,76 @@ class Conv2DNode(core.NodeImpl):
             shape=out_shape,
             tags={"output"},
         )
+
+
+@core.register_node("conv_3d")
+class Conv3DNode(core.NodeImpl):
+
+    """
+    node for 3D convolution
+    """
+
+    hyperparameter_names = ("inits",
+                            "num_filters",
+                            "filter_size",
+                            "conv_stride",
+                            "stride",
+                            "include_bias")
+
+    def compute_output(self, network, in_vw):
+        # gather hyperparameters
+        num_filters = network.find_hyperparameter(["num_filters"])
+        filter_size = network.find_hyperparameter(["filter_size"])
+        stride = network.find_hyperparameter(["conv_stride", "stride"],
+                                             (1, 1, 1))
+        inits = list(toolz.concat(network.find_hyperparameters(
+            ["inits"],
+            [])))
+        include_bias = network.find_hyperparameter(["include_bias"], False)
+        assert len(filter_size) == 3
+
+        # create weight
+        num_channels = in_vw.shape[1]
+        filter_shape = (num_filters, num_channels) + tuple(filter_size)
+        W = network.create_variable(
+            name="weight",
+            is_shared=True,
+            shape=filter_shape,
+            tags={"parameter", "weight"},
+            inits=inits,
+        ).variable
+        # create bias
+        if include_bias:
+            b = network.create_variable(
+                name="bias",
+                is_shared=True,
+                shape=(num_filters,),
+                tags={"parameter", "bias"},
+                inits=inits,
+            ).variable
+        else:
+            b = T.zeros(num_filters)
+
+        from theano.tensor.nnet.Conv3D import conv3D
+        # conv3D takes V in order: (batch, row, column, time, in channel)
+        # and W in order: (out channel, row, column, time ,in channel)
+        # but we keep the dimensions that W is stored in consistent with other
+        # convolutions, so we have to dimshuffle here
+        out_var = conv3D(V=in_vw.variable.dimshuffle(0, 2, 3, 4, 1),
+                         W=W.dimshuffle(0, 2, 3, 4, 1),
+                         b=b,
+                         d=stride)
+
+        out_shape = conv_output_shape(input_shape=in_vw.shape,
+                                      num_filters=num_filters,
+                                      axes=(2, 3),
+                                      conv_shape=filter_size,
+                                      strides=stride,
+                                      pads=(0, 0, 0))
+
+        network.create_variable(
+            "default",
+            variable=out_var,
+            shape=out_shape,
+            tags={"output"},
+        )

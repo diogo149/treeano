@@ -67,7 +67,8 @@ from downsample import (FeaturePoolNode,
                         GlobalSumPool2DNode,
                         CustomPool2DNode,
                         CustomGlobalPoolNode)
-from conv import (Conv2DNode)
+from conv import (Conv2DNode,
+                  Conv3DNode)
 from dnn import (DnnPoolNode,
                  DnnMeanPoolNode,
                  DnnMaxPoolNode,
