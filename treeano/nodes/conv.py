@@ -136,6 +136,8 @@ class Conv3DNode(core.NodeImpl):
                             "filter_size",
                             "conv_stride",
                             "stride",
+                            "conv_pad",
+                            "pad",
                             "include_bias")
 
     def compute_output(self, network, in_vw):
@@ -144,11 +146,13 @@ class Conv3DNode(core.NodeImpl):
         filter_size = network.find_hyperparameter(["filter_size"])
         stride = network.find_hyperparameter(["conv_stride", "stride"],
                                              (1, 1, 1))
+        pad = network.find_hyperparameter(["conv_pad", "pad"], "valid")
         inits = list(toolz.concat(network.find_hyperparameters(
             ["inits"],
             [])))
         include_bias = network.find_hyperparameter(["include_bias"], False)
         assert len(filter_size) == 3
+        assert pad == "valid"
 
         # create weight
         num_channels = in_vw.shape[1]
@@ -184,10 +188,81 @@ class Conv3DNode(core.NodeImpl):
 
         out_shape = conv_output_shape(input_shape=in_vw.shape,
                                       num_filters=num_filters,
-                                      axes=(2, 3),
+                                      axes=(2, 3, 4),
                                       conv_shape=filter_size,
                                       strides=stride,
                                       pads=(0, 0, 0))
+
+        network.create_variable(
+            "default",
+            variable=out_var,
+            shape=out_shape,
+            tags={"output"},
+        )
+
+
+@core.register_node("conv_3d2d")
+class Conv3D2DNode(core.NodeImpl):
+
+    """
+    performs 3D convolution via 2D convolution
+    see: theano.tensor.nnet.conv3d2d.conv3d
+    """
+
+    hyperparameter_names = ("inits",
+                            "num_filters",
+                            "filter_size",
+                            "conv_stride",
+                            "stride",
+                            "conv_pad",
+                            "pad")
+
+    def compute_output(self, network, in_vw):
+        # gather hyperparameters
+        num_filters = network.find_hyperparameter(["num_filters"])
+        filter_size = network.find_hyperparameter(["filter_size"])
+        stride = network.find_hyperparameter(["conv_stride", "stride"],
+                                             (1, 1, 1))
+        pad = network.find_hyperparameter(["conv_pad", "pad"], "valid")
+        inits = list(toolz.concat(network.find_hyperparameters(
+            ["inits"],
+            [])))
+        assert len(filter_size) == 3
+        assert pad == "valid"
+        assert stride == (1, 1, 1)
+
+        # create weight
+        num_channels = in_vw.shape[1]
+        filter_shape = (num_filters, num_channels) + tuple(filter_size)
+        W = network.create_variable(
+            name="weight",
+            is_shared=True,
+            shape=filter_shape,
+            tags={"parameter", "weight"},
+            inits=inits,
+        ).variable
+
+        from theano.tensor.nnet.conv3d2d import conv3d
+        # takes signals in order: (batch, time, channels, row, column)
+        # and filters in order: (out channel, time, in channels, row, column)
+        # but we keep the dimensions that W is stored in consistent with other
+        # convolutions, so we have to dimshuffle here
+        order = (0, 2, 1, 3, 4)
+        out_var = conv3d(signals=in_vw.variable.dimshuffle(*order),
+                         filters=W.dimshuffle(*order),
+                         signals_shape=[in_vw.shape[o] for o in order],
+                         filters_shape=[filter_shape[o] for o in order],
+                         # HACK as of 20150916, conv3d does a check
+                         # if isinstance(border_mode, str), so we manually
+                         # cast as a string
+                         border_mode=str("valid"))
+
+        out_shape = conv_output_shape(input_shape=in_vw.shape,
+                                      num_filters=num_filters,
+                                      axes=(2, 3, 4),
+                                      conv_shape=filter_size,
+                                      strides=stride,
+                                      pads=conv_parse_pad(filter_size, pad))
 
         network.create_variable(
             "default",

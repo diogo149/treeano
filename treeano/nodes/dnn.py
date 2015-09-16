@@ -186,7 +186,7 @@ class DnnConv3DNode(core.NodeImpl):
 
         out_shape = conv.conv_output_shape(input_shape=in_vw.shape,
                                            num_filters=num_filters,
-                                           axes=(2, 3),
+                                           axes=(2, 3, 4),
                                            conv_shape=filter_size,
                                            strides=stride,
                                            pads=pad)
