@@ -4,6 +4,7 @@ import combine
 import containers
 import activations
 import downsample
+import conv
 import dnn
 import updates
 import costs
@@ -66,6 +67,7 @@ from downsample import (FeaturePoolNode,
                         GlobalSumPool2DNode,
                         CustomPool2DNode,
                         CustomGlobalPoolNode)
+from conv import (Conv2DNode)
 from dnn import (DnnPoolNode,
                  DnnMeanPoolNode,
                  DnnMaxPoolNode)
