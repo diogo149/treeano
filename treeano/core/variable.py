@@ -1,7 +1,6 @@
 from __future__ import division, absolute_import
 from __future__ import print_function, unicode_literals
 
-import warnings
 import numpy as np
 import theano
 import theano.tensor as T
