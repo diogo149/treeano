@@ -70,7 +70,8 @@ from downsample import (FeaturePoolNode,
 from conv import (Conv2DNode)
 from dnn import (DnnPoolNode,
                  DnnMeanPoolNode,
-                 DnnMaxPoolNode)
+                 DnnMaxPoolNode,
+                 DnnConv2DNode)
 from updates import (UpdateScaleNode,
                      StandardUpdatesNode,
                      SGDNode,

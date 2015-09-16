@@ -3,11 +3,12 @@ nodes based on cuDNN
 http://deeplearning.net/software/theano/library/sandbox/cuda/dnn.html
 """
 
+import toolz
 from theano.sandbox.cuda import dnn
 
 from .. import core
-
 from . import downsample
+from . import conv
 
 
 @core.register_node("dnn_pool")
@@ -68,3 +69,63 @@ def DnnMeanPoolNode(*args, **kwargs):
 
 def DnnMaxPoolNode(*args, **kwargs):
     return DnnPoolNode(*args, mode="max", **kwargs)
+
+
+@core.register_node("dnn_conv_2d")
+class DnnConv2DNode(core.NodeImpl):
+
+    """
+    node for 2D convolution
+    """
+
+    hyperparameter_names = ("inits",
+                            "num_filters",
+                            "filter_size",
+                            "conv_stride",
+                            "stride",
+                            "conv_pad",
+                            "pad",
+                            "conv_mode")
+
+    def compute_output(self, network, in_vw):
+        # gather hyperparameters
+        num_filters = network.find_hyperparameter(["num_filters"])
+        filter_size = network.find_hyperparameter(["filter_size"])
+        stride = network.find_hyperparameter(["conv_stride", "stride"], (1, 1))
+        pad = network.find_hyperparameter(["conv_pad", "pad"], (0, 0))
+        pad = conv.conv_parse_pad(filter_size, pad)
+        conv_mode = network.find_hyperparameter(["conv_mode"], "conv")
+        inits = list(toolz.concat(network.find_hyperparameters(
+            ["inits"],
+            [])))
+        assert len(filter_size) == 2
+        assert conv_mode in ["conv", "cross"]
+
+        # create weight
+        num_channels = in_vw.shape[1]
+        W = network.create_variable(
+            name="weight",
+            is_shared=True,
+            shape=(num_filters, num_channels) + tuple(filter_size),
+            tags={"parameter", "weight"},
+            inits=inits,
+        ).variable
+
+        out_var = dnn.dnn_conv(img=in_vw.variable,
+                               kerns=W,
+                               border_mode=pad,
+                               subsample=stride,
+                               conv_mode=conv_mode)
+
+        out_shape = conv.conv_output_shape(input_shape=in_vw.shape,
+                                           num_filters=num_filters,
+                                           axes=(2, 3),
+                                           conv_shape=filter_size,
+                                           strides=stride,
+                                           pads=pad)
+        network.create_variable(
+            "default",
+            variable=out_var,
+            shape=out_shape,
+            tags={"output"},
+        )
