@@ -87,7 +87,8 @@ from stochastic import (DropoutNode,
                         GaussianDropoutNode,
                         SpatialDropoutNode)
 from composite import (DenseNode,
-                       DenseCombineNode)
+                       DenseCombineNode,
+                       Conv2DWithBiasNode)
 from hyperparameter import (VariableHyperparameterNode,
                             SharedHyperparameterNode,
                             OutputHyperparameterNode)

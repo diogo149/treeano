@@ -41,7 +41,7 @@ def _Flatten1dOr2dNode(name):
 
 
 @core.register_node("dense")
-class DenseNode(core.WrapperNodeImpl):
+class DenseNode(core.Wrapper0NodeImpl):
 
     """
     applies a dense neural network layer to the input
@@ -49,9 +49,6 @@ class DenseNode(core.WrapperNodeImpl):
     output = W[i] * x[i] + b
     """
 
-    # NOTE: inheriting core.WrapperNodeImpl despite not having children so
-    # that it's init_state is called
-    children_container = core.NoneChildrenContainer
     hyperparameter_names = ("num_units",
                             "inits")
 
@@ -102,3 +99,18 @@ class DenseCombineNode(core.WrapperNodeImpl):
         network.forward_hyperparameter(self.name,
                                        "output_dim",
                                        ["num_units"])
+
+
+@core.register_node("conv_2d_with_bias")
+class Conv2DWithBiasNode(core.Wrapper0NodeImpl):
+
+    hyperparameter_names = conv.Conv2DNode.hyperparameter_names
+
+    def architecture_children(self):
+        return [
+            containers.SequentialNode(
+                self._name + "_sequential",
+                [conv.Conv2DNode(self._name + "_conv"),
+                 # TODO add hyperparameter untie_biases
+                 simple.AddBiasNode(self._name + "_bias",
+                                    broadcastable_axes=(0, 2, 3))])]
