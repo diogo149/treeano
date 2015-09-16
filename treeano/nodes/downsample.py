@@ -40,7 +40,7 @@ def pool_output_shape(input_shape,
                       pads,
                       ignore_border=True):
     """
-    compute output shape for conv/pool/etc.
+    compute output shape for a pool
     """
     if strides is None:
         strides = pool_shape
