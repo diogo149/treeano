@@ -1533,8 +1533,6 @@
       - readable
   - ie. AddDropoutBeforeDenseNode
 ** code quality
-- consistent importing
-  - treeano.nodes as tn
 - consistent naming of VariableWrapper as vw
   - rename variable in network.py to vw
     - eg. find_variables_in_subtree to find_vws_in_subtree
@@ -1553,6 +1551,7 @@
       - test that loss can decrease: input -> node -> mean layer -> output
 - testing
   - add serialization tests for all nodes
+  - testing for cuDNN nodes
 - copy downhill.test.util tests for optimizers
 ** other libs / snippets of code that may be useful
 - nodes for data augmentation
