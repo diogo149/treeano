@@ -23,3 +23,7 @@ def test_conv_parse_pad():
     fails_fn = nt.raises(AssertionError)(tn.conv.conv_parse_pad)
     fails_fn((2,), "same")
     fails_fn((2, 3), (1, 2, 3))
+
+
+def test_conv_2d_node_serialization():
+    tn.check_serialization(tn.Conv2DNode("a"))
