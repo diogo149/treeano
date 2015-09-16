@@ -46,10 +46,10 @@ model = tn.HyperparameterNode(
     tn.SequentialNode(
         "seq",
         [tn.InputNode("x", shape=(None, 1, 28, 28)),
-         tn.DnnConv2DNodeWithBias("conv1"),
+         tn.DnnConv2DWithBiasNode("conv1"),
          tn.ReLUNode("relu1"),
          tn.DnnMaxPoolNode("mp1"),
-         tn.DnnConv2DNodeWithBias("conv2"),
+         tn.DnnConv2DWithBiasNode("conv2"),
          tn.ReLUNode("relu2"),
          tn.DnnMaxPoolNode("mp2"),
          tn.DenseNode("fc1"),

@@ -201,13 +201,13 @@ class DnnConv3DNode(core.NodeImpl):
 @core.register_node("dnn_conv_2d_with_bias")
 class DnnConv2DWithBiasNode(core.Wrapper0NodeImpl):
 
-    hyperparameter_names = dnn.DnnConv2DNode.hyperparameter_names
+    hyperparameter_names = DnnConv2DNode.hyperparameter_names
 
     def architecture_children(self):
         return [
             containers.SequentialNode(
                 self._name + "_sequential",
-                [dnn.DnnConv2DNode(self._name + "_conv"),
+                [DnnConv2DNode(self._name + "_conv"),
                  # TODO add hyperparameter untie_biases
                  simple.AddBiasNode(self._name + "_bias",
                                     broadcastable_axes=(0, 2, 3))])]
@@ -216,13 +216,13 @@ class DnnConv2DWithBiasNode(core.Wrapper0NodeImpl):
 @core.register_node("dnn_conv_3d_with_bias")
 class DnnConv3DWithBiasNode(core.Wrapper0NodeImpl):
 
-    hyperparameter_names = dnn.DnnConv3DNode.hyperparameter_names
+    hyperparameter_names = DnnConv3DNode.hyperparameter_names
 
     def architecture_children(self):
         return [
             containers.SequentialNode(
                 self._name + "_sequential",
-                [dnn.DnnConv3DNode(self._name + "_conv"),
+                [DnnConv3DNode(self._name + "_conv"),
                  # TODO add hyperparameter untie_biases
                  simple.AddBiasNode(self._name + "_bias",
                                     broadcastable_axes=(0, 2, 3, 4))])]
