@@ -94,6 +94,8 @@ class DnnConv2DNode(core.NodeImpl):
         stride = network.find_hyperparameter(["conv_stride", "stride"], (1, 1))
         pad = network.find_hyperparameter(["conv_pad", "pad"], (0, 0))
         pad = conv.conv_parse_pad(filter_size, pad)
+        # by default, do convolution instead of cross-correlation
+        # rationale: be compatible with standard (non-cuDNN) conv2d
         conv_mode = network.find_hyperparameter(["conv_mode"], "conv")
         inits = list(toolz.concat(network.find_hyperparameters(
             ["inits"],
