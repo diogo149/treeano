@@ -71,7 +71,8 @@ from conv import (Conv2DNode)
 from dnn import (DnnPoolNode,
                  DnnMeanPoolNode,
                  DnnMaxPoolNode,
-                 DnnConv2DNode)
+                 DnnConv2DNode,
+                 DnnConv3DNode)
 from updates import (UpdateScaleNode,
                      StandardUpdatesNode,
                      SGDNode,
