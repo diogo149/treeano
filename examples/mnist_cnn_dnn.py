@@ -10,7 +10,6 @@ import theano
 import theano.tensor as T
 import treeano
 import treeano.nodes as tn
-import treeano.lasagne.nodes as tl
 import canopy
 
 fX = theano.config.floatX
@@ -47,12 +46,12 @@ model = tn.HyperparameterNode(
     tn.SequentialNode(
         "seq",
         [tn.InputNode("x", shape=(None, 1, 28, 28)),
-         tl.Conv2DDNNNode("conv1"),
+         tn.DnnConv2DNode("conv1"),
          tn.ReLUNode("relu1"),
-         tl.MaxPool2DDNNNode("mp1"),
-         tl.Conv2DDNNNode("conv2"),
+         tn.DnnMaxPoolNode("mp1"),
+         tn.DnnConv2DNode("conv2"),
          tn.ReLUNode("relu2"),
-         tl.MaxPool2DDNNNode("mp2"),
+         tn.DnnMaxPoolNode("mp2"),
          tn.DenseNode("fc1"),
          tn.ReLUNode("relu3"),
          tn.DropoutNode("do1"),
