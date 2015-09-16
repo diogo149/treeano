@@ -26,6 +26,7 @@ def conv_output_length(input_size, conv_size, stride, pad):
 
 
 def conv_output_shape(input_shape,
+                      num_filters,
                       axes,
                       conv_shape,
                       strides,
@@ -34,6 +35,8 @@ def conv_output_shape(input_shape,
     compute output shape for a conv
     """
     output_shape = list(input_shape)
+    assert 1 not in axes
+    output_shape[1] = num_filters
     for axis, conv_size, stride, pad in zip(axes,
                                             conv_shape,
                                             strides,
@@ -108,6 +111,7 @@ class Conv2DNode(core.NodeImpl):
                                 subsample=stride)
 
         out_shape = conv_output_shape(input_shape=in_vw.shape,
+                                      num_filters=num_filters,
                                       axes=(2, 3),
                                       conv_shape=filter_size,
                                       strides=stride,
