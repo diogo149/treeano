@@ -8,9 +8,9 @@ WARNING: Treeano changes extremely frequently with breaking features. Furthermor
   - six
   - toolz
 - optional
-  - lasagne (recommended - for conv/pooling layers)
   - pydot
   - pygraphviz
   - scikit-learn (for the examples)
   - nose (for tests)
   - scikit-image (for spatial transformer)
+  - lasagne (for tests / wrapped nodes)
