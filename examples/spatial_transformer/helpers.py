@@ -11,7 +11,6 @@ import theano
 import theano.tensor as T
 import treeano
 import treeano.nodes as tn
-import treeano.lasagne.nodes as tl
 import canopy
 
 from treeano.sandbox.nodes import spatial_transformer as st
@@ -49,12 +48,12 @@ def load_network(update_scale_factor):
         "loc",
         tn.SequentialNode(
             "loc_seq",
-            [tl.MaxPool2DDNNNode("loc_pool1"),
-             tl.Conv2DDNNNode("loc_conv1"),
-             tl.MaxPool2DDNNNode("loc_pool2"),
+            [tn.DnnMaxPoolNode("loc_pool1"),
+             tn.DnnConv2DWithBiasNode("loc_conv1"),
+             tn.DnnMaxPoolNode("loc_pool2"),
              bn.NoScaleBatchNormalizationNode("loc_bn1"),
              tn.ReLUNode("loc_relu1"),
-             tl.Conv2DDNNNode("loc_conv2"),
+             tn.DnnConv2DWithBiasNode("loc_conv2"),
              bn.NoScaleBatchNormalizationNode("loc_bn2"),
              tn.ReLUNode("loc_relu2"),
              tn.DenseNode("loc_fc1", num_units=50),
@@ -86,12 +85,12 @@ def load_network(update_scale_factor):
                  "st_update_scale",
                  st_node,
                  update_scale_factor=update_scale_factor),
-             tl.Conv2DNode("conv1"),
-             tl.MaxPool2DNode("mp1"),
+             tn.Conv2DWithBiasNode("conv1"),
+             tn.MaxPool2DNode("mp1"),
              bn.NoScaleBatchNormalizationNode("bn1"),
              tn.ReLUNode("relu1"),
-             tl.Conv2DNode("conv2"),
-             tl.MaxPool2DNode("mp2"),
+             tn.Conv2DWithBiasNode("conv2"),
+             tn.MaxPool2DNode("mp2"),
              bn.NoScaleBatchNormalizationNode("bn2"),
              tn.ReLUNode("relu2"),
              tn.GaussianDropoutNode("do1"),

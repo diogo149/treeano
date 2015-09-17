@@ -10,7 +10,6 @@ import theano
 import theano.tensor as T
 import treeano
 import treeano.nodes as tn
-import treeano.lasagne.nodes as tl
 
 import canopy
 
@@ -37,7 +36,7 @@ class InceptionNode(treeano.WrapperNodeImpl):
 
         path_1x1 = tn.SequentialNode(
             self.name + "_1x1",
-            [tl.Conv2DDNNNode(
+            [tn.DnnConv2DWithBiasNode(
                 self.name + "_1x1conv",
                 filter_size=(1, 1),
                 pad="same"),
@@ -45,13 +44,13 @@ class InceptionNode(treeano.WrapperNodeImpl):
                                                 self.name + "_%s_1x1")])
         path_3x3 = tn.SequentialNode(
             self.name + "_3x3",
-            [tl.Conv2DDNNNode(
+            [tn.DnnConv2DWithBiasNode(
                 self.name + "_3x3reduce",
                 filter_size=(1, 1),
                 pad="same"),
              canopy.node_utils.format_node_name(activation,
                                                 self.name + "_%s_3x3reduce"),
-             tl.Conv2DDNNNode(
+             tn.DnnConv2DWithBiasNode(
                 self.name + "_3x3conv",
                 filter_size=(3, 3),
                 pad="same"),
@@ -59,13 +58,13 @@ class InceptionNode(treeano.WrapperNodeImpl):
                                                 self.name + "_%s_3x3")])
         path_5x5 = tn.SequentialNode(
             self.name + "_5x5",
-            [tl.Conv2DDNNNode(
+            [tn.DnnConv2DWithBiasNode(
                 self.name + "_5x5reduce",
                 filter_size=(1, 1),
                 pad="same"),
              canopy.node_utils.format_node_name(activation,
                                                 self.name + "_%s_5x5reduce"),
-             tl.Conv2DDNNNode(
+             tn.DnnConv2DWithBiasNode(
                 self.name + "_5x5conv",
                 filter_size=(5, 5),
                 pad="same"),
@@ -73,14 +72,14 @@ class InceptionNode(treeano.WrapperNodeImpl):
                                                 self.name + "_%s_5x5")])
         path_pool = tn.SequentialNode(
             self.name + "_poolproj",
-            [tl.MaxPool2DDNNNode(
+            [tn.DnnMaxPoolNode(
                 self.name + "_poolprojmax",
                 pool_stride=(1, 1),
                 # TODO parameterize
                 # also need to make padding be dependent on pool size
                 pool_size=(3, 3),
                 pad=(1, 1)),
-             tl.Conv2DDNNNode(
+             tn.DnnConv2DWithBiasNode(
                 self.name + "_poolproj1x1",
                 filter_size=(1, 1),
                 pad="same"),

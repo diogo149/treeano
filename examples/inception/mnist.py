@@ -10,7 +10,6 @@ import theano
 import theano.tensor as T
 import treeano
 import treeano.nodes as tn
-import treeano.lasagne.nodes as tl
 import canopy
 from treeano.sandbox.nodes import inception
 
@@ -35,9 +34,9 @@ model = tn.HyperparameterNode(
         "seq",
         [tn.InputNode("x", shape=(None, 1, 28, 28)),
          inception.InceptionNode("i1"),
-         tl.MaxPool2DDNNNode("mp1"),
+         tn.DnnMaxPoolNode("mp1"),
          inception.InceptionNode("i2"),
-         tl.MaxPool2DDNNNode("mp2"),
+         tn.DnnMaxPoolNode("mp2"),
          tn.DenseNode("fc1"),
          tn.ReLUNode("relu3"),
          tn.DropoutNode("do1"),

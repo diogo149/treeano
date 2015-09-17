@@ -10,7 +10,6 @@ import theano
 import theano.tensor as T
 import treeano
 import treeano.nodes as tn
-import treeano.lasagne.nodes as tl
 import canopy
 from treeano.sandbox.nodes import prelu
 
@@ -34,12 +33,12 @@ model = tn.HyperparameterNode(
     tn.SequentialNode(
         "seq",
         [tn.InputNode("x", shape=(None, 1, 28, 28)),
-         tl.Conv2DNode("conv1"),
+         tn.Conv2DWithBiasNode("conv1"),
          prelu.PReLUNode("prelu1"),
-         tl.MaxPool2DNode("mp1"),
-         tl.Conv2DNode("conv2"),
+         tn.MaxPool2DNode("mp1"),
+         tn.Conv2DWithBiasNode("conv2"),
          prelu.PReLUNode("prelu2"),
-         tl.MaxPool2DNode("mp2"),
+         tn.MaxPool2DNode("mp2"),
          tn.DenseNode("fc1"),
          prelu.PReLUNode("prelu3"),
          tn.DropoutNode("do1"),

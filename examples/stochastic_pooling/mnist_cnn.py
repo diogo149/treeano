@@ -10,7 +10,6 @@ import theano
 import theano.tensor as T
 import treeano
 import treeano.nodes as tn
-import treeano.lasagne.nodes as tl
 import canopy
 from treeano.sandbox.nodes import stochastic_pooling as sp
 
@@ -34,10 +33,10 @@ model = tn.HyperparameterNode(
     tn.SequentialNode(
         "seq",
         [tn.InputNode("x", shape=(None, 1, 28, 28)),
-         tl.Conv2DNode("conv1"),
+         tn.Conv2DWithBiasNode("conv1"),
          tn.ReLUNode("relu1"),
          sp.StochasticPool2DNode("sp1"),
-         tl.Conv2DNode("conv2"),
+         tn.Conv2DWithBiasNode("conv2"),
          tn.ReLUNode("relu2"),
          sp.StochasticPool2DNode("sp2"),
          tn.DenseNode("fc1"),

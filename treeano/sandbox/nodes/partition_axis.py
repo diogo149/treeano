@@ -4,7 +4,6 @@ NOTE: concatenation seems very slow
 
 import treeano
 import treeano.nodes as tn
-import treeano.lasagne.nodes as tl
 
 
 @treeano.register_node("partition_axis")
@@ -62,7 +61,7 @@ def MultiPool2DNode(name, **kwargs):
                                [PartitionAxisNode(name + "_part0",
                                                   split_idx=0,
                                                   num_splits=2),
-                                tl.MaxPool2DNode(name + "_max",
+                                tn.MaxPool2DNode(name + "_max",
                                                  ignore_border=True)]),
              tn.SequentialNode(name + "_seq1",
                                [PartitionAxisNode(name + "_part1",

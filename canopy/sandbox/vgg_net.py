@@ -5,7 +5,6 @@ import numpy as np
 import scipy.io
 import treeano
 import treeano.nodes as tn
-import treeano.lasagne.nodes as tl
 
 
 def vgg_16_nodes(conv_only):
@@ -24,58 +23,58 @@ def vgg_16_nodes(conv_only):
                 "conv_group_1",
                 tn.SequentialNode(
                     "conv_group_1_seq",
-                    [tl.Conv2DDNNNode("conv1_1"),
+                    [tn.DnnConv2DWithBiasNode("conv1_1"),
                      tn.ReLUNode("relu1_1"),
-                     tl.Conv2DDNNNode("conv1_2"),
+                     tn.DnnConv2DWithBiasNode("conv1_2"),
                      tn.ReLUNode("relu1_2")]),
                 num_filters=64),
-             tl.MaxPool2DNode("pool1"),
+             tn.MaxPool2DNode("pool1"),
              tn.HyperparameterNode(
                 "conv_group_2",
                 tn.SequentialNode(
                     "conv_group_2_seq",
-                    [tl.Conv2DDNNNode("conv2_1"),
+                    [tn.DnnConv2DWithBiasNode("conv2_1"),
                      tn.ReLUNode("relu2_1"),
-                     tl.Conv2DDNNNode("conv2_2"),
+                     tn.DnnConv2DWithBiasNode("conv2_2"),
                      tn.ReLUNode("relu2_2")]),
                  num_filters=128),
-             tl.MaxPool2DNode("pool2"),
+             tn.MaxPool2DNode("pool2"),
              tn.HyperparameterNode(
                 "conv_group_3",
                 tn.SequentialNode(
                     "conv_group_3_seq",
-                    [tl.Conv2DDNNNode("conv3_1"),
+                    [tn.DnnConv2DWithBiasNode("conv3_1"),
                      tn.ReLUNode("relu3_1"),
-                     tl.Conv2DDNNNode("conv3_2"),
+                     tn.DnnConv2DWithBiasNode("conv3_2"),
                      tn.ReLUNode("relu3_2"),
-                     tl.Conv2DDNNNode("conv3_3"),
+                     tn.DnnConv2DWithBiasNode("conv3_3"),
                      tn.ReLUNode("relu3_3")]),
                  num_filters=256),
-             tl.MaxPool2DNode("pool3"),
+             tn.MaxPool2DNode("pool3"),
              tn.HyperparameterNode(
                 "conv_group_4",
                 tn.SequentialNode(
                     "conv_group_4_seq",
-                    [tl.Conv2DDNNNode("conv4_1"),
+                    [tn.DnnConv2DWithBiasNode("conv4_1"),
                      tn.ReLUNode("relu4_1"),
-                     tl.Conv2DDNNNode("conv4_2"),
+                     tn.DnnConv2DWithBiasNode("conv4_2"),
                      tn.ReLUNode("relu4_2"),
-                     tl.Conv2DDNNNode("conv4_3"),
+                     tn.DnnConv2DWithBiasNode("conv4_3"),
                      tn.ReLUNode("relu4_3")]),
                  num_filters=512),
-             tl.MaxPool2DNode("pool4"),
+             tn.MaxPool2DNode("pool4"),
              tn.HyperparameterNode(
                 "conv_group_5",
                 tn.SequentialNode(
                     "conv_group_5_seq",
-                    [tl.Conv2DDNNNode("conv5_1"),
+                    [tn.DnnConv2DWithBiasNode("conv5_1"),
                      tn.ReLUNode("relu5_1"),
-                     tl.Conv2DDNNNode("conv5_2"),
+                     tn.DnnConv2DWithBiasNode("conv5_2"),
                      tn.ReLUNode("relu5_2"),
-                     tl.Conv2DDNNNode("conv5_3"),
+                     tn.DnnConv2DWithBiasNode("conv5_3"),
                      tn.ReLUNode("relu5_3")]),
                  num_filters=512),
-             tl.MaxPool2DNode("pool5"),
+             tn.MaxPool2DNode("pool5"),
              # TODO add dense nodes
              ]),
         pad="same",
