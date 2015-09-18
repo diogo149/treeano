@@ -12,6 +12,7 @@ from fn import (handled_fn)
 from conditional import (call_after_every)
 from nodes import (with_hyperparameters,
                    override_hyperparameters,
+                   update_hyperparameters,
                    schedule_hyperparameter,
                    use_scheduled_hyperparameter)
 from batch import (split_input,

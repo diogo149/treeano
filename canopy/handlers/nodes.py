@@ -36,8 +36,8 @@ class OverrideHyperparameters(base.NetworkHandlerImpl):
     handler that adds override hyperparameters to the network
     """
 
-    def __init__(self, **kwargs):
-        self.hyperparameters = kwargs
+    def __init__(self, **hyperparameters):
+        self.hyperparameters = hyperparameters
 
     def transform_network(self, network):
         # FIXME make this a transform
@@ -52,6 +52,24 @@ class OverrideHyperparameters(base.NetworkHandlerImpl):
         return treeano.Network(**kwargs)
 
 override_hyperparameters = OverrideHyperparameters
+
+
+class UpdateHyperparameters(base.NetworkHandlerImpl):
+
+    """
+    handler that replace hyperparameters of a node
+    """
+
+    def __init__(self, node_name, **hyperparameters):
+        self.node_name = node_name
+        self.hyperparameters = hyperparameters
+
+    def transform_network(self, network):
+        return transforms.update_hyperparameters(network,
+                                                 self.node_name,
+                                                 self.hyperparameters)
+
+update_hyperparameters = UpdateHyperparameters
 
 
 class ScheduleHyperparameter(base.NetworkHandlerImpl):

@@ -93,6 +93,20 @@ def test_override_hyperparameters3():
     np.testing.assert_equal(fn2({})["out"], x2)
 
 
+def test_update_hyperparameters():
+    network1 = tn.ConstantNode("c", value=1).network()
+
+    fn1 = network1.function([], ["c"])
+    np.testing.assert_equal(fn1()[0], 1)
+    fn2 = canopy.handlers.handled_fn(
+        network1,
+        [canopy.handlers.update_hyperparameters("c", value=2)],
+        {},
+        {"out": "c"}
+    )
+    np.testing.assert_equal(fn2({})["out"], 2)
+
+
 def test_schedule_hyperparameter():
     network = tn.OutputHyperparameterNode("a", hyperparameter="foo").network(
         default_hyperparameters=dict(foo=101)
