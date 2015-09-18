@@ -2,6 +2,7 @@
 node based transformations
 """
 
+import treeano
 import treeano.nodes as tn
 
 from . import fns
@@ -30,6 +31,24 @@ def replace_node(network, name_to_node, **kwargs):
     def inner(node):
         if node.name in name_to_node:
             return name_to_node[node.name]
+        else:
+            return node
+
+    return fns.transform_root_node_postwalk(network, inner, **kwargs)
+
+
+def update_hyperparameters(network, node_name, hyperparameters, **kwargs):
+    """
+    updates a node's hyperparameters
+    """
+
+    def inner(node):
+        if node.name == node_name:
+            for k in hyperparameters:
+                assert k in node.hyperparameter_names
+            new_node = treeano.node_utils.copy_node(node)
+            new_node.hyperparameters.update(hyperparameters)
+            return new_node
         else:
             return node
 

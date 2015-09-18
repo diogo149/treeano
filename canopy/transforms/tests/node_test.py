@@ -54,3 +54,17 @@ def test_replace_node():
 
     fails()
     np.testing.assert_equal(x, fn2(x)[0])
+
+
+def test_update_hyperparameters():
+    network1 = tn.SequentialNode(
+        "seq",
+        [tn.InputNode("i", shape=(3, 4, 5)),
+         tn.DropoutNode("do", dropout_probability=0.5)]).network()
+    network2 = canopy.transforms.update_hyperparameters(
+        network1,
+        "do",
+        {"dropout_probability": 0.3})
+
+    assert network1["do"].find_hyperparameter(["dropout_probability"]) == 0.5
+    assert network2["do"].find_hyperparameter(["dropout_probability"]) == 0.3
