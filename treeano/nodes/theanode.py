@@ -73,11 +73,17 @@ class ReshapeNode(core.NodeImpl):
     def compute_output(self, network, in_vw):
         new_shape = network.find_hyperparameter(["newshape",
                                                  "shape"])
+        # TODO use this to determine shape
         old_shape = in_vw.shape
-        # TODO handle case when -1 is given
-        assert -1 not in new_shape
-        # TODO handle case when None is given
-        assert None not in new_shape
+
+        out_shape = new_shape
+
+        # case if -1 is in new shape
+        if -1 in new_shape:
+            # should have only 1 -1
+            assert sum([s == -1 for s in out_shape]) == 1
+            out_shape = [None if s == -1 else s for s in out_shape]
+
         # FIXME
         # out_var = T.reshape(in_vw.variable,
         #                     newshape=new_shape,
@@ -86,7 +92,7 @@ class ReshapeNode(core.NodeImpl):
         network.create_variable(
             "default",
             variable=out_var,
-            shape=new_shape,
+            shape=out_shape,
             tags={"output"},
         )
 
