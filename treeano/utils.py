@@ -84,15 +84,9 @@ def maximum(a, b):
 
 def rectify(x, negative_coefficient=0):
     """
-    general fast way of performing ReLU-type activations
-
-    see below for info:
-    https://github.com/Lasagne/Lasagne/pull/163
-    https://github.com/Theano/Theano/issues/2698
+    general way of performing ReLU-type activations
     """
-    f1 = 0.5 * (1 + negative_coefficient)
-    f2 = 0.5 * (1 - negative_coefficient)
-    return f1 * x + f2 * abs(x)
+    return T.nnet.relu(x, alpha=negative_coefficient)
 
 
 def root_mean_square(x, axis=None):
