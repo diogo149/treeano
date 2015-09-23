@@ -164,7 +164,8 @@ def elementwise_sum(network, *in_vws):
     # TODO initialize reduce with first element, so graph doesn't have extra 0
     network.create_variable(
         "default",
-        variable=reduce(operator.add, [vw.variable for vw in in_vws]),
+        variable=reduce(core.update_deltas._smart_add,
+                        [vw.variable for vw in in_vws]),
         shape=input_shapes[0],
         tags={"output"},
     )
@@ -199,7 +200,8 @@ def elementwise_product(network, *in_vws):
     # TODO initialize reduce with first element, so graph doesn't have extra 1
     network.create_variable(
         "default",
-        variable=reduce(operator.mul, [vw.variable for vw in in_vws]),
+        variable=reduce(core.update_deltas._smart_mul,
+                        [vw.variable for vw in in_vws]),
         shape=input_shapes[0],
         tags={"output"},
     )
