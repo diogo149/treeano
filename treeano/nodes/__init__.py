@@ -4,6 +4,7 @@ import combine
 import containers
 import activations
 import downsample
+import upsample
 import conv
 import dnn
 import updates
@@ -67,6 +68,8 @@ from downsample import (FeaturePoolNode,
                         GlobalSumPool2DNode,
                         CustomPool2DNode,
                         CustomGlobalPoolNode)
+from upsample import (RepeatNDNode,
+                      SpatialRepeatNDNode)
 from conv import (Conv2DNode,
                   Conv3DNode,
                   Conv3D2DNode)

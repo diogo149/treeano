@@ -1205,6 +1205,7 @@
       - handlers are normally shared across multiple locations
         - eg. multiple handled networks, multiple handled functions
       - except when serializing/deserializing
+- upsample.BilinearInterpolationNode
 ** canopy.handlers
 - don't use __call__ for handlers
   - some kinds of handlers don't need state
