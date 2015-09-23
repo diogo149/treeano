@@ -107,6 +107,10 @@ def squared_error(pred, target):
     return (pred - target) ** 2
 
 
+def absolute_error(pred, target):
+    return abs(pred - target)
+
+
 def binary_hinge_loss(pred, target):
     """
     assumes that t is in {0, 1}
