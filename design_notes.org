@@ -748,6 +748,24 @@
   - I've been bitten by this bug multiple times
   - conclusion:
     - yes! better to prevent these kinds of bugs
+- how do we add weighted costs?
+  - alternatives
+    - special node with weights
+      - cons
+        - not entirely decomplected
+          - this would have to go into the total cost node (or something like it) anyway
+    - optional argument to total cost node
+      - cons
+        - no reason to add it here it it could otherwise be added to aggregator or elementwise cost
+    - optional argument to aggregator node
+      - cons
+        - the weights are somewhat specific to costs, while the aggregator doesn't have to be cost specific (they just aggregate to scalars)
+    - optional argument to elementwise cost node
+      - pros
+        - implementation is easier
+          - beause arguments of total cost node are just passed into this
+  - conclusion
+    - optional argument to elementwise cost node
 * canopy - general
 - treeano should not have hooks
   - there should be a clean separation of mapping from parameterization to theano variable and all the extra (modular) logic

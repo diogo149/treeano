@@ -44,27 +44,42 @@ class ElementwiseCostNode(core.WrapperNodeImpl):
     children_container = core.DictChildrenContainerSchema(
         pred=core.ChildContainer,
         target=core.ChildContainer,
+        weight=core.ChildContainer,
     )
     hyperparameter_names = ("cost_function",)
-    input_keys = ("pred_output", "target_output")
+    input_keys = ("pred_output", "target_output", "weight_output")
+
+    def architecture_children(self):
+        pred_node = self._children["pred"].children
+        target_node = self._children["target"].children
+
+        weight_container = self._children.get("weight")
+        if weight_container is not None:
+            weight_node = weight_container.children
+        else:
+            weight_node = simple.ConstantNode(self.name + "_weight",
+                                              value=1)
+        return [pred_node, target_node, weight_node]
 
     def init_state(self, network):
         """
         by default, forward input to both pred and target
         """
-        for child_name in ["pred", "target"]:
-            node = self._children[child_name].children
+        for child_name, node in zip(["pred", "target", "weight"],
+                                    self.architecture_children()):
             # forward input
             network.forward_input_to(node.name)
             # take output
             network.take_output_from(node.name,
                                      to_key="%s_output" % child_name)
 
-    def compute_output(self, network, pred, target):
+    def compute_output(self, network, pred, target, weight):
         cost_function = network.find_hyperparameter(["cost_function"])
+        out_var = weight.variable * cost_function(pred.variable,
+                                                  target.variable)
         network.create_variable(
             "default",
-            variable=cost_function(pred.variable, target.variable),
+            variable=out_var,
             shape=pred.shape,
             tags={"output"}
         )

@@ -51,6 +51,26 @@ def test_total_cost_node():
                                0)
 
 
+def test_total_cost_node_with_weight():
+    network = tn.TotalCostNode(
+        "cost",
+        {"pred": tn.InputNode("x", shape=(3, 4, 5)),
+         "weight": tn.InputNode("w", shape=(3, 4, 5)),
+         "target": tn.InputNode("y", shape=(3, 4, 5))},
+        cost_function=treeano.utils.squared_error).network()
+    fn = network.function(["x", "y", "w"], ["cost"])
+    x = np.random.rand(3, 4, 5).astype(fX)
+    w = np.random.rand(3, 4, 5).astype(fX)
+    y = np.random.rand(3, 4, 5).astype(fX)
+    np.testing.assert_allclose(fn(x, y, w)[0],
+                               (((x - y) ** 2) * w).mean(),
+                               rtol=1e-5)
+    np.testing.assert_allclose(fn(x, x, w)[0],
+                               0)
+    np.testing.assert_allclose(fn(y, y, w)[0],
+                               0)
+
+
 def test_auxiliary_cost_node():
     network = tn.HyperparameterNode(
         "hp",
