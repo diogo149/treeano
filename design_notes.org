@@ -740,6 +740,14 @@
     - less verifiable
   - conclusion:
     - yes! allows much less repetitive code - since the same logic can be more polymorphic
+- should shared variables always require "inits"
+  - why?
+    - to resume state
+    - to share between networks
+  - is there a way to make this less redundant?
+  - I've been bitten by this bug multiple times
+  - conclusion:
+    - yes! better to prevent these kinds of bugs
 * canopy - general
 - treeano should not have hooks
   - there should be a clean separation of mapping from parameterization to theano variable and all the extra (modular) logic
@@ -1075,12 +1083,6 @@
     - since it doesn't do anything with batch norm
 - maybe: remove polymorphism over batch axis, etc.
 ** v2
-- shared variables always require "inits"
-  - why?
-    - to resume state
-    - to share between networks
-  - is there a way to make this less redundant?
-  - I've been bitten by this bug multiple times
 - parameterize weight matrices
   - use cases:
     - weight sharing (transpose)
