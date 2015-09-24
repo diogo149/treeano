@@ -35,7 +35,9 @@ class DnnPoolNode(core.NodeImpl):
         assert dim in [2, 3]
         stride = network.find_hyperparameter(["pool_stride",
                                               "stride"],
-                                             (1,) * dim)
+                                             None)
+        if stride is None:
+            stride = pool_size
         pad = network.find_hyperparameter(["pool_pad", "pad"], (0,) * dim)
         assert dim == len(stride) == len(pad)
         if dim == 2:
