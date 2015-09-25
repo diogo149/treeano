@@ -42,6 +42,8 @@ class DisjointPseudorandomFractionalMaxPooling2DOp(cuda.GpuOp):
     def output_length(self, input_length):
         return int(np.floor(input_length / self.alpha))
 
+    # TODO add infer_shape
+
     def make_thunk(self, node, storage_map, _, _2):
         inputs = [storage_map[v] for v in node.inputs]
         outputs = [storage_map[v] for v in node.outputs]
