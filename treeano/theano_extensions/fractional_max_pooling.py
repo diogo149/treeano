@@ -39,6 +39,9 @@ class DisjointPseudorandomFractionalMaxPooling2DOp(cuda.GpuOp):
     def output_type(self, inp):
         return cuda.CudaNdarrayType(broadcastable=[False] * (inp.type.ndim))
 
+    def output_length(self, input_length):
+        return int(np.floor(input_length / self.alpha))
+
     def make_thunk(self, node, storage_map, _, _2):
         inputs = [storage_map[v] for v in node.inputs]
         outputs = [storage_map[v] for v in node.outputs]
@@ -89,9 +92,10 @@ __global__ void fmp(float * input,
         def thunk():
             inp_shape = inputs[0][0].shape
             batch_size, num_channels, height, width = inp_shape
+            assert height > 1
             # might not be necessary, but let's do it anyway
             assert height == width
-            new_dim = np.floor(height / self.alpha)
+            new_dim = self.output_length(height)
             out_shape = (batch_size, num_channels, new_dim, new_dim)
 
             example_size = num_channels * new_dim * new_dim
