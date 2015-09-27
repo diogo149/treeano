@@ -1,8 +1,16 @@
 language: python
+sudo: false
 python:
   - "2.7"
   # - "3.5"
-# command to install dependencies
+addons:
+  apt:
+    packages:
+    - libblas-dev
+    - liblapack-dev
+    - gfortran
+before_install:
+  - pip install -U pip
 install:
   - pip install numpy
   - pip install https://github.com/theano/theano/archive/master.zip
@@ -12,5 +20,9 @@ install:
   - pip install lasagne
   - pip install scikit-image
   - pip install nose
-# command to run tests
 script: nosetests -v
+cache:
+  - apt
+  - directories:
+    - $HOME/.cache/pip
+    - $HOME/.theano
