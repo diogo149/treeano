@@ -3,7 +3,6 @@ nodes for combining the outputs of multiple nodes
 """
 
 import abc
-import operator
 
 import six
 import theano.tensor as T
@@ -161,11 +160,9 @@ def elementwise_sum(network, *in_vws):
     # calculate and verify shape
     input_shapes = [vw.shape for vw in in_vws]
     assert utils.all_equal(input_shapes)
-    # TODO initialize reduce with first element, so graph doesn't have extra 0
     network.create_variable(
         "default",
-        variable=reduce(core.update_deltas._smart_add,
-                        [vw.variable for vw in in_vws]),
+        variable=utils.smart_sum([vw.variable for vw in in_vws]),
         shape=input_shapes[0],
         tags={"output"},
     )
@@ -197,11 +194,9 @@ def elementwise_product(network, *in_vws):
     # calculate and verify shape
     input_shapes = [vw.shape for vw in in_vws]
     assert utils.all_equal(input_shapes)
-    # TODO initialize reduce with first element, so graph doesn't have extra 1
     network.create_variable(
         "default",
-        variable=reduce(core.update_deltas._smart_mul,
-                        [vw.variable for vw in in_vws]),
+        variable=utils.smart_product([vw.variable for vw in in_vws]),
         shape=input_shapes[0],
         tags={"output"},
     )

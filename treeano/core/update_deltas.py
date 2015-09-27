@@ -1,48 +1,10 @@
 from __future__ import division, absolute_import
 from __future__ import print_function, unicode_literals
 
-import operator
-import functools
 
 import toolz
 
-
-def _smart_reduce(op, iterable):
-    iterable = list(iterable)
-    if len(iterable) == 1:
-        return iterable[0]
-    else:
-        return reduce(op, iterable[1:], iterable[0])
-
-
-def _smart_add(x, y):
-    """
-    0-aware add, to prevent computation graph from getting very large
-    """
-    if x == 0:
-        return y
-    elif y == 0:
-        return x
-    else:
-        return x + y
-
-
-def _smart_mul(x, y):
-    """
-    0- and 1- aware multiply, to prevent computation graph from getting very
-    large
-    """
-    if x == 0 or y == 0:
-        return 0
-    elif x == 1:
-        return y
-    elif y == 1:
-        return x
-    else:
-        return x * y
-
-_sum = functools.partial(_smart_reduce, _smart_add)
-_product = functools.partial(_smart_reduce, _smart_mul)
+from .. import utils
 
 
 class UpdateDeltas(object):
@@ -93,22 +55,22 @@ class UpdateDeltas(object):
         adds a value, and returns a new instance of UpdateDeltas
         """
         if isinstance(other, UpdateDeltas):
-            return UpdateDeltas(toolz.merge_with(_sum,
+            return UpdateDeltas(toolz.merge_with(utils.smart_sum,
                                                  self.deltas,
                                                  other.deltas))
         else:
-            return self.apply(lambda x: _smart_add(x, other))
+            return self.apply(lambda x: utils.smart_add(x, other))
 
     def __iadd__(self, other):
         """
         mutates the UpdateDeltas by adding a value
         """
         if isinstance(other, UpdateDeltas):
-            self.deltas = toolz.merge_with(_sum,
+            self.deltas = toolz.merge_with(utils.smart_sum,
                                            self.deltas,
                                            other.deltas)
         else:
-            self.iapply(lambda x: _smart_add(x, other))
+            self.iapply(lambda x: utils.smart_add(x, other))
         return self
 
     def __mul__(self, other):
@@ -121,11 +83,11 @@ class UpdateDeltas(object):
             # (another approach would be returning 0 if the value isn't in
             # both)
             # TODO is multiply by another set of deltas ever desired?
-            return UpdateDeltas(toolz.merge_with(_product,
+            return UpdateDeltas(toolz.merge_with(utils.smart_product,
                                                  self.deltas,
                                                  other.deltas))
         else:
-            return self.apply(lambda x: _smart_mul(x, other))
+            return self.apply(lambda x: utils.smart_mul(x, other))
 
     def __imul__(self, other):
         """
@@ -133,11 +95,11 @@ class UpdateDeltas(object):
         adds a value, and returns a new instance of UpdateDeltas
         """
         if isinstance(other, UpdateDeltas):
-            self.deltas = toolz.merge_with(_product,
+            self.deltas = toolz.merge_with(utils.smart_product,
                                            self.deltas,
                                            other.deltas)
         else:
-            self.iapply(lambda x: _smart_mul(x, other))
+            self.iapply(lambda x: utils.smart_mul(x, other))
         return self
 
     def __getitem__(self, key):

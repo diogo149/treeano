@@ -1,4 +1,5 @@
 import numbers
+import functools
 
 import numpy as np
 import theano
@@ -183,6 +184,46 @@ def shared_empty(ndim, dtype, name=None):
     create shared variable with placeholder data
     """
     return theano.shared(np.zeros([1] * ndim, dtype=dtype), name=name)
+
+# ############################## smart reducing ##############################
+
+
+def smart_reduce(op, iterable):
+    iterable = list(iterable)
+    if len(iterable) == 1:
+        return iterable[0]
+    else:
+        return functools.reduce(op, iterable[1:], iterable[0])
+
+
+def smart_add(x, y):
+    """
+    0-aware add, to prevent computation graph from getting very large
+    """
+    if x == 0:
+        return y
+    elif y == 0:
+        return x
+    else:
+        return x + y
+
+
+def smart_mul(x, y):
+    """
+    0- and 1- aware multiply, to prevent computation graph from getting very
+    large
+    """
+    if x == 0 or y == 0:
+        return 0
+    elif x == 1:
+        return y
+    elif y == 1:
+        return x
+    else:
+        return x * y
+
+smart_sum = functools.partial(smart_reduce, smart_add)
+smart_product = functools.partial(smart_reduce, smart_mul)
 
 
 # ##################### utils for dealing with networks #####################
