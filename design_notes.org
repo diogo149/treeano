@@ -1795,8 +1795,6 @@
 ** possible issues
 - when freezing training state, dataset state won't be frozen
 ** future
-- make python3 compatible
-  - add to travis?
 - use metaclass for registering classes for serialization
   - see: https://github.com/lmjohns3/downhill/blob/master/downhill/util.py
 - look into drawing network diagrams:
