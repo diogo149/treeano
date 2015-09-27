@@ -68,7 +68,7 @@ class HyperparameterNode(core.Wrapper1NodeImpl):
 
     def __init__(self, name, children, **hyperparameters):
         # set hyperparameter keys to be all passed in keys
-        self.hyperparameter_names = hyperparameters.keys()
+        self.hyperparameter_names = tuple(hyperparameters.keys())
         # override init to allow for using keyword arguments
         super(HyperparameterNode, self).__init__(name,
                                                  children,
