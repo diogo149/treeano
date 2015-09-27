@@ -3,12 +3,11 @@ import numpy as np
 import theano
 import theano.tensor as T
 
-import treeano.theano_extensions.fractional_max_pooling as fmp
-
 fX = theano.config.floatX
 
-
 if "gpu" in theano.config.device:
+    import treeano.theano_extensions.fractional_max_pooling as fmp
+
     def test_fractional_max_pooling_numeric_gradient():
         def fun(x):
             return fmp.DisjointPseudorandomFractionalMaxPooling2DOp(
