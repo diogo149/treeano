@@ -116,8 +116,9 @@ class MaxoutNode(core.Wrapper0NodeImpl):
     """
     from "Maxout Networks" http://arxiv.org/abs/1302.4389
     """
-    hyperparameter_names = filter(lambda x: x != "pool_function",
-                                  FeaturePoolNode.hyperparameter_names)
+    hyperparameter_names = tuple(
+        [n for n in FeaturePoolNode.hyperparameter_names
+         if n != "pool_function"])
 
     def architecture_children(self):
         return [FeaturePoolNode(self.name + "_featurepool")]
