@@ -358,17 +358,17 @@ class RelativeNetwork(object):
         return variable wrappers matching all of the given tags
         """
         remaining_vws = [
-            variable
+            vw
             for name in self.graph.architecture_subtree_names(self._name)
-            for variable in self[name]._state["current_variables"].values()]
+            for vw in self[name]._state["current_variables"].values()]
         if tags is not None:
             tags = set(tags)
             # only keep variables where all tags match
-            remaining_vws = filter(lambda v: len(tags - v.tags) == 0,
-                                   remaining_vws)
+            remaining_vws = [vw for vw in remaining_vws
+                             if len(tags - vw.tags) == 0]
         if is_shared is not None:
-            remaining_vws = filter(lambda v: v.is_shared == is_shared,
-                                   remaining_vws)
+            remaining_vws = [vw for vw in remaining_vws
+                             if is_shared == vw.is_shared]
         return remaining_vws
 
     def find_nodes_in_subtree(self, cls):

@@ -231,7 +231,7 @@ class ScanNode(core.Wrapper1NodeImpl):
         def step(*scan_vars):
             # calculate number for each type of scan var
             num_inputs = len(input_sequences)
-            num_outputs = len(filter(lambda x: x is not None, outputs_info))
+            num_outputs = len([x for x in outputs_info if x is not None])
             num_non_sequences = len(non_sequences)
             assert len(scan_vars) == (num_inputs
                                       + num_outputs

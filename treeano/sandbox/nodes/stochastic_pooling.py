@@ -37,9 +37,11 @@ def stochastic_pool(neibs, axis, deterministic):
 @treeano.register_node("stochastic_pool_2d")
 class StochasticPool2DNode(treeano.Wrapper0NodeImpl):
 
-    hyperparameter_names = (filter(lambda x: x != "pool_function",
-                                   tn.CustomPool2DNode.hyperparameter_names)
-                            + ("deterministic",))
+    hyperparameter_names = (
+        tuple([x
+               for x in tn.CustomPool2DNode.hyperparameter_names
+               if x != "pool_function"])
+        + ("deterministic",))
 
     def architecture_children(self):
         return [tn.CustomPool2DNode(self.name + "_pool2d")]
