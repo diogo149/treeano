@@ -42,32 +42,32 @@ def test_output_nanguard():
     try:
         fn2({"x": 3})
     except Exception as e:
-        assert e.message["error_type"] == "inf"
-        np.testing.assert_equal(e.message["value"], np.array(np.inf))
+        assert e.args[0]["error_type"] == "inf"
+        np.testing.assert_equal(e.args[0]["value"], np.array(np.inf))
     else:
         assert False
 
     try:
         fn2({"x": -6})
     except Exception as e:
-        nt.assert_equal(e.message["error_type"], "inf")
-        np.testing.assert_equal(e.message["value"], np.array(-np.inf))
+        nt.assert_equal(e.args[0]["error_type"], "inf")
+        np.testing.assert_equal(e.args[0]["value"], np.array(-np.inf))
     else:
         assert False
 
     try:
         fn2({"x": 0})
     except Exception as e:
-        nt.assert_equal(e.message["error_type"], "nan")
-        np.testing.assert_equal(e.message["value"], np.array(np.nan))
+        nt.assert_equal(e.args[0]["error_type"], "nan")
+        np.testing.assert_equal(e.args[0]["value"], np.array(np.nan))
     else:
         assert False
 
     try:
         fn1({"x": 6e10})
     except Exception as e:
-        nt.assert_equal(e.message["error_type"], "big")
-        np.testing.assert_allclose(e.message["value"],
+        nt.assert_equal(e.args[0]["error_type"], "big")
+        np.testing.assert_allclose(e.args[0]["value"],
                                    np.array(2e10),
                                    rtol=1e-5)
     else:
