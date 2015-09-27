@@ -20,9 +20,9 @@ def test_to_shared_dict():
              inits=[treeano.inits.ConstantInit(42.42)])]
     ).network()
     sd = canopy.network_utils.to_shared_dict(network)
-    nt.assert_equal(sd.keys(), ["lm:weight"])
-    np.testing.assert_equal(sd.values()[0].get_value(),
-                            42.42 * np.ones((10, 15), dtype=fX))
+    nt.assert_equal(["lm:weight"], list(sd.keys()))
+    np.testing.assert_equal(42.42 * np.ones((10, 15), dtype=fX),
+                            list(sd.values())[0].get_value())
 
 
 def test_to_value_dict():
@@ -35,9 +35,9 @@ def test_to_value_dict():
              inits=[treeano.inits.ConstantInit(42.42)])]
     ).network()
     sd = canopy.network_utils.to_value_dict(network)
-    nt.assert_equal(sd.keys(), ["lm:weight"])
-    np.testing.assert_equal(sd["lm:weight"],
-                            42.42 * np.ones((10, 15), dtype=fX))
+    nt.assert_equal(["lm:weight"], list(sd.keys()))
+    np.testing.assert_equal(42.42 * np.ones((10, 15), dtype=fX),
+                            sd["lm:weight"])
 
 
 def test_load_value_dict():
@@ -119,8 +119,8 @@ def test_to_preallocated_init1():
              inits=inits)]
     ).network()
 
-    w1 = canopy.network_utils.to_shared_dict(network1).values()[0]
-    w2 = canopy.network_utils.to_shared_dict(network2).values()[0]
+    w1 = list(canopy.network_utils.to_shared_dict(network1).values())[0]
+    w2 = list(canopy.network_utils.to_shared_dict(network2).values())[0]
     # both networks should be using the exact same shared variables
     assert w1 is w2
 
