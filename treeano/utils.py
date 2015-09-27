@@ -12,7 +12,7 @@ def as_fX(x):
     """
     convert input to value with type floatX
     """
-    if isinstance(x, (float, int, long)):
+    if isinstance(x, (float, numbers.Integral)):
         return np.array(x, dtype=fX)
     elif isinstance(x, np.ndarray):
         if x.dtype == np_fX:
