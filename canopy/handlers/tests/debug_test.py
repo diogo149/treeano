@@ -162,6 +162,8 @@ def test_save_last_inputs_and_networks():
     nt.assert_equal(save_handler.inputs_, inputs[-5:])
 
     # PY3: calling list on zip to make it eager
+    # otherwise, save_handler.value_dicts_ looks at the mutating
+    # value ducts
     for value_dict, i, o in list(zip(save_handler.value_dicts_,
                                      inputs[-5:],
                                      outputs[-5:])):
