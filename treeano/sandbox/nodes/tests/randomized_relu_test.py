@@ -1,3 +1,6 @@
+from __future__ import division, absolute_import
+from __future__ import print_function, unicode_literals
+
 import nose.tools as nt
 import numpy as np
 import theano
