@@ -196,7 +196,7 @@ def test_linear_mapping_node():
     # set weight_var value to new value
     weight_var.value = W
     # test that adding works
-    np.testing.assert_allclose(fn(x)[0], np.dot(x, W), rtol=1e-5)
+    np.testing.assert_allclose(np.dot(x, W), fn(x)[0], rtol=1e-4, atol=1e-7)
 
 
 def test_apply_node():
