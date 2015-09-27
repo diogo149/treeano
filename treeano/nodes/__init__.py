@@ -69,7 +69,9 @@ from downsample import (FeaturePoolNode,
                         CustomPool2DNode,
                         CustomGlobalPoolNode)
 from upsample import (RepeatNDNode,
-                      SpatialRepeatNDNode)
+                      SpatialRepeatNDNode,
+                      SparseUpsampleNode,
+                      SpatialSparseUpsampleNode)
 from conv import (Conv2DNode,
                   Conv3DNode,
                   Conv3D2DNode)
