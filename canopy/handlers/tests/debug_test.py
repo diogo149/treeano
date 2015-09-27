@@ -161,11 +161,12 @@ def test_save_last_inputs_and_networks():
 
     nt.assert_equal(save_handler.inputs_, inputs[-5:])
 
-    for value_dict, i, o in zip(save_handler.value_dicts_,
-                                inputs[-5:],
-                                outputs[-5:]):
+    # PY3: calling list on zip to make it eager
+    for value_dict, i, o in list(zip(save_handler.value_dicts_,
+                                     inputs[-5:],
+                                     outputs[-5:])):
         canopy.network_utils.load_value_dict(network, value_dict)
-        nt.assert_equal(fn(i), o)
+        nt.assert_equal(o, fn(i))
 
 
 def test_network_nanguard():
