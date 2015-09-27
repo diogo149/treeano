@@ -375,10 +375,8 @@ class RelativeNetwork(object):
         """
         return all nodes with the given class
         """
-        def predicate(node):
-            return node.__class__ is cls
-
-        return filter(predicate, self.graph.architecture_subtree(self._name))
+        return [node for node in self.graph.architecture_subtree(self._name)
+                if node.__class__ is cls]
 
     def create_variable(self, name, **kwargs):
         """

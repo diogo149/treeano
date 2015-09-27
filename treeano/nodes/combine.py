@@ -60,7 +60,8 @@ class BaseInputCombineNode(six.with_metaclass(abc.ABCMeta, core.NodeImpl)):
             ["ignore_default_input"], False)
         self.input_keys = tuple(sorted(network.get_all_input_edges().keys()))
         if ignore_default_input:
-            self.input_keys = filter(lambda x: x != "default", self.input_keys)
+            self.input_keys = tuple([k for k in self.input_keys
+                                     if k != "default"])
 
     @abc.abstractmethod
     def compute_output(self, network, *in_vws):
