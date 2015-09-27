@@ -1,3 +1,6 @@
+from __future__ import division, absolute_import
+from __future__ import print_function, unicode_literals
+
 import nose.tools as nt
 import numpy as np
 import theano
@@ -27,7 +30,7 @@ def test_pool_output_shape():
             ignore_border=ignore_border,
             padding=pads,
         ).shape.eval()
-        print ans, res
+        print(ans, res)
         np.testing.assert_equal(ans, res)
 
     test_same((3, 4, 5, 6), (2, 3), (1, 1), (0, 0), False)
@@ -63,7 +66,7 @@ def test_pool_output_shape_custom_pool_2d_node():
                                  )]
         ).network()
         ans = network["p"].get_variable("default").variable.shape.eval()
-        print ans, res
+        print(ans, res)
         np.testing.assert_equal(ans, res)
 
     test_same((3, 4, 5, 6), (2, 3), (1, 1), (0, 0), True)
