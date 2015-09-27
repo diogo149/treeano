@@ -58,6 +58,14 @@ class LasagneUpdatesNode(nodes.StandardUpdatesNode):
     def _new_update_deltas(self, network, parameters, grads):
         parameter_variables = [p.variable for p in parameters]
         updates = self._lasagne_updates(network, parameter_variables, grads)
+        if isinstance(updates, dict):
+            updates = list(updates.items())
+        # HACK around lasagne not giving names to temporary variables
+        counter = 0
+        for var, _ in updates:
+            if var.name is None:
+                counter += 1
+                var.name = "%s_unnamed_state%d" % (self.name, counter)
         return core.UpdateDeltas.from_updates(updates)
 
     def _lasagne_updates(self, network, parameter_variables, grads):
