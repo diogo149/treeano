@@ -197,8 +197,8 @@ class Network(object):
             # convert into format expected by theano.function
             updates = all_deltas.to_updates()
 
-        transformed_inputs = map(self.network_variable, inputs)
-        transformed_outputs = map(self.network_variable, outputs)
+        transformed_inputs = [self.network_variable(i) for i in inputs]
+        transformed_outputs = [self.network_variable(i) for i in outputs]
 
         if givens is None:
             tmp_givens = []
