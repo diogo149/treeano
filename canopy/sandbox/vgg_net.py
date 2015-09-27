@@ -14,7 +14,6 @@ def vgg_16_nodes(conv_only):
     """
     assert conv_only
 
-    # NOTE: using Conv2DDNNNode's because the network uses "same" convs
     return tn.HyperparameterNode(
         "vgg16",
         tn.SequentialNode(
@@ -80,6 +79,8 @@ def vgg_16_nodes(conv_only):
         pad="same",
         filter_size=(3, 3),
         pool_size=(2, 2),
+        # VGG net uses cross-correlation by default
+        conv_mode="cross",
     )
 
 
