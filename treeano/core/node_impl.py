@@ -66,7 +66,7 @@ class NodeImpl(NodeAPI):
 
     def __repr__(self):
         param_pairs = [("name", self.name)]
-        param_pairs.extend(self.hyperparameters.iteritems())
+        param_pairs.extend(self.hyperparameters.items())
         param_str = ", ".join("%s=%s" % (k, repr(v)) for k, v in param_pairs)
         root = "%s(%s)" % (self.__class__.__name__, param_str)
         # OPTIMIZE

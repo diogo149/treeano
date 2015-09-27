@@ -130,7 +130,7 @@ class DictChildrenContainer(ChildrenContainer):
 
     def __init__(self, children):
         assert isinstance(children, dict)
-        for k, v in six.iteritems(children):
+        for k, v in children.items():
             assert isinstance(k, six.string_types)
             assert isinstance(v, ChildrenContainer)
         self._children = children
@@ -146,12 +146,12 @@ class DictChildrenContainer(ChildrenContainer):
 
     def to_data(self):
         return {k: serialization_state.children_container_to_data(v)
-                for k, v in six.iteritems(self._children)}
+                for k, v in self._children.items()}
 
     @classmethod
     def from_data(cls, data):
         return cls({k: serialization_state.children_container_from_data(v)
-                    for k, v in six.iteritems(data)})
+                    for k, v in data.items()})
 
     def __getitem__(self, key):
         return self._children[key]
@@ -176,7 +176,7 @@ class _DictChildrenContainerFromSchema(DictChildrenContainer):
 
     @property
     def children(self):
-        return {k: v.children for k, v in six.iteritems(self._children)}
+        return {k: v.children for k, v in self._children.items()}
 
 
 class DictChildrenContainerSchema(object):
@@ -196,7 +196,7 @@ class DictChildrenContainerSchema(object):
     """
 
     def __init__(self, _children_container=None, **schema):
-        for k, v in six.iteritems(schema):
+        for k, v in schema.items():
             assert isinstance(k, six.string_types)
             assert ChildrenContainer in v.__bases__
         self.schema = schema

@@ -24,7 +24,7 @@ def node_to_str(cls):
     """
     returns the string for the given registered node class
     """
-    return {v: k for k, v in NODES.iteritems()}[cls]
+    return {v: k for k, v in NODES.items()}[cls]
 
 
 def node_from_str(s):
@@ -75,7 +75,7 @@ def children_container_to_str(cls):
     """
     returns the string for the given registered children container class
     """
-    return {v: k for k, v in CHILDREN_CONTAINERS.iteritems()}[cls]
+    return {v: k for k, v in CHILDREN_CONTAINERS.items()}[cls]
 
 
 def children_container_from_str(s):
