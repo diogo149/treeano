@@ -1,7 +1,7 @@
 import theano
 import theano.tensor as T
 from theano.tensor.nnet.neighbours import images2neibs
-from theano.tensor.signal.downsample import max_pool_2d
+from theano.tensor.signal.downsample import max_pool_2d, DownsampleFactorMax
 
 from .. import core
 from .. import utils
@@ -42,6 +42,16 @@ def pool_output_shape(input_shape,
     """
     compute output shape for a pool
     """
+    # TODO: use this function
+    # as of 20150926, it appears to be incorrect
+    # return tuple(DownsampleFactorMax.out_shape(
+    #     imgshape=input_shape,
+    #     ds=pool_shape,
+    #     st=strides,
+    #     ignore_border=ignore_border,
+    #     padding=pads,
+    # ))
+
     if strides is None:
         strides = pool_shape
 
