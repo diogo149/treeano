@@ -3,5 +3,5 @@ fractional_max_pooling
 """.split()
 
 
-import gradient
-import tensor
+from . import gradient
+from . import tensor

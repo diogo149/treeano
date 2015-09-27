@@ -1,11 +1,11 @@
-import handlers
-import network_utils
-import node_utils
-import schedules
-import serialization
-import transforms
-import templates
-import walk_utils
+from . import handlers
+from . import network_utils
+from . import node_utils
+from . import schedules
+from . import serialization
+from . import transforms
+from . import templates
+from . import walk_utils
 
 # TODO rename fn_utils
 # ---
@@ -14,5 +14,5 @@ import walk_utils
 # import fn_utils
 
 
-from fn_utils import evaluate_until
-from handlers import handled_fn
+from .fn_utils import evaluate_until
+from .handlers import handled_fn

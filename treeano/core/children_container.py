@@ -1,7 +1,7 @@
 import abc
 
 import six
-import serialization_state
+from . import serialization_state
 
 
 class ChildrenContainer(six.with_metaclass(abc.ABCMeta, object)):
