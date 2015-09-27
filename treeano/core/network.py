@@ -1,5 +1,4 @@
-import types
-
+import six
 import theano
 import theano.tensor as T
 
@@ -155,7 +154,7 @@ class Network(object):
         network.network_variable(("fc1", "W"))
         network.network_variable(var)  # no-op
         """
-        if isinstance(query, types.StringTypes):
+        if isinstance(query, six.string_types):
             node_name = query
             from_key = "default"
         elif isinstance(query, tuple):
