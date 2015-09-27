@@ -1,3 +1,6 @@
+from __future__ import division, absolute_import
+from __future__ import print_function, unicode_literals
+
 import nose.tools as nt
 import numpy as np
 import theano
@@ -37,6 +40,6 @@ if "gpu" in theano.config.device:
             )
             res = fmp_shape(x, op)
             new_dim = op.output_length(in_dim)
-            print in_dim, res, new_dim, alpha, u
+            print(in_dim, res, new_dim, alpha, u)
             nt.assert_equal((1, 1, new_dim, new_dim),
                             res)
