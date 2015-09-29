@@ -134,3 +134,20 @@ class GradientReversalNode(core.NodeImpl):
             shape=in_vw.shape,
             tags={"output"}
         )
+
+
+@core.register_node("zero_grad")
+class ZeroGradNode(core.NodeImpl):
+
+    """
+    like theano.gradient.zero_grad
+    """
+
+    def compute_output(self, network, in_vw):
+        out_var = theano.gradient.zero_grad(in_vw.variable)
+        network.create_variable(
+            "default",
+            variable=out_var,
+            shape=in_vw.shape,
+            tags={"output"}
+        )

@@ -29,6 +29,10 @@ def test_gradient_reversal_node_serialization():
     tn.check_serialization(tn.GradientReversalNode("a"))
 
 
+def test_zero_grad_node_serialization():
+    tn.check_serialization(tn.ZeroGradNode("a"))
+
+
 def test_tile_node():
     network = tn.SequentialNode(
         "n",
@@ -83,3 +87,30 @@ def test_dimshuffle_node():
     res = fn(x)[0]
     np.testing.assert_equal(res.shape, ans.shape)
     np.testing.assert_equal(res, ans)
+
+
+def test_zero_grad_node():
+    n1 = tn.SequentialNode(
+        "s",
+        [tn.InputNode("i", shape=()),
+         tn.toy.ScalarSumNode("ss")]).network()
+
+    n2 = tn.SequentialNode(
+        "s",
+        [tn.InputNode("i", shape=()),
+         tn.ZeroGradNode("z"),
+         tn.toy.ScalarSumNode("ss")]).network()
+
+    fn1 = n1.function(["i"],
+                      ["i",
+                       T.grad(n1["s"].get_variable("default").variable,
+                              n1["i"].get_variable("default").variable)])
+    fn2 = n2.function(["i"],
+                      ["i",
+                       T.grad(n2["s"].get_variable("default").variable,
+                              n2["i"].get_variable("default").variable)])
+
+    # gradient should be 1 w/o zero grad node
+    np.testing.assert_equal(1, fn1(3)[1])
+    # gradient should be 0 w/ zero grad node
+    np.testing.assert_equal(0, fn2(3)[1])
