@@ -230,6 +230,7 @@ class RotateShearStretchSpatialTransformerNode(treeano.Wrapper1NodeImpl):
         # create a matrix to convert 3 input parameters into the 6
         # parameters for an affine transform
         # FIXME this is incorrect, and does allow scaling
+        assert False
         params_to_affine = np.zeros((3, 2, 3), dtype=fX)
         # for parameters x, y, and z, convert to the following matrix:
         # x y 0
