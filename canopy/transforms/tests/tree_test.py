@@ -14,7 +14,7 @@ import canopy
 fX = theano.config.floatX
 
 
-def test_remove_node():
+def test_remove_nodes():
     network1 = tn.SequentialNode(
         "seq",
         [tn.InputNode("i", shape=()),
@@ -29,12 +29,12 @@ def test_remove_node():
         )]).network()
     fn1 = network1.function(["i"], ["seq"])
     nt.assert_equal(1, fn1(0)[0])
-    network2 = canopy.transforms.remove_node(network1,
-                                             {"hp2"},
-                                             keep_child=True)
+    network2 = canopy.transforms.remove_nodes(network1,
+                                              {"hp2"},
+                                              keep_child=True)
     fn2 = network2.function(["i"], ["seq"])
     nt.assert_equal(2, fn2(0)[0])
-    network3 = canopy.transforms.remove_node(network1, {"ac"})
+    network3 = canopy.transforms.remove_nodes(network1, {"ac"})
     fn3 = network3.function(["i"], ["seq"])
     nt.assert_equal(0, fn3(0)[0])
 

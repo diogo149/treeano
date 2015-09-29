@@ -9,7 +9,7 @@ from . import fns
 from .. import node_utils
 
 
-def remove_node(network, names_to_remove, keep_child=False, **kwargs):
+def remove_nodes(network, names_to_remove, keep_child=False, **kwargs):
     """
     replaces nodes with the given names with the node's single child if it
     has children or with an identitynode if the node doesn't have children

@@ -9,7 +9,7 @@ from .fns import (transform_root_node,
 from .node import (remove_dropout,
                    replace_node,
                    update_hyperparameters)
-from .tree import (remove_node,
+from .tree import (remove_nodes,
                    remove_subtree,
                    remove_parent,
                    add_parent,
