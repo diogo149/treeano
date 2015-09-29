@@ -29,18 +29,14 @@ def test_remove_node():
         )]).network()
     fn1 = network1.function(["i"], ["seq"])
     nt.assert_equal(1, fn1(0)[0])
-    network2 = canopy.transforms.remove_node(network1, {"hp2"})
+    network2 = canopy.transforms.remove_node(network1,
+                                             {"hp2"},
+                                             keep_child=True)
     fn2 = network2.function(["i"], ["seq"])
     nt.assert_equal(2, fn2(0)[0])
     network3 = canopy.transforms.remove_node(network1, {"ac"})
     fn3 = network3.function(["i"], ["seq"])
     nt.assert_equal(0, fn3(0)[0])
-
-    @nt.raises(ValueError)
-    def fails():
-        canopy.transforms.remove_node(network1, {"seq"})
-
-    fails()
 
 
 def test_remove_subtree():

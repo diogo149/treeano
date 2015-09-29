@@ -8,20 +8,19 @@ from . import fns
 from .. import node_utils
 
 
-def remove_node(network, names_to_remove, **kwargs):
+def remove_node(network, names_to_remove, keep_child=False, **kwargs):
     """
     replaces nodes with the given names with the node's single child if it
     has children or with an identitynode if the node doesn't have children
     """
     def inner(node):
         if node.name in names_to_remove:
-            children = node.architecture_children()
-            if len(children) == 1:
+            if keep_child:
+                children = node.architecture_children()
+                assert len(children) == 1
                 return children[0]
-            elif len(children) == 0:
-                return tn.IdentityNode(node.name)
             else:
-                raise ValueError
+                return tn.IdentityNode(node.name)
         else:
             return node
 
