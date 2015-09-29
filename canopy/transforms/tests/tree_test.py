@@ -116,3 +116,22 @@ def test_add_hyperparameters():
     nt.assert_equal(3, fn2a(0)[0])
     fn2b = network2.function(["i"], ["hp"])
     nt.assert_equal(3, fn2b(0)[0])
+
+
+def test_remove_parents():
+    network1 = tn.SequentialNode(
+        "seq",
+        [tn.InputNode("i", shape=()),
+         tn.HyperparameterNode(
+             "hp1",
+             tn.HyperparameterNode(
+                 "hp2",
+                 tn.AddConstantNode("ac"),
+                 value=1
+             ),
+             value=2
+        )]).network()
+
+    network2 = canopy.transforms.remove_parents(network1, "ac")
+
+    nt.assert_equal(tn.AddConstantNode("ac"), network2.root_node)

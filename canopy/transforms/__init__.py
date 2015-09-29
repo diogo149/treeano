@@ -13,4 +13,5 @@ from .tree import (remove_node,
                    remove_subtree,
                    remove_parent,
                    add_parent,
-                   add_hyperparameters)
+                   add_hyperparameters,
+                   remove_parents)

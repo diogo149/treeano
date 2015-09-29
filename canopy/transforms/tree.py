@@ -5,6 +5,7 @@ tree based transformations
 import treeano.nodes as tn
 
 from . import fns
+from .. import node_utils
 
 
 def remove_node(network, names_to_remove, **kwargs):
@@ -102,5 +103,26 @@ def add_hyperparameters(network, name, hyperparameters, **kwargs):
             root_node,
             **hyperparameters
         )
+
+    return fns.transform_root_node(network, inner, **kwargs)
+
+
+def remove_parents(network, name, **kwargs):
+    """
+    removes all parents of the given node name, replacing the root node with
+    itself
+    """
+
+    def inner(root_node):
+        found = [None]
+
+        def fn(node):
+            if node.name == name:
+                found[0] = node
+            return node
+
+        node_utils.postwalk_node(root_node, fn)
+        assert found[0] is not None
+        return found[0]
 
     return fns.transform_root_node(network, inner, **kwargs)
