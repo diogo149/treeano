@@ -82,7 +82,7 @@ class ReshapeNode(core.NodeImpl):
         if -1 in new_shape:
             # should have only 1 -1
             assert sum([s == -1 for s in out_shape]) == 1
-            out_shape = [None if s == -1 else s for s in out_shape]
+            out_shape = tuple([None if s == -1 else s for s in out_shape])
 
         # FIXME
         # out_var = T.reshape(in_vw.variable,
