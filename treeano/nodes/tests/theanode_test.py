@@ -33,6 +33,10 @@ def test_zero_grad_node_serialization():
     tn.check_serialization(tn.ZeroGradNode("a"))
 
 
+def test_disconnected_grad_node_serialization():
+    tn.check_serialization(tn.DisconnectedGradNode("a"))
+
+
 def test_tile_node():
     network = tn.SequentialNode(
         "n",
@@ -114,3 +118,18 @@ def test_zero_grad_node():
     np.testing.assert_equal(1, fn1(3)[1])
     # gradient should be 0 w/ zero grad node
     np.testing.assert_equal(0, fn2(3)[1])
+
+
+def test_disconnected_grad_node():
+    network = tn.SequentialNode(
+        "s",
+        [tn.InputNode("i", shape=()),
+         tn.DisconnectedGradNode("g"),
+         tn.toy.ScalarSumNode("ss")]).network()
+
+    @nt.raises(theano.gradient.DisconnectedInputError)
+    def should_fail():
+        T.grad(network["s"].get_variable("default").variable,
+               network["i"].get_variable("default").variable)
+
+    should_fail()

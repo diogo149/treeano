@@ -35,7 +35,8 @@ from .theanode import (TileNode,
                        ReshapeNode,
                        DimshuffleNode,
                        GradientReversalNode,
-                       ZeroGradNode)
+                       ZeroGradNode,
+                       DisconnectedGradNode)
 from .combine import (BaseChildrenCombineNode,
                       BaseInputCombineNode,
                       InputFunctionCombineNode,
