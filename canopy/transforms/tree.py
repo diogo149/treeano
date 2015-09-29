@@ -123,9 +123,9 @@ def remove_parents(network, name, **kwargs):
     return fns.transform_root_node(network, inner, **kwargs)
 
 
-def replace_node(network, old_name, new_name, **kwargs):
+def move_node(network, new_name, old_name, **kwargs):
     """
-    replaces a given node with another node
+    moves a given node into the location in the tree of another node
     """
     def inner(root_node):
         if network.is_built:

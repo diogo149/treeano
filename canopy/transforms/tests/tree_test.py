@@ -133,7 +133,7 @@ def test_remove_parents():
     nt.assert_equal(tn.AddConstantNode("ac"), network2.root_node)
 
 
-def test_replace_node():
+def test_move_node():
     network1 = tn.SequentialNode(
         "seq",
         [tn.InputNode("i", shape=()),
@@ -147,7 +147,7 @@ def test_replace_node():
              value=2
         )]).network()
 
-    network2 = canopy.transforms.replace_node(network1, "hp1", "ac")
+    network2 = canopy.transforms.move_node(network1, "ac", "hp1")
 
     ans = tn.SequentialNode(
         "seq",

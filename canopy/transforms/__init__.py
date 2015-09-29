@@ -15,4 +15,4 @@ from .tree import (remove_nodes,
                    add_parent,
                    add_hyperparameters,
                    remove_parents,
-                   replace_node)
+                   move_node)
