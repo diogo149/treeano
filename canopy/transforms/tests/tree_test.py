@@ -131,3 +131,27 @@ def test_remove_parents():
     network2 = canopy.transforms.remove_parents(network1, "ac")
 
     nt.assert_equal(tn.AddConstantNode("ac"), network2.root_node)
+
+
+def test_replace_node():
+    network1 = tn.SequentialNode(
+        "seq",
+        [tn.InputNode("i", shape=()),
+         tn.HyperparameterNode(
+             "hp1",
+             tn.HyperparameterNode(
+                 "hp2",
+                 tn.AddConstantNode("ac"),
+                 value=1
+             ),
+             value=2
+        )]).network()
+
+    network2 = canopy.transforms.replace_node(network1, "hp1", "ac")
+
+    ans = tn.SequentialNode(
+        "seq",
+        [tn.InputNode("i", shape=()),
+         tn.AddConstantNode("ac")])
+
+    nt.assert_equal(ans, network2.root_node)

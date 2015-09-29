@@ -2,6 +2,7 @@
 tree based transformations
 """
 
+import treeano
 import treeano.nodes as tn
 
 from . import fns
@@ -113,15 +114,32 @@ def remove_parents(network, name, **kwargs):
     """
 
     def inner(root_node):
-        found = [None]
+        if network.is_built:
+            graph = network.graph
+        else:
+            graph = treeano.core.graph.TreeanoGraph(root_node)
+        return graph.name_to_node[name]
+
+    return fns.transform_root_node(network, inner, **kwargs)
+
+
+def replace_node(network, old_name, new_name, **kwargs):
+    """
+    replaces a given node with another node
+    """
+    def inner(root_node):
+        if network.is_built:
+            graph = network.graph
+        else:
+            graph = treeano.core.graph.TreeanoGraph(root_node)
+        new_node = graph.name_to_node[new_name]
 
         def fn(node):
-            if node.name == name:
-                found[0] = node
-            return node
+            if node.name == old_name:
+                return new_node
+            else:
+                return node
 
-        node_utils.postwalk_node(root_node, fn)
-        assert found[0] is not None
-        return found[0]
+        return node_utils.postwalk_node(root_node, fn)
 
     return fns.transform_root_node(network, inner, **kwargs)
