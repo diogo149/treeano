@@ -94,13 +94,15 @@ def root_mean_square(x, axis=None):
     return T.sqrt(T.mean(T.sqr(x), axis=axis))
 
 
-def stable_softmax(x):
+def stable_softmax(x, axis=1):
     """
     numerical stabilization to avoid f32 overflow
     http://deeplearning.net/software/theano/library/tensor/nnet/nnet.html#tensor.nnet.softmax
     """
-    e_x = T.exp(x - x.max(axis=1, keepdims=True))
-    out = e_x / e_x.sum(axis=1, keepdims=True)
+    # TODO test performance on axis
+    # if this way is slow, could reshape, do the softmax, then reshape back
+    e_x = T.exp(x - x.max(axis=axis, keepdims=True))
+    out = e_x / e_x.sum(axis=axis, keepdims=True)
     return out
 
 
