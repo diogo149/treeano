@@ -76,7 +76,7 @@ var defaultSettings = [
 
 var monitorData = [];
 var allKeys = [];
-var settings = defaultSettings;
+var settings;
 
 var $window = $(window);
 var $mainView = $("#main-view");
@@ -518,7 +518,14 @@ function createDataView() {
   $mainView.append($("<pre/>").text(JSON.stringify(monitorData, undefined, 2)));
 }
 
-// TODO if view is saved, default to chart view
-loadMonitorData(createEditView);
+$.getJSON("default_settings.json").done(function(data) {
+  settings = data;
+  // if view is saved, default to chart view
+  loadMonitorData(createChartView);
+}).fail(function(err) {
+  console.log("no default settings found");
+  settings = defaultSettings;
+  loadMonitorData(createEditView);
+});
 
 // })();

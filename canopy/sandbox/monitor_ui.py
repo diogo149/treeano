@@ -15,6 +15,7 @@ features
 import re
 import os
 import json
+import shutil
 
 import numpy as np
 
@@ -32,7 +33,8 @@ class ResultWriter(object):
                  dirname,
                  pattern,
                  remove_matched=False,
-                 symlink=False):
+                 symlink=False,
+                 default_settings_file=None):
         """
         remove_matched:
         whether or not to remove the matched results from the output map
@@ -53,8 +55,14 @@ class ResultWriter(object):
             # create monitor.json file
             with open(os.path.join(dirname, "monitor.json"), "w") as f:
                 pass
+            if default_settings_file is not None:
+                os.symlink(os.path.realpath(default_settings_file),
+                           os.path.join(dirname, "default_settings.json"))
         else:
             templates.copy_template("monitor_ui", dirname)
+            if default_settings_file is not None:
+                shutil.copy(os.path.realpath(default_settings_file),
+                            os.path.join(dirname, "default_settings.json"))
         self._json_path = os.path.join(self.dirname, "monitor.json")
         self._regex = re.compile(self.pattern)
 
