@@ -101,9 +101,16 @@ def stable_softmax(x, axis=1):
     """
     # TODO test performance on axis
     # if this way is slow, could reshape, do the softmax, then reshape back
-    e_x = T.exp(x - x.max(axis=axis, keepdims=True))
-    out = e_x / e_x.sum(axis=axis, keepdims=True)
-    return out
+    if axis == tuple(range(1, x.ndim)):
+        # reshape, do softmax, then reshape back, in order to be differentiable
+        # TODO could do reshape trick for any set of sequential axes
+        # that end with last (eg. 2,3), not only when starting with axis 1
+        return stable_softmax(x.flatten(2)).reshape(x.shape)
+    else:
+        # TODO add warning for axis with tuple that it is not differntiable
+        e_x = T.exp(x - x.max(axis=axis, keepdims=True))
+        out = e_x / e_x.sum(axis=axis, keepdims=True)
+        return out
 
 
 def squared_error(pred, target):
