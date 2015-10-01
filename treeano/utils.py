@@ -194,6 +194,13 @@ def shared_empty(ndim, dtype, name=None):
     """
     return theano.shared(np.zeros([1] * ndim, dtype=dtype), name=name)
 
+
+def seed_MRG_RandomStreams(rng, seed=12345):
+    """
+    seeds random state of theano.sandbox.rng_mrg.MRG_RandomStreams
+    """
+    rng.rstate = theano.sandbox.rng_mrg.MRG_RandomStreams(seed=seed).rstate
+
 # ############################## smart reducing ##############################
 
 
