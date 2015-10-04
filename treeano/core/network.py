@@ -396,7 +396,7 @@ class RelativeNetwork(object):
         self._state['original_variables'][name] = variable
         return variable
 
-    def copy_variable(self, name, previous_vw, tags=None):
+    def copy_vw(self, name, previous_vw, tags=None):
         """
         creates a copy of previous_vw under a new name
 

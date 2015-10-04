@@ -89,7 +89,7 @@ class SharedHyperparameterNode(core.Wrapper1NodeImpl):
         )
         # create a copy of the shared variable, so we can use this to
         # update the variable
-        network.copy_variable(
+        network.copy_vw(
             name="hyperparameter",
             previous_vw=raw_vw,
             tags={"hyperparameter", "monitor"},

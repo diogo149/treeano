@@ -29,7 +29,7 @@ class DropoutNode(core.NodeImpl):
                                          "p"],
                                         0)
         if deterministic or p == 0:
-            network.copy_variable(
+            network.copy_vw(
                 name="default",
                 previous_vw=in_vw,
                 tags={"output"},
@@ -87,7 +87,7 @@ class GaussianDropoutNode(core.NodeImpl):
                 # probability
                 sigma = T.sqrt(p / (1 - p))
         if deterministic or sigma == 0:
-            network.copy_variable(
+            network.copy_vw(
                 name="default",
                 previous_vw=in_vw,
                 tags={"output"},
@@ -132,7 +132,7 @@ class SpatialDropoutNode(core.NodeImpl):
                                          "p"],
                                         0)
         if deterministic or p == 0:
-            network.copy_variable(
+            network.copy_vw(
                 name="default",
                 previous_vw=in_vw,
                 tags={"output"},

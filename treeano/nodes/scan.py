@@ -87,7 +87,7 @@ class ScanStateNode(core.NodeImpl):
 
     def compute_output(self, network, initial_state):
         # copy initial state, to be later referenced
-        network.copy_variable(
+        network.copy_vw(
             name="initial_state",
             previous_vw=initial_state,
             tags={"input"},

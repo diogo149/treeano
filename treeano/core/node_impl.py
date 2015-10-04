@@ -129,7 +129,7 @@ class NodeImpl(NodeAPI):
         """
         by default, return first input as output
         """
-        network.copy_variable(
+        network.copy_vw(
             name="default",
             previous_vw=args[0],
             tags={"output"},
