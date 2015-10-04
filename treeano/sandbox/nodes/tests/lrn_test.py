@@ -81,3 +81,16 @@ def test_local_response_normalization_2d_v2():
 def test_local_response_normalization_2d_pool():
     _test_localresponse_normalization_fn(
         lrn.local_response_normalization_2d_pool)
+
+
+def test_local_response_normalization_2d_node_shape():
+    shape = (3, 4, 5, 6)
+    network = tn.SequentialNode(
+        "s",
+        [tn.InputNode("i", shape=shape),
+         lrn.LocalResponseNormalization2DNode("lrn")]
+    ).network()
+    fn = network.function(["i"], ["s"])
+    x = np.random.randn(*shape).astype(fX)
+    res = fn(x)[0].shape
+    np.testing.assert_equal(shape, res)
