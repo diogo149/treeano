@@ -51,20 +51,33 @@ def ground_truth_normalizer(bc01, k, n, alpha, beta):
     return out_bc01
 
 
-def test_local_response_normalization_2d():
-    vw = treeano.VariableWrapper("foo",
-                                 variable=T.tensor4(),
-                                 shape=(3, 4, 5, 6))
-    kwargs = dict(
+def _test_localresponse_normalization_fn(fn, shape=(3, 4, 5, 6), **kwargs):
+    vw = treeano.VariableWrapper("foo", variable=T.tensor4(), shape=shape)
+    new_kwargs = dict(
         # use a big value of alpha so mistakes involving alpha show up strong
         alpha=1.5,
         k=2,
         beta=0.75,
         n=5,
     )
-    fn = theano.function([vw.variable],
-                         [lrn.local_response_normalization_2d(vw, **kwargs)])
-    x = np.random.randn(3, 4, 5, 6).astype(fX)
+    new_kwargs.update(kwargs)
+    fn = theano.function([vw.variable], [fn(vw, **new_kwargs)])
+    x = np.random.randn(*shape).astype(fX)
     res, = fn(x)
-    ans = ground_truth_normalizer(x, **kwargs)
+    ans = ground_truth_normalizer(x, **new_kwargs)
     np.testing.assert_allclose(ans, res, rtol=1e-5)
+
+
+def test_local_response_normalization_2d_v1():
+    _test_localresponse_normalization_fn(
+        lrn.local_response_normalization_2d_v1)
+
+
+def test_local_response_normalization_2d_v2():
+    _test_localresponse_normalization_fn(
+        lrn.local_response_normalization_2d_v2)
+
+
+def test_local_response_normalization_2d_pool():
+    _test_localresponse_normalization_fn(
+        lrn.local_response_normalization_2d_pool)

@@ -5,8 +5,10 @@ import treeano
 from treeano.sandbox.nodes import lrn
 fX = theano.config.floatX
 
-f = lrn.local_response_normalization_2d_v1
+# f = lrn.local_response_normalization_2d_v1
 # f = lrn.local_response_normalization_2d_v2
+# f = lrn.local_response_normalization_2d_dnn
+f = lrn.local_response_normalization_2d_pool
 
 vw = treeano.VariableWrapper("foo",
                              variable=T.tensor4(),
@@ -34,9 +36,13 @@ forward pass:
 %timeit fn1(x)
 local_response_normalization_2d_v1: 66.2 us
 local_response_normalization_2d_v2: 66.5 us
+local_response_normalization_2d_dnn: 61.8 us
+local_response_normalization_2d_pool: 66.6 us
 
 forward + backward pass:
 %timeit fn2(x)
 local_response_normalization_2d_v1: 117 us
 local_response_normalization_2d_v2: 115 us
+local_response_normalization_2d_dnn: 91.4 us
+local_response_normalization_2d_pool: 87.4 us
 """
