@@ -173,7 +173,7 @@ class Pool2DNode(core.NodeImpl):
             pool_shape=pool_size,
             strides=stride,
             pads=pad)
-        out_var = max_pool_2d(in_vw.variable,
+        out_var = max_pool_2d(input=in_vw.variable,
                               ds=pool_size,
                               st=stride,
                               ignore_border=ignore_border,
