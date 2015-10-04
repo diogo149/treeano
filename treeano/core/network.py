@@ -396,14 +396,14 @@ class RelativeNetwork(object):
         self._state['original_variables'][name] = variable
         return variable
 
-    def copy_variable(self, name, previous_variable, tags=None):
+    def copy_variable(self, name, previous_vw, tags=None):
         """
-        creates a copy of previous_variable under a new name
+        creates a copy of previous_vw under a new name
 
         the main use case for this is for wrapper nodes which just pass
         their input as their output
         """
-        variable = previous_variable.variable
+        variable = previous_vw.variable
         if utils.is_shared_variable(variable):
             # creating a "copy"of the variable
             # ---
@@ -415,7 +415,7 @@ class RelativeNetwork(object):
         return self.create_variable(
             name,
             variable=variable,
-            shape=previous_variable.shape,
+            shape=previous_vw.shape,
             tags=tags,
         )
 

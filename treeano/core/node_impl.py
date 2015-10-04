@@ -131,7 +131,7 @@ class NodeImpl(NodeAPI):
         """
         network.copy_variable(
             name="default",
-            previous_variable=args[0],
+            previous_vw=args[0],
             tags={"output"},
         )
 

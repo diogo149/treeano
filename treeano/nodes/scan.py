@@ -89,7 +89,7 @@ class ScanStateNode(core.NodeImpl):
         # copy initial state, to be later referenced
         network.copy_variable(
             name="initial_state",
-            previous_variable=initial_state,
+            previous_vw=initial_state,
             tags={"input"},
         )
         # create a new variable representing the output of this node,
