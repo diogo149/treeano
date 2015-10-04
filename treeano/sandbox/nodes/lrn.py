@@ -98,6 +98,27 @@ def local_response_normalization_2d_dnn(in_vw, alpha, k, beta, n):
     return in_var / (((alpha * n) * unreshaped + k) ** beta)
 
 
+def local_response_normalization_pool(in_vw, alpha, k, beta, n):
+    """
+    using built-in pooling, works for N-D tensors (2D/3D/etc.)
+    """
+    from theano.tensor.signal.downsample import max_pool_2d
+    assert n % 2 == 1, "n must be odd"
+    in_var = in_vw.variable
+    batch_size, num_channels = in_vw.symbolic_shape()[:2]
+    squared = T.sqr(in_var)
+    reshaped = squared.reshape((batch_size, 1, num_channels, -1))
+    pooled = max_pool_2d(input=reshaped,
+                         ds=(n, 1),
+                         st=(1, 1),
+                         padding=(n // 2, 0),
+                         ignore_border=True,
+                         mode="average_inc_pad")
+    unreshaped = pooled.reshape(in_vw.symbolic_shape())
+    # multiply by n, since we did a mean pool instead of a sum pool
+    return in_var / (((alpha * n) * unreshaped + k) ** beta)
+
+
 @treeano.register_node("local_response_normalization_2d")
 class LocalResponseNormalization2DNode(treeano.NodeImpl):
 
@@ -105,6 +126,7 @@ class LocalResponseNormalization2DNode(treeano.NodeImpl):
         v1=local_response_normalization_2d_v1,
         v2=local_response_normalization_2d_v2,
         pool=local_response_normalization_2d_pool,
+        pool_nd=local_response_normalization_pool,
         dnn=local_response_normalization_2d_dnn,
     )
 
@@ -126,6 +148,29 @@ class LocalResponseNormalization2DNode(treeano.NodeImpl):
                             k=k,
                             beta=beta,
                             n=n),
+            shape=in_vw.shape,
+            tags={"output"},
+        )
+
+
+@treeano.register_node("local_response_normalization")
+class LocalResponseNormalizationNode(treeano.NodeImpl):
+
+    hyperparameter_names = ("alpha", "k", "beta", "n", "version")
+
+    def compute_output(self, network, in_vw):
+        alpha = network.find_hyperparameter(["alpha"], 1e-4)
+        k = network.find_hyperparameter(["k"], 2)
+        beta = network.find_hyperparameter(["beta"], 0.75)
+        n = network.find_hyperparameter(["n"], 5)
+
+        network.create_variable(
+            "default",
+            variable=local_response_normalization_pool(in_vw,
+                                                       alpha=alpha,
+                                                       k=k,
+                                                       beta=beta,
+                                                       n=n),
             shape=in_vw.shape,
             tags={"output"},
         )
