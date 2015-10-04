@@ -5,6 +5,9 @@ import treeano
 from treeano.sandbox.nodes import lrn
 fX = theano.config.floatX
 
+# shape = (3, 4, 5, 6)
+shape = (32, 32, 32, 32)
+
 # f = lrn.local_response_normalization_2d_v1
 # f = lrn.local_response_normalization_2d_v2
 # f = lrn.local_response_normalization_2d_dnn
@@ -12,7 +15,7 @@ f = lrn.local_response_normalization_2d_pool
 
 vw = treeano.VariableWrapper("foo",
                              variable=T.tensor4(),
-                             shape=(3, 4, 5, 6))
+                             shape=shape)
 kwargs = dict(
     alpha=1e-4,
     k=2,
@@ -27,10 +30,14 @@ fn1 = theano.function(
 fn2 = theano.function(
     [vw.variable],
     [g_sum])
-x = np.random.randn(3, 4, 5, 6).astype(fX)
+x = np.random.randn(*shape).astype(fX)
 
 """
 20151004 results:
+
+=====
+
+shape = (3, 4, 5, 6)
 
 forward pass:
 %timeit fn1(x)
@@ -45,4 +52,20 @@ local_response_normalization_2d_v1: 117 us
 local_response_normalization_2d_v2: 115 us
 local_response_normalization_2d_dnn: 91.4 us
 local_response_normalization_2d_pool: 87.4 us
+
+=====
+
+shape = (32, 32, 32, 32)
+
+forward pass:
+%timeit fn1(x)
+local_response_normalization_2d_v1: 2.26 ms
+local_response_normalization_2d_v2: 2.29 ms
+local_response_normalization_2d_pool: 2.15 ms
+
+forward + backward pass:
+%timeit fn2(x)
+local_response_normalization_2d_v1: 6.71 ms
+local_response_normalization_2d_v2: 6.71 ms
+local_response_normalization_2d_pool: 2.69 ms
 """
