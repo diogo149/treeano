@@ -42,8 +42,11 @@ def update_hyperparameters(network, node_name, hyperparameters, **kwargs):
     updates a node's hyperparameters
     """
 
+    found = [False]
+
     def inner(node):
         if node.name == node_name:
+            found[0] = True
             for k in hyperparameters:
                 assert k in node.hyperparameter_names
             new_node = treeano.node_utils.copy_node(node)
@@ -52,4 +55,6 @@ def update_hyperparameters(network, node_name, hyperparameters, **kwargs):
         else:
             return node
 
-    return fns.transform_root_node_postwalk(network, inner, **kwargs)
+    res = fns.transform_root_node_postwalk(network, inner, **kwargs)
+    assert found[0], "%s not found in network" % node_name
+    return res
