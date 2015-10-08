@@ -26,7 +26,10 @@ def test_elementwise_kl_sparsity_penalty_node1():
     ).network()
     fn = network.function(["i"], ["s"])
     x = np.ones((5, 3), dtype=fX) * 0.1
-    np.testing.assert_equal(fn(x)[0], np.zeros((5, 3), dtype=fX))
+    np.testing.assert_allclose(np.zeros((5, 3), dtype=fX),
+                               fn(x)[0],
+                               rtol=1e-5,
+                               atol=1e-7)
 
 
 def test_elementwise_kl_sparsity_penalty_node2():
