@@ -86,21 +86,22 @@ def test_toy_updater_node():
 
     network = ToyUpdaterNode("a").network()
     fn1 = network.function([], ["a"])
-    init_value = fn1()
+    # cast to np.array, since it could be a CudaNdarray if on gpu
+    init_value = np.array(fn1()[0])
     fn2 = network.function([], ["a"], include_updates=True)
-    np.testing.assert_allclose(init_value[0],
+    np.testing.assert_allclose(init_value,
                                fn2()[0],
                                rtol=1e-5,
                                atol=1e-8)
-    np.testing.assert_allclose(init_value[0] + 42,
+    np.testing.assert_allclose(init_value + 42,
                                fn2()[0],
                                rtol=1e-5,
                                atol=1e-8)
-    np.testing.assert_allclose(init_value[0] + 84,
+    np.testing.assert_allclose(init_value + 84,
                                fn1()[0],
                                rtol=1e-5,
                                atol=1e-8)
-    np.testing.assert_allclose(init_value[0] + 84,
+    np.testing.assert_allclose(init_value + 84,
                                fn1()[0],
                                rtol=1e-5,
                                atol=1e-8)
