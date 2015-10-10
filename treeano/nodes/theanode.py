@@ -24,7 +24,7 @@ class TileNode(core.NodeImpl):
         reps = network.find_hyperparameter(["reps"])
         shape = in_vw.shape
         v = in_vw.variable
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=T.tile(v, reps),
             shape=tuple(s * r for s, r in zip(shape, reps)),
@@ -52,7 +52,7 @@ class ToOneHotNode(core.NodeImpl):
         if cast_int32:
             v = v.astype("int32")
 
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=T.extra_ops.to_one_hot(v, nb_class=nb_class, dtype=dtype),
             shape=in_vw.shape + (nb_class,),
@@ -89,7 +89,7 @@ class ReshapeNode(core.NodeImpl):
         #                     newshape=new_shape,
         #                     ndim=len(new_shape))
         out_var = in_vw.variable.reshape(new_shape)
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=out_var,
             shape=out_shape,
@@ -111,7 +111,7 @@ class DimshuffleNode(core.NodeImpl):
         out_var = in_vw.variable.dimshuffle(*pattern)
         out_shape = tuple([1 if i == "x" else in_vw.shape[i]
                            for i in pattern])
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=out_var,
             shape=out_shape,
@@ -128,7 +128,7 @@ class GradientReversalNode(core.NodeImpl):
 
     def compute_output(self, network, in_vw):
         out_var = theano_extensions.gradient.gradient_reversal(in_vw.variable)
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=out_var,
             shape=in_vw.shape,
@@ -145,7 +145,7 @@ class ZeroGradNode(core.NodeImpl):
 
     def compute_output(self, network, in_vw):
         out_var = theano.gradient.zero_grad(in_vw.variable)
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=out_var,
             shape=in_vw.shape,
@@ -162,7 +162,7 @@ class DisconnectedGradNode(core.NodeImpl):
 
     def compute_output(self, network, in_vw):
         out_var = theano.gradient.disconnected_grad(in_vw.variable)
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=out_var,
             shape=in_vw.shape,

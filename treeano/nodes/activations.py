@@ -15,7 +15,7 @@ class BaseActivationNode(six.with_metaclass(abc.ABCMeta, core.NodeImpl)):
 
     def compute_output(self, network, in_vw):
         new_var = self.activation(network, in_vw)
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=new_var,
             shape=in_vw.shape,

@@ -41,7 +41,7 @@ class ElementwiseKLSparsityPenaltyNode(treeano.NodeImpl):
         max_value = network.find_hyperparameter(["max_value"], 1)
         scaled_output = (in_vw.variable - min_value) / (max_value - min_value)
         cost = _bernoulli_kl_divergence(p, scaled_output)
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=cost,
             shape=in_vw.shape,

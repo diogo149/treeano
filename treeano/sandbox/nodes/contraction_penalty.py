@@ -58,7 +58,7 @@ class ElementwiseContractionPenaltyNode(treeano.NodeImpl):
             reshaped_jacobian = swapped_jacobian.reshape((batch_size, -1))
             res = (reshaped_jacobian ** 2).mean(axis=1)
             res_shape = (h_vw.shape[batch_axis],)
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=res,
             shape=res_shape,

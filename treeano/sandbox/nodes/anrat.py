@@ -132,7 +132,7 @@ class ANRATNode(treeano.WrapperNodeImpl):
         if ANRAT_USE_LOG_LAMBDA:
             initial_lambda = np.log(initial_lambda)
 
-        lambda_vw = network.create_variable(
+        lambda_vw = network.create_vw(
             name="lambda",
             is_shared=True,
             shape=(),

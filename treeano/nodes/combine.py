@@ -99,7 +99,7 @@ class InputFunctionCombineNode(BaseInputCombineNode):
         else:
             shape = shape_fn(*[input_vw.shape for input_vw in in_vws])
         var = combine_fn(*[input_vw.variable for input_vw in in_vws])
-        network.create_variable(
+        network.create_vw(
             name="default",
             variable=var,
             shape=shape,
@@ -148,7 +148,7 @@ class ConcatenateNode(BaseChildrenCombineNode):
                 )
                 shape.append(sizes[0])
 
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=T.concatenate([vw.variable for vw in in_vws],
                                    axis),
@@ -161,7 +161,7 @@ def elementwise_sum(network, *in_vws):
     # calculate and verify shape
     input_shapes = [vw.shape for vw in in_vws]
     assert utils.all_equal(input_shapes)
-    network.create_variable(
+    network.create_vw(
         "default",
         variable=utils.smart_sum([vw.variable for vw in in_vws]),
         shape=input_shapes[0],
@@ -195,7 +195,7 @@ def elementwise_product(network, *in_vws):
     # calculate and verify shape
     input_shapes = [vw.shape for vw in in_vws]
     assert utils.all_equal(input_shapes)
-    network.create_variable(
+    network.create_vw(
         "default",
         variable=utils.smart_product([vw.variable for vw in in_vws]),
         shape=input_shapes[0],

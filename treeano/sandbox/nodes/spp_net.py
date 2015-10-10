@@ -87,7 +87,7 @@ class SpatialPyramidPoolingNode(treeano.NodeImpl):
                   for kwargs in mp_kwargs_list]
         out_var = T.concatenate([p.flatten(2) for p in pooled], axis=1)
 
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=out_var,
             shape=out_shape,

@@ -11,7 +11,7 @@ def test_basic_scan():
     class x2Node(treeano.NodeImpl):
 
         def compute_output(self, network, in_vw):
-            network.create_variable(
+            network.create_vw(
                 name="default",
                 variable=in_vw.variable * 2,
                 shape=in_vw.shape,

@@ -37,7 +37,7 @@ class EquilibratedSGDNode(tn.StandardUpdatesNode):
 
         update_deltas = treeano.UpdateDeltas()
 
-        k_vw = network.create_variable(
+        k_vw = network.create_vw(
             "esgd_count",
             shape=(),
             is_shared=True,
@@ -49,7 +49,7 @@ class EquilibratedSGDNode(tn.StandardUpdatesNode):
         update_deltas[k] = new_k - k
 
         for parameter_vw, grad in zip(parameter_vws, grads):
-            D_vw = network.create_variable(
+            D_vw = network.create_vw(
                 "esgd_D(%s)" % parameter_vw.name,
                 shape=parameter_vw.shape,
                 is_shared=True,

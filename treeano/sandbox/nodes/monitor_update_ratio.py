@@ -66,7 +66,7 @@ class MonitorUpdateRatioNode(treeano.Wrapper1NodeImpl):
                 shared_stat = stat_fn(vw.variable + delta)
                 delta_stat = stat_fn(delta)
                 ratio = delta_stat / shared_stat
-                network.create_variable(
+                network.create_vw(
                     name,
                     variable=ratio,
                     shape=(),

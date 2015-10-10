@@ -27,21 +27,21 @@ class SMORMS3Node(tn.StandardUpdatesNode):
             [])))
         update_deltas = treeano.UpdateDeltas()
         for parameter_vw, grad in zip(parameter_vws, grads):
-            mem_vw = network.create_variable(
+            mem_vw = network.create_vw(
                 "smorms3_mem(%s)" % parameter_vw.name,
                 shape=parameter_vw.shape,
                 is_shared=True,
                 tags={"state"},
                 inits=inits + [treeano.inits.ConstantInit(1)],
             )
-            g_vw = network.create_variable(
+            g_vw = network.create_vw(
                 "smorms3_g(%s)" % parameter_vw.name,
                 shape=parameter_vw.shape,
                 is_shared=True,
                 tags={"state"},
                 inits=inits,
             )
-            g2_vw = network.create_variable(
+            g2_vw = network.create_vw(
                 "smorms3_g2(%s)" % parameter_vw.name,
                 shape=parameter_vw.shape,
                 is_shared=True,

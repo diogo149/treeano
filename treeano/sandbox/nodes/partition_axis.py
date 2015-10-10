@@ -42,7 +42,7 @@ class PartitionAxisNode(treeano.NodeImpl):
 
         idx = tuple([slice(None) for _ in range(channel_axis)]
                     + [slice(start_idx, end_idx)])
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=var[idx],
             shape=new_shape,

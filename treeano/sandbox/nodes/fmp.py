@@ -29,7 +29,7 @@ class DisjointPseudorandomFractionalMaxPool2DNode(treeano.NodeImpl):
         if out_shape[2] is not None:
             out_shape[2] = out_shape[3] = op.output_length(out_shape[2])
         out_shape = tuple(out_shape)
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=op(in_vw.variable),
             shape=out_shape,
@@ -105,7 +105,7 @@ class OverlappingRandomFractionalMaxPool2DNode(treeano.NodeImpl):
 
         out_var = pool_fn(temp, axis=0)
 
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=out_var,
             shape=out_shape,

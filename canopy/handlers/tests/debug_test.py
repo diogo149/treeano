@@ -16,7 +16,7 @@ def test_output_nanguard():
         class CustomNode(treeano.NodeImpl):
 
             def compute_output(self, network, in_vw):
-                network.create_variable(
+                network.create_vw(
                     "default",
                     variable=in_vw.variable / a,
                     shape=in_vw.shape
@@ -79,7 +79,7 @@ def test_nanguardmode():
         class CustomNode(treeano.NodeImpl):
 
             def compute_output(self, network, in_vw):
-                network.create_variable(
+                network.create_vw(
                     "default",
                     variable=in_vw.variable / a,
                     shape=in_vw.shape
@@ -124,14 +124,14 @@ def test_save_last_inputs_and_networks():
     class StateDiffNode(treeano.NodeImpl):
 
         def compute_output(self, network, in_vw):
-            foo_vw = network.create_variable(
+            foo_vw = network.create_vw(
                 "foo",
                 shape=(),
                 is_shared=True,
                 tags={"parameter", "weight"},
                 inits=[]
             )
-            network.create_variable(
+            network.create_vw(
                 "default",
                 variable=abs(in_vw.variable - foo_vw.variable),
                 shape=()
@@ -176,7 +176,7 @@ def test_network_nanguard():
         input_keys = ()
 
         def compute_output(self, network):
-            network.create_variable(
+            network.create_vw(
                 "default",
                 is_shared=True,
                 shape=(),

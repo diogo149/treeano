@@ -153,13 +153,13 @@ class AffineSpatialTransformerNode(treeano.Wrapper1NodeImpl):
                                               y_s,
                                               *output_shape)
 
-        network.create_variable(
+        network.create_vw(
             "affine_parameters",
             variable=affine_parameters,
             shape=(in_vw.shape[0], 2, 3),
             tags={},
         )
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=out_var,
             shape=in_vw.shape[:2] + output_shape,
@@ -203,13 +203,13 @@ class TranslationAndScaleSpatialTransformerNode(treeano.Wrapper1NodeImpl):
                                               y_s,
                                               *output_shape)
 
-        network.create_variable(
+        network.create_vw(
             "affine_parameters",
             variable=affine_parameters,
             shape=(in_vw.shape[0], 2, 3),
             tags={},
         )
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=out_var,
             shape=in_vw.shape[:2] + output_shape,
@@ -256,13 +256,13 @@ class RotateShearStretchSpatialTransformerNode(treeano.Wrapper1NodeImpl):
                                               y_s,
                                               *output_shape)
 
-        network.create_variable(
+        network.create_vw(
             "affine_parameters",
             variable=affine_parameters,
             shape=(in_vw.shape[0], 2, 3),
             tags={},
         )
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=out_var,
             shape=in_vw.shape[:2] + output_shape,

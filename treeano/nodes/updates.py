@@ -142,7 +142,7 @@ class NesterovMomentumNode(core.Wrapper1NodeImpl):
         for vw in shared_vws:
             var = vw.variable
             if var in update_deltas:
-                velocity_vw = network.create_variable(
+                velocity_vw = network.create_vw(
                     "nesterov_momentum_velocity(%s)" % vw.name,
                     shape=vw.shape,
                     is_shared=True,
@@ -247,7 +247,7 @@ class AdamNode(StandardUpdatesNode):
         update_deltas = core.UpdateDeltas()
 
         # keep count state only once
-        t_vw = network.create_variable(
+        t_vw = network.create_vw(
             "adam_count",
             shape=(),
             is_shared=True,
@@ -269,7 +269,7 @@ class AdamNode(StandardUpdatesNode):
         for parameter_vw, grad in zip(parameter_vws, grads):
             # biased 1st moment estimate
             # moving average of gradient
-            m_vw = network.create_variable(
+            m_vw = network.create_vw(
                 "adam_m(%s)" % parameter_vw.name,
                 shape=parameter_vw.shape,
                 is_shared=True,
@@ -278,7 +278,7 @@ class AdamNode(StandardUpdatesNode):
             )
             # 2nd moment
             # moving average of squared gradient
-            v_vw = network.create_variable(
+            v_vw = network.create_vw(
                 "adam_v(%s)" % parameter_vw.name,
                 shape=parameter_vw.shape,
                 is_shared=True,
@@ -345,7 +345,7 @@ class AdaMaxNode(StandardUpdatesNode):
         update_deltas = core.UpdateDeltas()
 
         # keep count state only once
-        t_vw = network.create_variable(
+        t_vw = network.create_vw(
             "adamax_count",
             shape=(),
             is_shared=True,
@@ -364,7 +364,7 @@ class AdaMaxNode(StandardUpdatesNode):
         for parameter_vw, grad in zip(parameter_vws, grads):
             # biased 1st moment estimate
             # moving average of gradient
-            m_vw = network.create_variable(
+            m_vw = network.create_vw(
                 "adamax_m(%s)" % parameter_vw.name,
                 shape=parameter_vw.shape,
                 is_shared=True,
@@ -372,7 +372,7 @@ class AdaMaxNode(StandardUpdatesNode):
                 inits=inits,
             )
             # exponentially weighted infinity norm
-            u_vw = network.create_variable(
+            u_vw = network.create_vw(
                 "adamax_u(%s)" % parameter_vw.name,
                 shape=parameter_vw.shape,
                 is_shared=True,

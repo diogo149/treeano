@@ -26,7 +26,7 @@ class IntervalReLUNode(treeano.NodeImpl):
         alpha_var = T.constant(alpha).dimshuffle(*pattern)
         out_var = treeano.utils.rectify(in_vw.variable,
                                         negative_coefficient=alpha_var)
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=out_var,
             shape=in_vw.shape,

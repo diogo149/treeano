@@ -94,7 +94,7 @@ class Conv2DNode(core.NodeImpl):
         # create weight
         num_channels = in_vw.shape[1]
         filter_shape = (num_filters, num_channels) + tuple(filter_size)
-        W = network.create_variable(
+        W = network.create_vw(
             name="weight",
             is_shared=True,
             shape=filter_shape,
@@ -116,7 +116,7 @@ class Conv2DNode(core.NodeImpl):
                                       strides=stride,
                                       pads=conv_parse_pad(filter_size, pad))
 
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=out_var,
             shape=out_shape,
@@ -157,7 +157,7 @@ class Conv3DNode(core.NodeImpl):
         # create weight
         num_channels = in_vw.shape[1]
         filter_shape = (num_filters, num_channels) + tuple(filter_size)
-        W = network.create_variable(
+        W = network.create_vw(
             name="weight",
             is_shared=True,
             shape=filter_shape,
@@ -166,7 +166,7 @@ class Conv3DNode(core.NodeImpl):
         ).variable
         # create bias
         if include_bias:
-            b = network.create_variable(
+            b = network.create_vw(
                 name="bias",
                 is_shared=True,
                 shape=(num_filters,),
@@ -193,7 +193,7 @@ class Conv3DNode(core.NodeImpl):
                                       strides=stride,
                                       pads=(0, 0, 0))
 
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=out_var,
             shape=out_shape,
@@ -234,7 +234,7 @@ class Conv3D2DNode(core.NodeImpl):
         # create weight
         num_channels = in_vw.shape[1]
         filter_shape = (num_filters, num_channels) + tuple(filter_size)
-        W = network.create_variable(
+        W = network.create_vw(
             name="weight",
             is_shared=True,
             shape=filter_shape,
@@ -264,7 +264,7 @@ class Conv3D2DNode(core.NodeImpl):
                                       strides=stride,
                                       pads=conv_parse_pad(filter_size, pad))
 
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=out_var,
             shape=out_shape,

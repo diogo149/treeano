@@ -18,7 +18,7 @@ class PrintNode(core.NodeImpl):
         message = network.find_hyperparameter(["message"], self.name)
         # TODO add attrs as hyperparameter for debugging
         out_var = theano.printing.Print(message)(in_vw.variable)
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=out_var,
             shape=in_vw.shape,

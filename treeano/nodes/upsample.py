@@ -30,7 +30,7 @@ class RepeatNDNode(core.NodeImpl):
                 if out_shape[axis] is not None:
                     out_shape[axis] *= factor
 
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=out_var,
             shape=tuple(out_shape),
@@ -72,7 +72,7 @@ class SparseUpsampleNode(core.NodeImpl):
         zeros = T.zeros(tuple(out_symbolic_shape))
         out_var = T.set_subtensor(zeros[tuple(slices)], in_vw.variable)
 
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=out_var,
             shape=tuple(out_shape),

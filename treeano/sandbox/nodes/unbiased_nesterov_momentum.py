@@ -21,7 +21,7 @@ class UnbiasedNesterovMomentumNode(treeano.Wrapper1NodeImpl):
         shared_vws = network.find_vws_in_subtree(is_shared=True)
 
         # keep count state only once
-        t_vw = network.create_variable(
+        t_vw = network.create_vw(
             "nesterov_momentum_count",
             shape=(),
             is_shared=True,
@@ -37,7 +37,7 @@ class UnbiasedNesterovMomentumNode(treeano.Wrapper1NodeImpl):
         for vw in shared_vws:
             var = vw.variable
             if var in update_deltas:
-                velocity_vw = network.create_variable(
+                velocity_vw = network.create_vw(
                     "nesterov_momentum_velocity(%s)" % vw.name,
                     shape=vw.shape,
                     is_shared=True,

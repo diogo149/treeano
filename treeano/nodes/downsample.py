@@ -102,7 +102,7 @@ class FeaturePoolNode(core.NodeImpl):
         reshaped = in_var.reshape(new_symbolic_shape)
         out_var = pool_fn(reshaped, axis=axis + 1)
 
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=out_var,
             shape=out_shape,
@@ -180,7 +180,7 @@ class Pool2DNode(core.NodeImpl):
                               padding=pad,
                               mode=mode)
 
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=out_var,
             shape=out_shape,
@@ -218,7 +218,7 @@ class GlobalPool2DNode(core.NodeImpl):
         pool_size = in_vw.shape[2:]
         pooled = max_pool_2d(in_vw.variable, ds=pool_size, mode=mode)
         out_var = pooled.flatten(2)
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=out_var,
             shape=out_shape,
@@ -290,7 +290,7 @@ class CustomPool2DNode(core.NodeImpl):
         feats = pool_fn(neibs, axis=1)
         out_var = feats.reshape(symbolic_out_shape)
 
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=out_var,
             shape=out_shape,
@@ -315,7 +315,7 @@ class CustomGlobalPoolNode(core.NodeImpl):
         flattened = in_vw.variable.flatten(3)
         # pool together
         out_var = pool_fn(flattened, axis=2)
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=out_var,
             shape=in_vw.shape[:2],

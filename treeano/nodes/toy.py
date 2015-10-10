@@ -29,7 +29,7 @@ class ScalarSumNode(core.NodeImpl):
     """
 
     def compute_output(self, network, in_vw):
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=in_vw.variable.sum(),
             shape=(),

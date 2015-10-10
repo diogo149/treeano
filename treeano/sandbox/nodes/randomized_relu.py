@@ -37,7 +37,7 @@ class RandomizedReLUNode(treeano.NodeImpl):
             negative_coefficient = 1.0 / alphas
 
         # return output
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=treeano.utils.rectify(
                 in_vw.variable,

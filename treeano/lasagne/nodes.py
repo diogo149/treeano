@@ -28,7 +28,7 @@ def wrap_lasagne_node(network, in_vw, param_kwargs, constructor, kwargs):
         assert name in param_kwargs
         assert "tags" in param_kwargs[name]
         assert "inits" in param_kwargs[name]
-        vw = network.create_variable(
+        vw = network.create_vw(
             name=name,
             is_shared=True,
             shape=param.get_value().shape,
@@ -36,7 +36,7 @@ def wrap_lasagne_node(network, in_vw, param_kwargs, constructor, kwargs):
         )
         to_replace[param] = vw.variable
     new_output, = utils.deep_clone([output], to_replace)
-    network.create_variable(
+    network.create_vw(
         name="default",
         variable=new_output,
         shape=output_shape,

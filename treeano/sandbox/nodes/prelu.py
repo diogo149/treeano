@@ -48,7 +48,7 @@ class PReLUNode(treeano.NodeImpl):
                        for b, s in zip(broadcastable, in_vw.shape)])
 
         # create state
-        alpha_vw = network.create_variable(
+        alpha_vw = network.create_vw(
             "alpha",
             is_shared=True,
             shape=shape,
@@ -58,7 +58,7 @@ class PReLUNode(treeano.NodeImpl):
         alpha = T.patternbroadcast(alpha_vw.variable, broadcastable)
 
         # return output
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=treeano.utils.rectify(in_vw.variable,
                                            negative_coefficient=alpha),
@@ -130,7 +130,7 @@ class DropoutPReLUNode(treeano.NodeImpl):
                        for b, s in zip(broadcastable, in_vw.shape)])
 
         # create state
-        alpha_vw = network.create_variable(
+        alpha_vw = network.create_vw(
             "alpha",
             is_shared=True,
             shape=shape,
@@ -142,7 +142,7 @@ class DropoutPReLUNode(treeano.NodeImpl):
         alpha = T.patternbroadcast(alpha, broadcastable)
 
         # return output
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=treeano.utils.rectify(in_vw.variable,
                                            negative_coefficient=alpha),

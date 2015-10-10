@@ -378,7 +378,7 @@ class RelativeNetwork(object):
         return [node for node in self.graph.architecture_subtree(self._name)
                 if node.__class__ is cls]
 
-    def create_variable(self, name, **kwargs):
+    def create_vw(self, name, **kwargs):
         """
         creates a new output variable for the current node
         """
@@ -412,7 +412,7 @@ class RelativeNetwork(object):
             # ---
             # why tensor_copy? theano.compile.view_op doesn't support Rop
             variable = T.tensor_copy(variable)
-        return self.create_variable(
+        return self.create_vw(
             name,
             variable=variable,
             shape=previous_vw.shape,

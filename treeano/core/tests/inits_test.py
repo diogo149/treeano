@@ -20,7 +20,7 @@ def test_constant_init():
 
         def compute_output(self, network):
             inits = network.find_hyperparameter(["inits"])
-            network.create_variable(
+            network.create_vw(
                 "default",
                 is_shared=True,
                 shape=(1, 2, 3),

@@ -33,7 +33,7 @@ class NodeImpl(NodeAPI):
         def compute_output(self, network, in1, in2):
             # in1 and in2 correspond to input_keys
             assert in1.shape == in2.shape
-            network.create_variable(
+            network.create_vw(
                 name="default",
                 variable=in1.variable + in2.variable,
                 shape=in1.shape,

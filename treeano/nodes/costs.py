@@ -26,7 +26,7 @@ class AggregatorNode(core.NodeImpl):
     def compute_output(self, network, in_vw):
         aggregator = network.find_hyperparameter(["aggregator"], "mean")
         aggregator_fn = AGGREGATORS.get(aggregator, aggregator)
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=aggregator_fn(in_vw.variable),
             shape=(),
@@ -77,7 +77,7 @@ class ElementwiseCostNode(core.WrapperNodeImpl):
         cost_function = network.find_hyperparameter(["cost_function"])
         out_var = weight.variable * cost_function(pred.variable,
                                                   target.variable)
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=out_var,
             shape=pred.shape,
@@ -111,7 +111,7 @@ class TotalCostNode(core.WrapperNodeImpl):
         super(TotalCostNode, self).compute_output(network, in_vw)
         if network.find_hyperparameter(["monitor"]):
             # add monitoring
-            network.create_variable(
+            network.create_vw(
                 "cost",
                 variable=in_vw.variable,
                 shape=(),

@@ -51,7 +51,7 @@ def test_evaluate_monitoring_variables():
     class FooNode(treeano.NodeImpl):
 
         def compute_output(self, network, in_vw):
-            network.create_variable(
+            network.create_vw(
                 "default",
                 variable=42 * in_vw.variable.sum(),
                 shape=(),
@@ -81,7 +81,7 @@ def test_monitor_network_state():
         input_keys = ()
 
         def compute_output(self, network):
-            network.create_variable(
+            network.create_vw(
                 "default",
                 is_shared=True,
                 shape=(),

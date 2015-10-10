@@ -68,7 +68,7 @@ def test_weight_decay_node():
         input_keys = ()
 
         def compute_output(self, network):
-            network.create_variable(
+            network.create_vw(
                 "default",
                 is_shared=True,
                 shape=(),

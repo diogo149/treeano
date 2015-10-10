@@ -30,7 +30,7 @@ class WTASpatialSparsityNode(treeano.NodeImpl):
         threshold = T.max(in_var, axis=spatial_axes, keepdims=True)
         mask = in_var >= threshold
         mask = theano.gradient.disconnected_grad(mask)
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=mask * in_var,
             shape=in_vw.shape,
@@ -94,7 +94,7 @@ class WTASparsityNode(treeano.NodeImpl):
             # not just based on population sparsity
             mask *= (in_var >= batch_and_channel)
         mask = theano.gradient.disconnected_grad(mask)
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=mask * in_var,
             shape=in_vw.shape,

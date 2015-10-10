@@ -27,7 +27,7 @@ class KumaraswamyUnitNode(treeano.NodeImpl):
     def compute_output(self, network, in_vw):
         a = network.find_hyperparameter(["kumaraswamy_a"], 8)
         b = network.find_hyperparameter(["kumaraswamy_b"], 30)
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=kumaraswamy_unit(in_vw.variable, a, b),
             shape=in_vw.shape,

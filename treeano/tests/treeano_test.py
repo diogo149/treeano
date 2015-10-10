@@ -67,7 +67,7 @@ def test_toy_updater_node():
 
         def compute_output(self, network):
             shape = (2, 3, 4)
-            state = network.create_variable(
+            state = network.create_vw(
                 name="default",
                 shape=shape,
                 is_shared=True,

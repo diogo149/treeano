@@ -40,7 +40,7 @@ class ContainerNode(core.WrapperNodeImpl):
     def compute_output(self, network):
         # return variable that always returns an assertion error
         # because the output should not be used
-        network.create_variable(
+        network.create_vw(
             name="default",
             variable=T.opt.Assert()(T.constant(0.0), 0),
             shape=(),

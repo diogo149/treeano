@@ -91,7 +91,7 @@ class InputNode(core.NodeImpl):
     input_keys = ()
 
     def compute_output(self, network):
-        network.create_variable(
+        network.create_vw(
             name="default",
             shape=network.find_hyperparameter(["input_shape",
                                                "shape"]),
@@ -136,7 +136,7 @@ class ConstantNode(core.NodeImpl):
         else:
             variable = T.constant(value)
             shape = value.shape if hasattr(value, "shape") else ()
-        network.create_variable(
+        network.create_vw(
             name="default",
             variable=variable,
             shape=shape,
@@ -188,7 +188,7 @@ class AddBiasNode(core.NodeImpl):
         shape = tuple([1 if is_broadcastable else size
                        for is_broadcastable, size in zip(broadcastable,
                                                          in_vw.shape)])
-        b = network.create_variable(
+        b = network.create_vw(
             name="bias",
             is_shared=True,
             shape=shape,
@@ -200,7 +200,7 @@ class AddBiasNode(core.NodeImpl):
         # to have a small overhead
         if any(broadcastable):
             b_var = T.patternbroadcast(b_var, broadcastable)
-        network.create_variable(
+        network.create_vw(
             name="default",
             variable=(in_vw.variable + b_var),
             shape=in_vw.shape,
@@ -228,14 +228,14 @@ class LinearMappingNode(core.NodeImpl):
         output_dim = network.find_hyperparameter(["output_dim"])
         weight_shape = (in_vw.shape[-1], output_dim)
         output_shape = tuple(in_vw.shape[:-1]) + (output_dim, )
-        W = network.create_variable(
+        W = network.create_vw(
             name="weight",
             is_shared=True,
             shape=weight_shape,
             tags={"parameter", "weight"},
             inits=inits,
         )
-        network.create_variable(
+        network.create_vw(
             name="default",
             variable=T.dot(in_vw.variable, W.variable),
             shape=output_shape,
@@ -259,7 +259,7 @@ class ApplyNode(core.NodeImpl):
             shape = None
         else:
             shape = shape_fn(in_vw.shape)
-        network.create_variable(
+        network.create_vw(
             name="default",
             variable=fn(in_vw.variable),
             shape=shape,
@@ -278,7 +278,7 @@ class AddConstantNode(core.NodeImpl):
 
     def compute_output(self, network, in_vw):
         value = network.find_hyperparameter(["value"])
-        network.create_variable(
+        network.create_vw(
             name="default",
             variable=in_vw.variable + value,
             shape=in_vw.shape,
@@ -297,7 +297,7 @@ class MultiplyConstantNode(core.NodeImpl):
 
     def compute_output(self, network, in_vw):
         value = network.find_hyperparameter(["value"])
-        network.create_variable(
+        network.create_vw(
             name="default",
             variable=in_vw.variable * value,
             shape=in_vw.shape,

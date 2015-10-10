@@ -28,7 +28,7 @@ class SimpleBatchNormalizationNode(treeano.NodeImpl):
 
     def _make_param(self, network, in_vw, name):
         inits = list(toolz.concat(network.find_hyperparameters(["inits"], [])))
-        return network.create_variable(
+        return network.create_vw(
             name=name,
             is_shared=True,
             shape=(in_vw.shape[1],),
@@ -44,7 +44,7 @@ class SimpleBatchNormalizationNode(treeano.NodeImpl):
         std = T.sqrt(in_var.var(axis=axis, keepdims=True) + epsilon)
         gamma = self._make_param(network, in_vw, "gamma")
         beta = self._make_param(network, in_vw, "beta")
-        network.create_variable(
+        network.create_vw(
             name="default",
             # NOTE: 20150907 it is faster to combine gamma + std
             # before broadcasting
@@ -63,7 +63,7 @@ class NoScaleBatchNormalizationNode(treeano.NodeImpl):
 
     def _make_param(self, network, in_vw, name):
         inits = list(toolz.concat(network.find_hyperparameters(["inits"], [])))
-        return network.create_variable(
+        return network.create_vw(
             name=name,
             is_shared=True,
             shape=(in_vw.shape[1],),
@@ -78,7 +78,7 @@ class NoScaleBatchNormalizationNode(treeano.NodeImpl):
         mean = in_var.mean(axis=axis, keepdims=True)
         std = T.sqrt(in_var.var(axis=axis, keepdims=True) + epsilon)
         beta = self._make_param(network, in_vw, "beta")
-        network.create_variable(
+        network.create_vw(
             name="default",
             # NOTE: 20150907 it is faster to divide by std before
             # broadcasting than to just divide by std
@@ -194,14 +194,14 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
             ["inits"],
             [treeano.inits.ConstantInit(1.0 if use_log_moving_var else 0.0)])))
 
-        _gamma = network.create_variable(
+        _gamma = network.create_vw(
             name="gamma",
             is_shared=True,
             shape=parameter_shape,
             tags={"parameter"},
             inits=gamma_inits,
         )
-        _beta = network.create_variable(
+        _beta = network.create_vw(
             name="beta",
             is_shared=True,
             shape=parameter_shape,
@@ -211,14 +211,14 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
         gamma = T.patternbroadcast(_gamma.variable, parameter_broadcastable)
         beta = T.patternbroadcast(_beta.variable, parameter_broadcastable)
 
-        moving_mean = network.create_variable(
+        moving_mean = network.create_vw(
             name="mean",
             is_shared=True,
             shape=stats_shape,
             tags={"state"},
             inits=mean_inits,
         )
-        moving_var = network.create_variable(
+        moving_var = network.create_vw(
             name="var",
             is_shared=True,
             shape=stats_shape,
@@ -253,13 +253,13 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
         assert in_var.broadcastable == stats_broadcastable
 
         # save the mean/var for updating and debugging
-        network.create_variable(
+        network.create_vw(
             name="in_mean",
             variable=in_mean,
             tags={},
             shape=stats_shape,
         )
-        network.create_variable(
+        network.create_vw(
             name="in_var",
             variable=in_var,
             tags={},
@@ -300,7 +300,7 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
         denom = T.sqrt(effective_var + epsilon)
         scaled = (in_vw.variable - effective_mean) / denom
         output = gamma * scaled + beta
-        network.create_variable(
+        network.create_vw(
             name="default",
             variable=output,
             shape=in_vw.shape,

@@ -141,7 +141,7 @@ class LocalResponseNormalization2DNode(treeano.NodeImpl):
 
         lrn_fn = self.LRN_FUNCTIONS[version]
 
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=lrn_fn(in_vw,
                             alpha=alpha,
@@ -164,7 +164,7 @@ class LocalResponseNormalizationNode(treeano.NodeImpl):
         beta = network.find_hyperparameter(["beta"], 0.75)
         n = network.find_hyperparameter(["n"], 5)
 
-        network.create_variable(
+        network.create_vw(
             "default",
             variable=local_response_normalization_pool(in_vw,
                                                        alpha=alpha,
