@@ -50,6 +50,8 @@ class SparseUpsampleNode(core.NodeImpl):
 
     """
     returns the tensor with 0s surrounding it in the specified dimensions
+
+    also referred to as "perforated" upsampling
     """
 
     hyperparameter_names = ("upsample_factor",)
