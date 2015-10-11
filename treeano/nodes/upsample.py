@@ -10,6 +10,8 @@ class RepeatNDNode(core.NodeImpl):
 
     """
     repeats each axis of a tensor by a specified amount
+
+    also referred to as "nearest neighbor" upsampling
     """
 
     hyperparameter_names = ("upsample_factor",)
