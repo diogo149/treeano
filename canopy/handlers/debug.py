@@ -140,6 +140,14 @@ class SaveLastInputsAndNetworks(base.NetworkHandlerImpl):
     """
     handler that keeps a history of inputs and network states (before calling
     the function)
+
+    example:
+    >>> save_handler = canopy.handlers.save_last_inputs_and_networks(5)
+    >>> # create handled function with save handlers
+    >>> # to view the saved inputs:
+    >>> save_handler.inputs_
+    >>> # to view the final value dict (network state)
+    >>> save_handler.value_dicts_[-1]
     """
 
     def __init__(self, num_inputs_to_save=5, num_value_dicts_to_save=None):
