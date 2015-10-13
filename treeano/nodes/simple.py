@@ -177,6 +177,9 @@ class AddBiasNode(core.NodeImpl):
                 if batch_axis is None:
                     # no minibatch axis = no default broadcasting
                     broadcastable_axes = []
+                elif batch_axis >= in_vw.ndim:
+                    # scalar input = no broadcasting
+                    broadcastable_axes = []
                 else:
                     # by default, broadcast over minibatch axis, if any
                     broadcastable_axes = [batch_axis]
