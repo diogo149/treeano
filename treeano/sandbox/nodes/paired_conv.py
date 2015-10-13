@@ -47,21 +47,3 @@ class PairedConvNode(treeano.Wrapper1NodeImpl):
         network.set_hyperparameter(conv_node_name + "_2",
                                    "pad",
                                    second_pad)
-
-
-def PairedConv2DWithBiasNode(name, **kwargs):
-    return PairedConvNode(name,
-                          tn.Conv2DWithBiasNode(name + "_conv"),
-                          **kwargs)
-
-
-def PairedDnnConv2DWithBiasNode(name, **kwargs):
-    return PairedConvNode(name,
-                          tn.DnnConv2DWithBiasNode(name + "_conv"),
-                          **kwargs)
-
-
-def PairedDnnConv3DWithBiasNode(name, **kwargs):
-    return PairedConvNode(name,
-                          tn.DnnConv3DWithBiasNode(name + "_conv"),
-                          **kwargs)

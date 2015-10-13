@@ -11,15 +11,17 @@ fX = theano.config.floatX
 
 
 def test_paired_conv_2d_with_bias_node_serialization():
-    tn.check_serialization(paired_conv.PairedConv2DWithBiasNode("a"))
+    tn.check_serialization(
+        paired_conv.PairedConvNode("a", tn.IdentityNode("b")))
 
 
 def test_paired_conv_2d_with_bias_node():
     network = tn.SequentialNode(
         "s",
         [tn.InputNode("i", shape=(3, 4, 5, 6)),
-         paired_conv.PairedConv2DWithBiasNode(
+         paired_conv.PairedConvNode(
              "c",
+             tn.Conv2DWithBiasNode("c_conv"),
              filter_size=(2, 2),
              num_filters=7,
              pad="same")]
