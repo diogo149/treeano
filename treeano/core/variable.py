@@ -19,6 +19,7 @@ parameter
 hyperparameter
 monitor
 state
+tied
 """.split())
 
 
@@ -173,6 +174,9 @@ class VariableWrapper(object):
             if (not self.is_shared) and ENABLE_TEST_VALUE:
                 test_value = np.random.rand(*self.shape).astype(self.dtype)
                 variable.tag.test_value = test_value
+
+            # re-validate that initialization worked properly
+            self.validate()
 
         return self.variable_
 

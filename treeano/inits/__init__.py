@@ -1,6 +1,8 @@
 import itertools
 
 import numpy as np
+import theano
+import theano.tensor as T
 
 # for importing
 from ..core.inits import (SharedInit,
@@ -60,7 +62,9 @@ class TiedInit(SharedInit):
         assert shared.dtype == var.dtype
         assert shared.get_value().shape == var.shape
         assert shared.broadcastable == var.broadcastable
-        return shared
+        var.is_shared_ = False
+        var.tags_ = {"tied"}
+        return theano.compile.view_op(shared)
 
 
 # ############################### weight inits ###############################
