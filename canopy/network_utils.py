@@ -9,7 +9,11 @@ def to_shared_dict(network):
     name_to_shared = {}
     for vw in vws:
         assert vw.name not in name_to_shared
-        name_to_shared[vw.name] = vw.variable
+        # if vw.name != vw.variable.name, preallocated init will break
+        # HACK don't save tied shared variables
+        # tied variables should have the same name as the original vw
+        if vw.name == vw.variable.name:
+            name_to_shared[vw.name] = vw.variable
     return name_to_shared
 
 
