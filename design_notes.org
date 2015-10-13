@@ -1261,6 +1261,7 @@
     - time transferring data to shared variable
     - add flag to not free memory afterwards
 ** RNNs
+- https://github.com/Lasagne/Lasagne/issues/425
 - https://github.com/craffel/nntools/blob/recurrent/examples/recurrent.py
   - see:
     - how a mask is used
