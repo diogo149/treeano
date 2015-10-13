@@ -84,10 +84,16 @@ class Conv2DNode(core.NodeImpl):
         num_filters = network.find_hyperparameter(["num_filters"])
         filter_size = network.find_hyperparameter(["filter_size"])
         stride = network.find_hyperparameter(["conv_stride", "stride"], (1, 1))
-        pad = network.find_hyperparameter(["conv_pad", "pad"], "valid")
         inits = list(toolz.concat(network.find_hyperparameters(
             ["inits"],
             [])))
+        pad = network.find_hyperparameter(["conv_pad", "pad"], "valid")
+
+        # convert numerical pad to valid or full
+        if pad == (0, 0):
+            pad = "valid"
+        elif pad == tuple([fs - 1 for fs in filter_size]):
+            pad = "full"
         assert len(filter_size) == 2
         assert pad in ["valid", "full"]
 
