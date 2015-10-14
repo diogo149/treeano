@@ -25,6 +25,21 @@ def test_to_shared_dict():
                             list(sd.values())[0].get_value())
 
 
+def test_to_shared_dict_relative_network():
+    network = tn.SequentialNode(
+        "seq",
+        [tn.InputNode("i", shape=(10,)),
+         tn.LinearMappingNode("lm1", output_dim=15),
+         tn.LinearMappingNode("lm2", output_dim=15)]
+    ).network()
+    nt.assert_equal({"lm1:weight", "lm2:weight"},
+                    set(canopy.network_utils.to_shared_dict(network)))
+    nt.assert_equal({"lm1:weight"},
+                    set(canopy.network_utils.to_shared_dict(network["lm1"])))
+    nt.assert_equal({"lm2:weight"},
+                    set(canopy.network_utils.to_shared_dict(network["lm2"])))
+
+
 def test_to_value_dict():
     network = tn.SequentialNode(
         "seq",

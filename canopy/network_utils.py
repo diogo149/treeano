@@ -5,7 +5,9 @@ import treeano
 
 def to_shared_dict(network):
     network.build()
-    vws = network[network.root_node.name].find_vws_in_subtree(is_shared=True)
+    if not network.is_relative():
+        network = network[network.root_node.name]
+    vws = network.find_vws_in_subtree(is_shared=True)
     name_to_shared = {}
     for vw in vws:
         assert vw.name not in name_to_shared

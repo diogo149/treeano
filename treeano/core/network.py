@@ -214,6 +214,9 @@ class Network(object):
                              **kwargs)
         return fn
 
+    def is_relative(self):
+        return False
+
 
 class NoDefaultValue(object):
     pass
@@ -239,6 +242,9 @@ class RelativeNetwork(object):
 
     def __getitem__(self, name):
         return self._network[name]
+
+    def is_relative(self):
+        return True
 
     def store_inputs(self, inputs):
         """
