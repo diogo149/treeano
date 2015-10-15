@@ -11,6 +11,38 @@ from .. import theano_extensions
 fX = theano.config.floatX
 
 
+@core.register_node("sqr")
+class SqrNode(core.NodeImpl):
+
+    """
+    like theano.tensor.sqr
+    """
+
+    def compute_output(self, network, in_vw):
+        network.create_vw(
+            "default",
+            variable=T.sqr(in_vw.variable),
+            shape=in_vw.shape,
+            tags={"output"},
+        )
+
+
+@core.register_node("sqrt")
+class SqrtNode(core.NodeImpl):
+
+    """
+    like theano.tensor.sqrt
+    """
+
+    def compute_output(self, network, in_vw):
+        network.create_vw(
+            "default",
+            variable=T.sqrt(in_vw.variable),
+            shape=in_vw.shape,
+            tags={"output"},
+        )
+
+
 @core.register_node("tile")
 class TileNode(core.NodeImpl):
 
