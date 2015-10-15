@@ -37,15 +37,21 @@ class L2PoolNode(treeano.Wrapper1NodeImpl):
                                    float(np.prod(pool_size)))
 
 
-def L2Pool2DNode(name, pool_size, **kwargs):
+def L2Pool2DNode(name, **kwargs):
+    l2_kwargs = {}
+    if "pool_size" in kwargs:
+        l2_kwargs["pool_size"] = kwargs.pop("pool_size")
     return L2PoolNode(
         name,
         tn.MeanPool2DNode(name + "_pool", **kwargs),
-        pool_size=pool_size)
+        **l2_kwargs)
 
 
 def DnnL2Pool2DNode(name, pool_size, **kwargs):
+    l2_kwargs = {}
+    if "pool_size" in kwargs:
+        l2_kwargs["pool_size"] = kwargs.pop("pool_size")
     return L2PoolNode(
         name,
         tn.DnnMeanPoolNode(name + "_pool", **kwargs),
-        pool_size=pool_size)
+        **l2_kwargs)

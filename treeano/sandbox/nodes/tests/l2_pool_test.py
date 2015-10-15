@@ -12,7 +12,7 @@ fX = theano.config.floatX
 
 def test_l2_pool_2d_node_serialization():
     # NOTE: serialization converts pool_size to list, so must be a list
-    tn.check_serialization(l2_pool.L2Pool2DNode("a", pool_size=[1, 1]))
+    tn.check_serialization(l2_pool.L2Pool2DNode("a"))
 
 
 def test_l2_pool_2d_node():
