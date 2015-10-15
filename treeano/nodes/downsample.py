@@ -200,6 +200,9 @@ def MaxPool2DNode(*args, **kwargs):
 
 
 def SumPool2DNode(*args, **kwargs):
+    """
+    NOTE: does not work on the GPU, and may be slower than mean pool
+    """
     return Pool2DNode(*args, mode="sum", **kwargs)
 
 
