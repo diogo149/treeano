@@ -67,6 +67,7 @@ class Network(object):
         # initialize long range dependencies
         # ---
         # order doesn't matter
+        # done before init_state because some nodes need to know their inputs
         for node in self.graph.architectural_tree_nodes_root_to_leaves():
             node.init_long_range_dependencies(self.relative_network(node))
         # initialize state
