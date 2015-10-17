@@ -46,8 +46,8 @@ class TiedInit(SharedInit):
         self.root_node_name = root_node_name
         self.target_root_node_name = target_root_node_name
 
-    def create_shared(self, var):
-        network = var.relative_network
+    def create_shared(self, vw):
+        network = vw.relative_network
         assert network is not None
         node_name = network._name
         assert self.root_node_name in node_name
@@ -55,15 +55,16 @@ class TiedInit(SharedInit):
                                              self.target_root_node_name,
                                              1)
         # HACK there should be a better way to to do this!
-        node_name2, vw_key = var.name.split(":")
+        node_name2, vw_key = vw.name.split(":")
         # sanity check, just to be sure
         assert node_name2 == node_name
         shared = network[target_node_name].get_variable(vw_key).variable
-        assert shared.dtype == var.dtype
-        assert shared.get_value().shape == var.shape
-        assert shared.broadcastable == var.broadcastable
-        var.is_shared_ = False
-        var.tags_ = {"tied"}
+        assert shared.dtype == vw.dtype
+        assert shared.get_value().shape == vw.shape
+        assert shared.broadcastable == vw.broadcastable
+        # mutate variable wrapper to no longer be shared
+        vw.is_shared_ = False
+        vw.tags_ = {"tied"}
         return theano.compile.view_op(shared)
 
 
