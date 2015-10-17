@@ -13,27 +13,27 @@ class SharedInit(object):
     interface for initialization schemes of shared variables
     """
 
-    def predicate(self, var):
+    def predicate(self, vw):
         """
         whether or not the current initialization applies to the current
         variable
         """
         return True
 
-    def create_shared(self, var):
+    def create_shared(self, vw):
         """
         creates the shared variable with an appropriately initialized value
         """
         kwargs = {}
-        if len(var.broadcastable) > 0:
-            kwargs["broadcastable"] = var.broadcastable
-        value = self.initialize_value(var)
-        kwargs["name"] = var.name
-        kwargs["value"] = np.array(value).astype(var.dtype)
+        if len(vw.broadcastable) > 0:
+            kwargs["broadcastable"] = vw.broadcastable
+        value = self.initialize_value(vw)
+        kwargs["name"] = vw.name
+        kwargs["value"] = np.array(value).astype(vw.dtype)
         variable = theano.shared(**kwargs)
         return variable
 
-    def initialize_value(self, var):
+    def initialize_value(self, vw):
         """
         creates appropriately initialized value for the given
         VariableWrapper
@@ -47,8 +47,8 @@ class WeightInit(SharedInit):
     base class for initializations that only work on weights
     """
 
-    def predicate(self, var):
-        return "weight" in var.tags
+    def predicate(self, vw):
+        return "weight" in vw.tags
 
 # ############################# implementations #############################
 
@@ -60,7 +60,7 @@ class ExceptionInit(SharedInit):
     initialization doesn't fall back to other schemes
     """
 
-    def initialize_value(self, var):
+    def initialize_value(self, vw):
         assert False, "Initialization failed"
 
 
@@ -73,9 +73,9 @@ class ConstantInit(SharedInit):
     def __init__(self, constant):
         self.constant = constant
 
-    def initialize_value(self, var):
-        if var.ndim > 0:
-            value = self.constant * np.ones(var.shape)
+    def initialize_value(self, vw):
+        if vw.ndim > 0:
+            value = self.constant * np.ones(vw.shape)
         else:
             value = self.constant
         return value
@@ -98,13 +98,13 @@ class PreallocatedInit(SharedInit):
     def __init__(self, name_to_shared):
         self.name_to_shared = name_to_shared
 
-    def predicate(self, var):
-        return var.name in self.name_to_shared
+    def predicate(self, vw):
+        return vw.name in self.name_to_shared
 
-    def create_shared(self, var):
-        shared = self.name_to_shared[var.name]
-        assert shared.dtype == var.dtype
-        assert shared.get_value().shape == var.shape
-        assert shared.name == var.name
-        assert shared.broadcastable == var.broadcastable
+    def create_shared(self, vw):
+        shared = self.name_to_shared[vw.name]
+        assert shared.dtype == vw.dtype
+        assert shared.get_value().shape == vw.shape
+        assert shared.name == vw.name
+        assert shared.broadcastable == vw.broadcastable
         return shared
