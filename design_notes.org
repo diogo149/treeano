@@ -1268,6 +1268,8 @@
     - the generated dataset
 - lasagne "Add recurrent layers" pull request
   - https://github.com/Lasagne/Lasagne/pull/294/files
+- https://github.com/DTU-deeplearning/day3-RNN/blob/master/decoder_attention.py
+  - lasagne LSTM + soft attention
 - use batch_axis instead of batch_size
   - use symbolic shape to tile if batch size is None
 - some nodes will be broken with ScanNode
