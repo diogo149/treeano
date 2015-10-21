@@ -178,3 +178,34 @@ class SaveLastInputsAndNetworks(base.NetworkHandlerImpl):
         return self._inner_handler(state, in_dict, *args, **kwargs)
 
 save_last_inputs_and_networks = SaveLastInputsAndNetworks
+
+
+class MakeUpdatesSynchronous(base.NetworkHandlerImpl):
+
+    """
+    it seems that theano applies updates asynchronously, which
+    can lead to relative large GPU transfer times
+
+    this causes most of the update computation to be performed
+    eagerly, by computing the sum of all update deltas
+    NOTE: can add a bit of overhead
+    """
+
+    UPDATES_SUM_KEY = "_updates_sum_"
+
+    def transform_compile_function_kwargs(self, state, **kwargs):
+        outputs = kwargs["outputs"]
+        new_outputs = dict(outputs)
+        deltas = state.network.update_deltas.deltas.values()
+        ud_sum = treeano.utils.smart_sum(ud.sum() for ud in deltas)
+        assert self.UPDATES_SUM_KEY not in new_outputs
+        new_outputs[self.UPDATES_SUM_KEY] = ud_sum
+        kwargs["outputs"] = new_outputs
+        return kwargs
+
+    def call(self, fn, in_dict, *args, **kwargs):
+        res = fn(in_dict, *args, **kwargs)
+        res.pop(self.UPDATES_SUM_KEY)
+        return res
+
+make_updates_synchronous = MakeUpdatesSynchronous

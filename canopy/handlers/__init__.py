@@ -27,4 +27,5 @@ from .misc import (callback_with_input,
 from .debug import (output_nanguard,
                     network_nanguard,
                     nanguardmode,
-                    save_last_inputs_and_networks)
+                    save_last_inputs_and_networks,
+                    make_updates_synchronous)
