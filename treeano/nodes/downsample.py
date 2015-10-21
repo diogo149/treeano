@@ -14,6 +14,8 @@ def pool_output_length(input_size,
                        ignore_border):
     """
     calculates the output size along a single axis for a pooling operation
+
+    logic from theano.tensor.signal.DownsampleFactorMax.out_shape
     """
     if input_size is None:
         return None
@@ -22,8 +24,9 @@ def pool_output_length(input_size,
         without_stride = input_size + 2 * pad - pool_size + 1
         # equivalent to np.ceil(without_stride / stride)
         pre_max = (without_stride + stride - 1) // stride
-        output_size = utils.maximum(pre_max, 1)
+        output_size = utils.maximum(pre_max, 0)
     else:
+        assert pad == 0
         if stride >= pool_size:
             output_size = (input_size + stride - 1) // stride
         else:
@@ -42,16 +45,6 @@ def pool_output_shape(input_shape,
     """
     compute output shape for a pool
     """
-    # TODO: use this function
-    # as of 20150926, it appears to be incorrect
-    # return tuple(DownsampleFactorMax.out_shape(
-    #     imgshape=input_shape,
-    #     ds=pool_shape,
-    #     st=strides,
-    #     ignore_border=ignore_border,
-    #     padding=pads,
-    # ))
-
     if strides is None:
         strides = pool_shape
 
@@ -66,6 +59,24 @@ def pool_output_shape(input_shape,
                                                 pad,
                                                 ignore_border)
     return tuple(output_shape)
+
+
+def pool_output_shape_2d(input_shape,
+                         axes,
+                         pool_shape,
+                         strides,
+                         pads,
+                         ignore_border=True):
+    """
+    compute output shape for a pool
+    """
+    return tuple(DownsampleFactorMax.out_shape(
+        imgshape=input_shape,
+        ds=pool_shape,
+        st=strides,
+        ignore_border=ignore_border,
+        padding=pads,
+    ))
 
 
 @core.register_node("feature_pool")

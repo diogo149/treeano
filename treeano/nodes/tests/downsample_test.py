@@ -12,7 +12,7 @@ import treeano.nodes as tn
 fX = theano.config.floatX
 
 
-def test_pool_output_shape():
+def test_pool_output_shape_2d():
     def test_same(input_shape, local_sizes, strides, pads, ignore_border):
         res = tn.downsample.pool_output_shape(
             input_shape,
@@ -33,12 +33,40 @@ def test_pool_output_shape():
         print(ans, res)
         np.testing.assert_equal(ans, res)
 
-    test_same((3, 4, 5, 6), (2, 3), (1, 1), (0, 0), False)
-    test_same((3, 4, 5, 6), (2, 3), (2, 2), (0, 0), False)
-    test_same((3, 4, 1, 1), (2, 3), (2, 2), (0, 0), False)
-    test_same((3, 4, 5, 6), (2, 3), (1, 1), (0, 0), True)
-    test_same((3, 4, 5, 6), (2, 3), (2, 2), (0, 0), True)
-    test_same((3, 4, 1, 1), (2, 3), (2, 2), (0, 0), True)
+    # tests w/ ignore border
+    test_same((1, 1, 5, 6), (2, 3), (1, 1), (0, 0), True)
+    test_same((1, 1, 5, 6), (2, 3), (2, 2), (0, 0), True)
+    test_same((1, 1, 1, 1), (2, 3), (2, 2), (0, 0), True)
+    test_same((1, 1, 5, 6), (2, 3), (1, 1), (0, 1), True)
+    test_same((1, 1, 5, 6), (2, 3), (2, 2), (1, 0), True)
+    test_same((1, 1, 1, 1), (2, 3), (2, 2), (1, 1), True)
+
+    # tests w/o ignore border, and stride <= pool_size
+    test_same((1, 1, 5, 6), (2, 3), (1, 1), (0, 0), False)
+    test_same((1, 1, 5, 6), (2, 3), (2, 2), (0, 0), False)
+    test_same((1, 1, 1, 1), (2, 3), (2, 2), (0, 0), False)
+
+    # tests w/o ignore border, and stride > pool_size
+    test_same((1, 1, 5, 6), (2, 3), (3, 3), (0, 0), False)
+    test_same((1, 1, 5, 6), (2, 3), (3, 3), (0, 0), False)
+    test_same((1, 1, 1, 1), (2, 3), (3, 3), (0, 0), False)
+
+
+def test_pool_output_shape_3d():
+    def test_same(input_shape, local_sizes, strides, pads, ignore_border, ans):
+        res = tn.downsample.pool_output_shape(
+            input_shape,
+            (2, 3, 4),
+            local_sizes,
+            strides,
+            pads,
+            ignore_border,
+        )
+        print(ans, res)
+        np.testing.assert_equal(ans, res)
+
+    test_same((1, 1, 2, 2, 2), (2, 2, 2), (2, 2, 2), (0, 0, 0), False,
+              ans=(1, 1, 1, 1, 1))
 
 
 def test_pool_output_shape_custom_pool_2d_node():
