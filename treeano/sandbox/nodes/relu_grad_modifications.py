@@ -136,7 +136,7 @@ class _IndependentLeakyPositivePushing(treeano.sandbox.utils.OverwriteGrad):
     def grad(self, inputs, out_grads):
         (inp,) = inputs
         (grd,) = out_grads
-        return (grd * ((1 - self.alpha) * _is_pos(inp)
+        return (grd * ((1 - self.alpha_) * _is_pos(inp)
                        + self.alpha_ * _is_pos(grd)),)
 
     @staticmethod
