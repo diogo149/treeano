@@ -1,3 +1,6 @@
+import abc
+
+import six
 import theano
 import theano.tensor as T
 
@@ -42,3 +45,48 @@ def soft_binary_crossentropy(pred, target, alpha=0.01):
     exactly 1
     """
     return T.nnet.binary_crossentropy(pred, T.clip(target, alpha, 1 - alpha))
+
+
+class OverwriteGrad(six.with_metaclass(abc.ABCMeta, object)):
+
+    """
+    wraps a function, allowing a different gradient to be applied
+
+    based on Lasagne Recipes on Guided Backpropagation
+    """
+
+    def __init__(self, fn):
+        self.fn = fn
+        # memoizes an OpFromGraph instance per tensor type
+        self.ops = {}
+
+    def __call__(self, x):
+        # OpFromGraph is oblique to Theano optimizations, so we need to move
+        # things to GPU ourselves if needed.
+        if theano.sandbox.cuda.cuda_enabled:
+            maybe_to_gpu = theano.sandbox.cuda.as_cuda_ndarray_variable
+        else:
+            maybe_to_gpu = lambda x: x
+        # move the input to GPU if needed.
+        x = maybe_to_gpu(x)
+        # note the tensor type of the input variable to the fn
+        # (mainly dimensionality and dtype); we need to create a fitting Op.
+        tensor_type = x.type
+        # create a suitable Op if not yet done
+        if tensor_type not in self.ops:
+            # create an input variable of the correct type
+            inp = tensor_type()
+            # pass it through the fn (and move to GPU if needed)
+            outp = maybe_to_gpu(self.fn(inp))
+            # fix the forward expression
+            op = theano.OpFromGraph([inp], [outp])
+            # replace the gradient with our own
+            op.grad = self.grad
+            # Finally, we memoize the new Op
+            self.ops[tensor_type] = op
+        # apply the memoized Op to the input we got
+        return self.ops[tensor_type](x)
+
+    @abc.abstractmethod
+    def grad(self, inputs, out_grads):
+        pass
