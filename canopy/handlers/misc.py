@@ -64,7 +64,7 @@ class ExponentialPolyakAveraging(base.NetworkHandlerImpl):
         # update values
         for k, v in value_dict.items():
             if (self.average_only_floats
-                    and not treeano.utils.is_float_array(v)):
+                    and not treeano.utils.is_float_ndarray(v)):
                 # keep last
                 # ---
                 # because we might only want to save parameters
