@@ -87,7 +87,6 @@ class FoldUnfoldAxisIntoBatchNode(treeano.Wrapper1NodeImpl):
             pattern = list(range(in_vw.ndim + 1))
             pattern.pop(1)
             pattern.insert(axis, 1)
-            print pattern
             var = var.dimshuffle(*pattern)
 
         # calculate new shape
