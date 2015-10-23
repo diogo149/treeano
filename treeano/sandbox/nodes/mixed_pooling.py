@@ -1,3 +1,10 @@
+"""
+from
+"Generalizing Pooling Functions in Convolutional Neural Networks: Mixed,
+Gated, and Tree"
+http://arxiv.org/abs/1509.08985
+"""
+
 import toolz
 import theano
 import theano.tensor as T
