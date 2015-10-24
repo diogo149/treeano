@@ -288,6 +288,18 @@ class RelativeNetwork(object):
         value = self.find_hyperparameter(hyperparameter_keys, *args, **kwargs)
         self.set_hyperparameter(node_name, key, value)
 
+    def maybe_forward_hyperparameter(self, *args, **kwargs):
+        """
+        forwards hyperaparameters to a different node, if given
+
+        returns True if set, False otherwise
+        """
+        try:
+            self.forward_hyperparameter(*args, **kwargs)
+            return True
+        except MissingHyperparameter:
+            return False
+
     def find_hyperparameter(self,
                             hyperparameter_keys,
                             default_value=NoDefaultValue):
