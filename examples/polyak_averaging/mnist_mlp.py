@@ -114,7 +114,8 @@ canopy.evaluate_until(fn=train_fn,
                       gen=itertools.repeat(in_train),
                       max_iters=25)
 
-canopy.network_utils.load_value_dict(network, polyak_averaging.get_value_dict())
+canopy.network_utils.load_value_dict(network,
+                                     polyak_averaging.get_value_dict())
 m = {}
 validate(m)
 print(m)
