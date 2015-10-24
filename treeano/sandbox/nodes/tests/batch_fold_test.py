@@ -24,6 +24,14 @@ def test_fold_unfold_axis_into_batch_node_serialization():
         bf.FoldUnfoldAxisIntoBatchNode("a", tn.IdentityNode("i")))
 
 
+def test_add_axis_node_serialization():
+    tn.check_serialization(bf.AddAxisNode("a"))
+
+
+def test_remove_axis_node_serialization():
+    tn.check_serialization(bf.RemoveAxisNode("b"))
+
+
 def test_fold_unfold_axis_into_batch_node():
     network = tn.SequentialNode(
         "s",
@@ -50,3 +58,41 @@ def test_fold_unfold_axis_into_batch_node():
     nt.assert_equal((30, 4), i2.shape)
     nt.assert_equal((10, 3, 11), fu2.shape)
     nt.assert_equal((2, 3, 11, 5), fu1.shape)
+
+
+def test_add_remove_axis_node():
+    network = tn.SequentialNode(
+        "s",
+        [tn.InputNode("i", shape=(2, 3, 4)),
+         bf.AddAxisNode("a1", axis=3),
+         bf.AddAxisNode("a2", axis=1),
+         bf.RemoveAxisNode("r1", axis=1),
+         bf.AddAxisNode("a3", axis=0),
+         bf.RemoveAxisNode("r2", axis=4),
+         bf.RemoveAxisNode("r3", axis=0)]
+    ).network()
+
+    fn = network.function(["i"], ["a1", "a2", "r1", "a3", "r2", "r3"])
+    x = np.zeros((2, 3, 4), dtype=fX)
+    a1, a2, r1, a3, r2, r3 = fn(x)
+    nt.assert_equal((2, 3, 4, 1), a1.shape)
+    nt.assert_equal((2, 1, 3, 4, 1), a2.shape)
+    nt.assert_equal((2, 3, 4, 1), r1.shape)
+    nt.assert_equal((1, 2, 3, 4, 1), a3.shape)
+    nt.assert_equal((1, 2, 3, 4), r2.shape)
+    nt.assert_equal((2, 3, 4), r3.shape)
+
+
+def test_remove_axis_node():
+    # testing that it works on non-broadcastable dims
+    network = tn.SequentialNode(
+        "s",
+        [tn.InputNode("i", shape=(1, 1, 1)),
+         bf.RemoveAxisNode("r1", axis=2),
+         bf.RemoveAxisNode("r2", axis=1),
+         bf.RemoveAxisNode("r3", axis=0)]
+    ).network()
+
+    fn = network.function(["i"], ["s"])
+    x = np.zeros((1, 1, 1), dtype=fX)
+    fn(x)
