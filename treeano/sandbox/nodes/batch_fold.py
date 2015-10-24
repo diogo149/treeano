@@ -100,3 +100,64 @@ class FoldUnfoldAxisIntoBatchNode(treeano.Wrapper1NodeImpl):
             shape=new_shape,
             tags={"output"},
         )
+
+
+@treeano.register_node("add_axis")
+class AddAxisNode(treeano.NodeImpl):
+
+    """
+    adds an axis with length 1
+    """
+    hyperparameter_names = ("axis",)
+
+    def compute_output(self, network, in_vw):
+        axis = network.find_hyperparameter(["axis"])
+        assert 0 <= axis <= in_vw.ndim
+
+        # calculate variable
+        pattern = list(range(in_vw.ndim))
+        pattern.insert(axis, "x")
+        out_var = in_vw.variable.dimshuffle(*pattern)
+
+        # calculate shape
+        out_shape = list(in_vw.shape)
+        out_shape.insert(axis, 1)
+        out_shape = tuple(out_shape)
+
+        network.create_vw(
+            "default",
+            variable=out_var,
+            shape=out_shape,
+            tags={"output"},
+        )
+
+
+@treeano.register_node("remove_axis")
+class RemoveAxisNode(treeano.NodeImpl):
+
+    """
+    removes an axis with length 1
+    """
+    hyperparameter_names = ("axis",)
+
+    def compute_output(self, network, in_vw):
+        axis = network.find_hyperparameter(["axis"])
+        assert 0 <= axis < in_vw.ndim
+
+        # calculate shape
+        out_shape = list(in_vw.shape)
+        axis_length = out_shape.pop(axis)
+        assert axis_length == 1
+        out_shape = tuple(out_shape)
+
+        # calculate variable
+        ss = list(in_vw.symbolic_shape())
+        ss.pop(axis)
+        out_var = in_vw.variable.reshape(ss)
+
+        network.create_vw(
+            "default",
+            variable=out_var,
+            shape=out_shape,
+            tags={"output"},
+        )
