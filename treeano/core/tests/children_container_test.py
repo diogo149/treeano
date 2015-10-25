@@ -105,3 +105,22 @@ def test_dict_children_container_schema_no_children():
     cc = dccs(None)
     # test that .children returns the same as the input
     nt.assert_equal(cc.children, {})
+
+
+def test_nodes_and_edges_children_container():
+    # test to_data
+    cc = core.NodesAndEdgesContainer([[], []])
+    nt.assert_equal({"nodes": [], "edges": []}, cc.to_data())
+
+    # test children_container_to_data
+    as_data = core.children_container_to_data(cc)
+    nt.assert_equal(dict(
+        children_container_key="nodes_and_edges",
+        children_container_data={"nodes": [], "edges": []}),
+        as_data)
+
+    # test back and forth
+    cc2 = core.children_container_from_data(as_data)
+    nt.assert_is_instance(cc2, core.NodesAndEdgesContainer)
+    nt.assert_equal(as_data,
+                    core.children_container_to_data(cc2))
