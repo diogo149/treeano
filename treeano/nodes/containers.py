@@ -2,7 +2,47 @@ import theano
 import theano.tensor as T
 
 from .. import core
-from . import simple
+
+
+@core.register_node("graph")
+class GraphNode(core.WrapperNodeImpl):
+
+    """
+    creates nodes in an arbitrary graph
+
+    edges:
+    - each edge requires at least one of the keys between "from" and "to", and
+      can have optional keys "from_key" and "to_key"
+    - if "from"'s value is None or not given, the value for this edge is taken
+      as the input of the graph node with key "from_key"
+    """
+
+    children_container = core.NodesAndEdgesContainer
+
+    def init_state(self, network):
+        for original_edge in self._children.edges:
+            # one of "to" or "from" must be set
+            assert "to" in original_edge or "from" in original_edge
+            # add defaults
+            edge = {
+                "from": None,
+                "to": self.name,
+                "from_key": "default",
+                "to_key": "default",
+            }
+            edge.update(original_edge)
+            assert set(edge.keys()) == {"to", "from", "to_key", "from_key"}
+            if edge["from"] is None:
+                # None means take the current node's input
+                network.forward_input_to(node_name=edge["to"],
+                                         previous_to_key=edge["from_key"],
+                                         to_key=edge["to_key"],
+                                         ignore_no_input=False)
+            else:
+                network.add_dependency(from_name=edge["from"],
+                                       to_name=edge["to"],
+                                       from_key=edge["from_key"],
+                                       to_key=edge["to_key"])
 
 
 @core.register_node("sequential")

@@ -46,7 +46,8 @@ from .combine import (BaseChildrenCombineNode,
                       ElementwiseSumNode,
                       InputElementwiseSumNode,
                       ElementwiseProductNode)
-from .containers import (SequentialNode,
+from .containers import (GraphNode,
+                         SequentialNode,
                          ContainerNode,
                          AuxiliaryNode)
 from .activations import (BaseActivationNode,
