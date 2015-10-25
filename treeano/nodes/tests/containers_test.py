@@ -19,6 +19,11 @@ def test_auxiliary_node_serialization():
     tn.check_serialization(tn.AuxiliaryNode("a", tn.IdentityNode("b")))
 
 
+def test_graph_node_serialization():
+    tn.check_serialization(tn.GraphNode("a", [[tn.IdentityNode("b")],
+                                              [{"from": "b", "to": "a"}]]))
+
+
 @nt.raises(AssertionError)
 def test_container_node_raises():
     network = tn.SequentialNode(
