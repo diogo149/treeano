@@ -13,13 +13,19 @@ class GraphNode(core.WrapperNodeImpl):
     edges:
     - each edge requires at least one of the keys between "from" and "to", and
       can have optional keys "from_key" and "to_key"
+    - if "to" is not given, the default is the graph node
     - if "from"'s value is None or not given, the value for this edge is taken
       as the input of the graph node with key "from_key"
     """
 
     children_container = core.NodesAndEdgesContainer
+    hyperparameter_names = ("output_key",)
+
+    def get_input_keys(self, network):
+        return [network.find_hyperparameter(["output_key"], "default")]
 
     def init_state(self, network):
+        # create edges
         for original_edge in self._children.edges:
             # one of "to" or "from" must be set
             assert "to" in original_edge or "from" in original_edge
