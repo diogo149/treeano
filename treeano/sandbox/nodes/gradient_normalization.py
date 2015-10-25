@@ -33,8 +33,10 @@ class GradientBatchNormalizationOp(ViewOp):
             new_grad -= mean
         # divide by std
         new_grad /= std
+        # optionally keep mean
         if self.keep_mean_ and self.subtract_mean_:
             new_grad += mean
+
         return (new_grad,)
 
 
