@@ -23,7 +23,8 @@ from .children_container import (ChildrenContainer,
                                  NoneChildrenContainer,
                                  ChildContainer,
                                  DictChildrenContainer,
-                                 DictChildrenContainerSchema)
+                                 DictChildrenContainerSchema,
+                                 NodesAndEdgesContainer)
 from .network import (MissingHyperparameter,
                       Network)
 from .node import NodeAPI

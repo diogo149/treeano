@@ -214,3 +214,39 @@ class DictChildrenContainerSchema(object):
             new_children[k] = self.schema[k](children[k])
             assert isinstance(new_children[k], ChildrenContainer)
         return _DictChildrenContainerFromSchema(new_children)
+
+
+@serialization_state.register_children_container("nodes_and_edges")
+class NodesAndEdgesContainer(ChildrenContainer):
+
+    """
+    contains both a list of nodes, and a list of edges
+
+    edges are represented as dicts
+    """
+
+    def __init__(self, children):
+        assert isinstance(children, (list, tuple))
+        assert len(children) == 2
+        nodes, edges = children
+        for edge in edges:
+            assert isinstance(edge, dict)
+        self.nodes, self.edges = nodes, edges
+
+    @property
+    def children(self):
+        return (self.nodes, self.edges)
+
+    def __iter__(self):
+        return iter(self.nodes)
+
+    def to_data(self):
+        return {"nodes": [serialization_state.node_to_data(node)
+                          for node in self.nodes],
+                "edges": self.edges}
+
+    @classmethod
+    def from_data(cls, data):
+        nodes = [serialization_state.node_from_data(n) for n in data["nodes"]]
+        edges = data["edges"]
+        return cls((nodes, edges))
