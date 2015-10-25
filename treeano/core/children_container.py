@@ -23,6 +23,9 @@ class ChildrenContainer(six.with_metaclass(abc.ABCMeta, object)):
 
     @abc.abstractmethod
     def __iter__(self):
+        """
+        returns iterator of nodes in container
+        """
         pass
 
     @abc.abstractmethod
