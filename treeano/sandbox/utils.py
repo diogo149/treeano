@@ -80,6 +80,8 @@ class OverwriteGrad(six.with_metaclass(abc.ABCMeta, object)):
             outp = maybe_to_gpu(self.fn(inp))
             # fix the forward expression
             op = theano.OpFromGraph([inp], [outp])
+            # keep a reference to previous gradient
+            op.overwritten_grad = op.grad
             # replace the gradient with our own
             op.grad = self.grad
             # Finally, we memoize the new Op
