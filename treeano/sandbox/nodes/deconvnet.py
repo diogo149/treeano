@@ -9,6 +9,7 @@ import theano.tensor as T
 import treeano
 import treeano.nodes as tn
 import treeano.sandbox.utils
+import canopy
 
 
 class _Deconvnet(treeano.sandbox.utils.OverwriteGrad):
@@ -36,3 +37,23 @@ class DeconvnetReLUNode(tn.BaseActivationNode):
 
     def activation(self, network, in_vw):
         return deconvnet_relu(in_vw.variable)
+
+
+def replace_relu_with_deconvnet_transform(network, **kwargs):
+
+    def inner(node):
+        if isinstance(node, tn.ReLUNode):
+            return DeconvnetReLUNode(node.name)
+        else:
+            return node
+
+    return canopy.transforms.fns.transform_root_node_postwalk(
+        network, inner, **kwargs)
+
+
+class ReplaceReLUWithDeconvnet(canopy.handlers.NetworkHandlerImpl):
+
+    def transform_network(self, network):
+        return replace_relu_with_deconvnet_transform(network)
+
+replace_relu_with_deconvnet_handler = ReplaceReLUWithDeconvnet
