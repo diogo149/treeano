@@ -1,7 +1,6 @@
 """
 from "Striving for Simplicity - The All Convolutional Net"
 http://arxiv.org/abs/1412.6806
-
 """
 
 import theano
@@ -10,6 +9,7 @@ import theano.tensor as T
 import treeano
 import treeano.nodes as tn
 import treeano.sandbox.utils
+import canopy
 
 
 class _GuidedBackprop(treeano.sandbox.utils.OverwriteGrad):
@@ -33,3 +33,23 @@ class GuidedBackpropReLUNode(tn.BaseActivationNode):
 
     def activation(self, network, in_vw):
         return guided_backprop_relu(in_vw.variable)
+
+
+def replace_relu_with_guided_backprop_transform(network, **kwargs):
+
+    def inner(node):
+        if isinstance(node, tn.ReLUNode):
+            return GuidedBackpropReLUNode(node.name)
+        else:
+            return node
+
+    return canopy.transforms.fns.transform_root_node_postwalk(
+        network, inner, **kwargs)
+
+
+class ReplaceReLUWithGuidedBackprop(canopy.handlers.NetworkHandlerImpl):
+
+    def transform_network(self, network):
+        return replace_relu_with_guided_backprop_transform(network)
+
+replace_relu_with_guided_backprop_handler = ReplaceReLUWithGuidedBackprop
