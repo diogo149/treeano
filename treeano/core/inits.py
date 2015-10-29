@@ -4,6 +4,8 @@ from __future__ import print_function, unicode_literals
 import numpy as np
 import theano
 
+from .. import utils
+
 # ############################### base classes ###############################
 
 
@@ -74,7 +76,10 @@ class ConstantInit(SharedInit):
         self.constant = constant
 
     def initialize_value(self, vw):
-        if vw.ndim > 0:
+        if utils.is_ndarray(self.constant):
+            assert vw.shape == self.constant.shape
+            value = self.constant
+        elif vw.ndim > 0:
             value = self.constant * np.ones(vw.shape)
         else:
             value = self.constant
