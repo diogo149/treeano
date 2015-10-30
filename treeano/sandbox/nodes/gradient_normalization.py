@@ -12,15 +12,24 @@ class GradientBatchNormalizationOp(ViewOp):
                  normalization_axes=(0,),
                  subtract_mean=False,
                  keep_mean=False,
+                 preprocess=None,
                  epsilon=1e-8):
         assert isinstance(normalization_axes, (list, tuple))
         self.normalization_axes_ = tuple(normalization_axes)
         self.subtract_mean_ = subtract_mean
         self.keep_mean_ = keep_mean
+        self.preprocess_ = preprocess
         self.epsilon_ = epsilon
 
     def grad(self, inputs, output_gradients):
         old_grad, = output_gradients
+
+        if old_grad.ndim > 2 and self.preprocess_ is not None:
+            preprocess_axis = tuple(range(2, old_grad.ndim))
+            if self.preprocess_ == "mean":
+                old_grad = old_grad.mean(axis=preprocess_axis, keepdims=True)
+            else:
+                assert False
 
         # calculate mean and std
         kwargs = dict(axis=self.normalization_axes_, keepdims=True)
@@ -49,11 +58,13 @@ class GradientBatchNormalizationNode(treeano.NodeImpl):
 
     hyperparameter_names = ("subtract_mean",
                             "keep_mean",
+                            "preprocess",
                             "epsilon")
 
     def compute_output(self, network, in_vw):
         subtract_mean = network.find_hyperparameter(["subtract_mean"], False)
         keep_mean = network.find_hyperparameter(["keep_mean"], False)
+        preprocess = network.find_hyperparameter(["preprocess"], None)
         epsilon = network.find_hyperparameter(["epsilon"], 1e-8)
         # TODO parameterize normalization axes
         normalization_axes = [axis for axis in range(in_vw.ndim) if axis != 1]
@@ -61,6 +72,7 @@ class GradientBatchNormalizationNode(treeano.NodeImpl):
             normalization_axes=normalization_axes,
             subtract_mean=subtract_mean,
             keep_mean=keep_mean,
+            preprocess=preprocess,
             epsilon=epsilon,
         )(in_vw.variable)
         network.create_vw(
