@@ -11,6 +11,22 @@ from .. import transforms
 fX = theano.config.floatX
 
 
+class RemoveNodesWithClass(base.NetworkHandlerImpl):
+
+    """
+    handler that adds hyperparameters to the network
+    """
+
+    def __init__(self, cls):
+        self.cls = cls
+
+    def transform_network(self, network):
+        return transforms.remove_nodes_with_class(network, self.cls)
+
+
+remove_nodes_with_class = RemoveNodesWithClass
+
+
 class WithHyperparameters(base.NetworkHandlerImpl):
 
     """

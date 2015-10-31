@@ -10,7 +10,8 @@ from .base import (NetworkHandlerAPI,
                    NetworkHandlerImpl)
 from .fn import (handled_fn)
 from .conditional import (call_after_every)
-from .nodes import (with_hyperparameters,
+from .nodes import (remove_nodes_with_class,
+                    with_hyperparameters,
                     override_hyperparameters,
                     update_hyperparameters,
                     schedule_hyperparameter,
