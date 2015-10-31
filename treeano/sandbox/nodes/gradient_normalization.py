@@ -57,7 +57,8 @@ class GradientBatchNormalizationNode(treeano.NodeImpl):
     like treeano.theano_extensions.gradient.gradient_reversal
     """
 
-    hyperparameter_names = ("normalization_axes",
+    hyperparameter_names = ("gbn_normalization_axes",
+                            "normalization_axes",
                             "mean_preprocess_axes",
                             "subtract_mean",
                             "keep_mean",
@@ -71,7 +72,8 @@ class GradientBatchNormalizationNode(treeano.NodeImpl):
         default_normalization_axes = [axis for axis in range(in_vw.ndim)
                                       if axis != 1]
         normalization_axes = network.find_hyperparameter(
-            ["normalization_axes"],
+            ["gbn_normalization_axes",
+             "normalization_axes"],
             default_normalization_axes)
         # TODO experiment if meaning all non-batch axes is useful
         default_mean_preprocess_axes = ()
