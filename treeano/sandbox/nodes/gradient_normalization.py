@@ -85,7 +85,10 @@ class GradientBatchNormalizationNode(treeano.NodeImpl):
 
 def remove_gradient_batch_normalization_handler():
     """
-    gradient batch normalization can be slower at test time
+    gradient batch normalization can be slower at test time, where it isn't
+    generally used (since updates are not occuring), so this handler
+    can remove the nodes
+
     TODO: figure out why
     """
     return canopy.handlers.remove_nodes_with_class(
