@@ -10,26 +10,25 @@ class GradientBatchNormalizationOp(ViewOp):
 
     def __init__(self,
                  normalization_axes=(0,),
+                 mean_preprocess_axes=(),
                  subtract_mean=False,
                  keep_mean=False,
-                 preprocess=None,
                  epsilon=1e-8):
         assert isinstance(normalization_axes, (list, tuple))
+        assert isinstance(mean_preprocess_axes, (list, tuple))
+        assert len(set(normalization_axes) & set(mean_preprocess_axes)) == 0
         self.normalization_axes_ = tuple(normalization_axes)
+        self.mean_preprocess_axes_ = tuple(mean_preprocess_axes)
         self.subtract_mean_ = subtract_mean
         self.keep_mean_ = keep_mean
-        self.preprocess_ = preprocess
         self.epsilon_ = epsilon
 
     def grad(self, inputs, output_gradients):
         old_grad, = output_gradients
 
-        if old_grad.ndim > 2 and self.preprocess_ is not None:
-            preprocess_axis = tuple(range(2, old_grad.ndim))
-            if self.preprocess_ == "mean":
-                old_grad = old_grad.mean(axis=preprocess_axis, keepdims=True)
-            else:
-                assert False
+        if self.mean_preprocess_axes_:
+            old_grad = old_grad.mean(axis=self.mean_preprocess_axes_,
+                                     keepdims=True)
 
         # calculate mean and std
         kwargs = dict(axis=self.normalization_axes_, keepdims=True)
@@ -56,23 +55,32 @@ class GradientBatchNormalizationNode(treeano.NodeImpl):
     like treeano.theano_extensions.gradient.gradient_reversal
     """
 
-    hyperparameter_names = ("subtract_mean",
+    hyperparameter_names = ("normalization_axes",
+                            "mean_preprocess_axes",
+                            "subtract_mean",
                             "keep_mean",
-                            "preprocess",
                             "epsilon")
 
     def compute_output(self, network, in_vw):
         subtract_mean = network.find_hyperparameter(["subtract_mean"], False)
         keep_mean = network.find_hyperparameter(["keep_mean"], False)
-        preprocess = network.find_hyperparameter(["preprocess"], None)
         epsilon = network.find_hyperparameter(["epsilon"], 1e-8)
-        # TODO parameterize normalization axes
-        normalization_axes = [axis for axis in range(in_vw.ndim) if axis != 1]
+        # by default, normalize all except axis 1
+        default_normalization_axes = [axis for axis in range(in_vw.ndim)
+                                      if axis != 1]
+        normalization_axes = network.find_hyperparameter(
+            ["normalization_axes"],
+            default_normalization_axes)
+        # TODO experiment if meaning all non-batch axes is useful
+        default_mean_preprocess_axes = ()
+        mean_preprocess_axes = network.find_hyperparameter(
+            ["mean_preprocess_axes"],
+            default_mean_preprocess_axes)
         out_var = GradientBatchNormalizationOp(
             normalization_axes=normalization_axes,
+            mean_preprocess_axes=mean_preprocess_axes,
             subtract_mean=subtract_mean,
             keep_mean=keep_mean,
-            preprocess=preprocess,
             epsilon=epsilon,
         )(in_vw.variable)
         network.create_vw(
