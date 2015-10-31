@@ -25,7 +25,10 @@ class GradientBatchNormalizationOp(ViewOp):
 
     def grad(self, inputs, output_gradients):
         old_grad, = output_gradients
+        # initialize to old gradient
+        new_grad = old_grad
 
+        # mean preprocess
         if self.mean_preprocess_axes_:
             old_grad = old_grad.mean(axis=self.mean_preprocess_axes_,
                                      keepdims=True)
@@ -35,8 +38,7 @@ class GradientBatchNormalizationOp(ViewOp):
         mean = old_grad.mean(**kwargs)
         std = old_grad.std(**kwargs) + self.epsilon_
 
-        # initialize to old gradient
-        new_grad = old_grad
+        # remove mean
         if self.subtract_mean_:
             new_grad -= mean
         # divide by std
