@@ -81,3 +81,12 @@ class GradientBatchNormalizationNode(treeano.NodeImpl):
             shape=in_vw.shape,
             tags={"output"}
         )
+
+
+def remove_gradient_batch_normalization_handler():
+    """
+    gradient batch normalization can be slower at test time
+    TODO: figure out why
+    """
+    return canopy.handlers.remove_nodes_with_class(
+        GradientBatchNormalizationNode)
