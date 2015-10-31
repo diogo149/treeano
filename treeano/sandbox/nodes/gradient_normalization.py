@@ -53,10 +53,6 @@ class GradientBatchNormalizationOp(ViewOp):
 @treeano.register_node("gradient_batch_normalization")
 class GradientBatchNormalizationNode(treeano.NodeImpl):
 
-    """
-    like treeano.theano_extensions.gradient.gradient_reversal
-    """
-
     hyperparameter_names = ("gbn_normalization_axes",
                             "normalization_axes",
                             "mean_preprocess_axes",
