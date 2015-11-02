@@ -1557,6 +1557,8 @@
       - readable
   - ie. AddDropoutBeforeDenseNode
 ** code quality
+- use theano.tensor.nnet.abstract_conv2d.conv2d
+  - see https://groups.google.com/forum/#!topic/theano-dev/hLeaHBurJOg
 - consistent naming of VariableWrapper as vw
   - rename variable in network.py to vw
     - eg. find_variables_in_subtree to find_vws_in_subtree
