@@ -18,14 +18,19 @@ fX = theano.config.floatX
 @treeano.register_node("default_recurrent_conv_2d")
 class DefaultRecurrentConv2DNode(treeano.Wrapper0NodeImpl):
 
-    hyperparameter_names = ("num_filters",
-                            "filter_size")
+    hyperparameter_names = ("inits",
+                            "num_filters",
+                            "filter_size",
+                            "conv_pad",
+                            "pad")
     # TODO parameterize
     steps = 3
 
     def architecture_children(self):
         # TODO set LRN n = num_filters / 8 + 1
         nodes = [
+            # NOTE: not explicitly giving the first conv a pad of "same",
+            # since the first conv can have any output shape
             tn.DnnConv2DWithBiasNode(self.name + "_conv0"),
             tn.IdentityNode(self.name + "_z0"),
             tn.ReLUNode(self.name + "_z0_relu"),
