@@ -46,8 +46,15 @@ class ClipScalingNode(treeano.NodeImpl):
                 inits=maxs_inits,
             ).variable
         else:
-            mins_var = T.constant(mins)
-            maxs_var = T.constant(maxs)
+            if treeano.utils.is_variable(mins):
+                mins_var = mins
+            else:
+                mins_var = T.constant(mins)
+
+            if treeano.utils.is_variable(maxs):
+                maxs_var = maxs
+            else:
+                maxs_var = T.constant(maxs)
 
         in_pattern = list(range(in_vw.ndim))
         # insert after channel dim
@@ -122,8 +129,15 @@ class TanhScalingNode(treeano.NodeImpl):
                 inits=scales_inits,
             ).variable
         else:
-            means_var = T.constant(means)
-            scales_var = T.constant(scales)
+            if treeano.utils.is_variable(means):
+                means_var = means
+            else:
+                means_var = T.constant(means)
+
+            if treeano.utils.is_variable(scales):
+                scales_var = scales
+            else:
+                scales_var = T.constant(scales)
 
         in_pattern = list(range(in_vw.ndim))
         # insert after channel dim
@@ -196,8 +210,15 @@ class RBFScalingNode(treeano.NodeImpl):
                 inits=scales_inits,
             ).variable
         else:
-            means_var = T.constant(means)
-            scales_var = T.constant(scales)
+            if treeano.utils.is_variable(means):
+                means_var = means
+            else:
+                means_var = T.constant(means)
+
+            if treeano.utils.is_variable(scales):
+                scales_var = scales
+            else:
+                scales_var = T.constant(scales)
 
         in_pattern = list(range(in_vw.ndim))
         # insert after channel dim
