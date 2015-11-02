@@ -249,9 +249,6 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
             unbias_factor = treeano.utils.as_fX(batch_size / (batch_size - 1))
             in_var = unbias_factor * biased_in_var
 
-        assert in_mean.broadcastable == stats_broadcastable
-        assert in_var.broadcastable == stats_broadcastable
-
         # save the mean/var for updating and debugging
         network.create_vw(
             name="in_mean",
