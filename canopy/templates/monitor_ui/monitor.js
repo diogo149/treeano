@@ -8,7 +8,7 @@ var EPSILON = 1e-6;
 
 var defaultSettings = [
   {
-    title: "foo",
+    title: "cost",
     onlyRelevantTooltipKeys: true,
     rollingMeanWindow: 1,
     numXTicks: 11,
@@ -21,39 +21,7 @@ var defaultSettings = [
         scale: "linear"
       },
       cost: {
-        keys: ["valid_cost"],
-        lower: "min",
-        upper: "max",
-        scale: "log"
-      }
-    },
-    x: {
-      key: "_idx",
-      scale: "idx"
-    },
-    ys: [
-      {
-        keys: ["valid_cost"],
-        scale: "cost",
-        color: "category10"
-      }
-    ]
-  },
-  {
-    title: "bar",
-    onlyRelevantTooltipKeys: true,
-    rollingMeanWindow: 1,
-    numXTicks: 11,
-    numYTicks: 11,
-    scales: {
-      idx: {
-        keys: ["_idx"],
-        lower: "min",
-        upper: "max",
-        scale: "linear"
-      },
-      cost: {
-        keys: ["train_cost", "valid_cost"],
+        keys: ["cost$"],
         scale: "linear",
         lower: "min",
         upper: "max"
@@ -65,8 +33,72 @@ var defaultSettings = [
     },
     ys: [
       {
-        keys: ["_cost"],
+        keys: ["cost$"],
         scale: "cost",
+        color: "category10"
+      }
+    ]
+  },
+  {
+    title: "time",
+    onlyRelevantTooltipKeys: true,
+    rollingMeanWindow: 1,
+    numXTicks: 11,
+    numYTicks: 11,
+    scales: {
+      idx: {
+        keys: ["_idx"],
+        lower: "min",
+        upper: "max",
+        scale: "linear"
+      },
+      time: {
+        keys: ["\\w+_time$"],
+        scale: "log",
+        lower: "min",
+        upper: "max"
+      }
+    },
+    x: {
+      key: "_idx",
+      scale: "idx"
+    },
+    ys: [
+      {
+        keys: ["\\w+_time$"],
+        scale: "time",
+        color: "category10"
+      }
+    ]
+  },
+  {
+    title: "hyperparameters",
+    onlyRelevantTooltipKeys: true,
+    rollingMeanWindow: 1,
+    numXTicks: 11,
+    numYTicks: 11,
+    scales: {
+      idx: {
+        keys: ["_idx"],
+        lower: "min",
+        upper: "max",
+        scale: "linear"
+      },
+      hyperparameter: {
+        keys: [":hyperparameter$"],
+        scale: "linear",
+        lower: "min",
+        upper: "max"
+      }
+    },
+    x: {
+      key: "_idx",
+      scale: "idx"
+    },
+    ys: [
+      {
+        keys: [":hyperparameter$"],
+        scale: "hyperparameter",
         color: "category10"
       }
     ]
