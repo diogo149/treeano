@@ -102,4 +102,3 @@ class MonitorNetworkState(base.NetworkHandlerImpl):
         return res
 
 monitor_network_state = MonitorNetworkState
-
