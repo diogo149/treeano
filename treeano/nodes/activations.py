@@ -72,6 +72,13 @@ class SigmoidNode(BaseActivationNode):
         return T.nnet.sigmoid(in_vw.variable)
 
 
+@core.register_node("softplus")
+class SoftplusNode(BaseActivationNode):
+
+    def activation(self, network, in_vw):
+        return T.nnet.softplus(in_vw.variable)
+
+
 @core.register_node("resqrt")
 class ReSQRTNode(BaseActivationNode):
 
