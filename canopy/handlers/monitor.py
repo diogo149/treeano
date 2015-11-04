@@ -141,3 +141,41 @@ class MonitorVariable(base.NetworkHandlerImpl):
         return res
 
 monitor_variable = MonitorVariable
+
+
+class MonitorSharedInSubtree(base.NetworkHandlerImpl):
+
+    """
+    monitors all shared variables in a graph by raveling each into
+    multiple scalars
+    """
+
+    def __init__(self, node_name, fmt="%s_%d"):
+        self.node_name = node_name
+        self.fmt = fmt
+        # TODO parameterize
+        self.query = dict(
+            is_shared=True
+        )
+
+    def transform_compile_function_kwargs(self, state, **kwargs):
+        vws = state.network[self.node_name].find_vws_in_subtree(**self.query)
+        self.output_keys_to_vw_name_ = {}
+        for vw in vws:
+            output_key = self.fmt % (vw.name, 0)
+            assert output_key not in kwargs["outputs"]
+            kwargs["outputs"][output_key] = vw.variable
+            self.output_keys_to_vw_name_[output_key] = vw.name
+        return kwargs
+
+    def call(self, fn, in_dict, *args, **kwargs):
+        res = fn(in_dict, *args, **kwargs)
+        for output_key, vw_name in self.output_keys_to_vw_name_.items():
+            val = res.pop(output_key)
+            for i, v in enumerate(val.ravel()):
+                new_output_key = self.fmt % (vw_name, i)
+                assert new_output_key not in res
+                res[new_output_key] = v
+        return res
+
+monitor_shared_in_subtree = MonitorSharedInSubtree

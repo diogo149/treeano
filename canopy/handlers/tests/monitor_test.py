@@ -114,3 +114,44 @@ def test_monitor_variable():
     res = fn({"x": np.array([2, 3], dtype=fX)})
     ans = {"i:default_0": 2, "i:default_1": 3}
     nt.assert_equal(ans, res)
+
+
+def test_monitor_shared_in_subtree():
+    class CustomNode(treeano.NodeImpl):
+        input_keys = ()
+        hyperparameter_names = ("shape",)
+
+        def compute_output(self, network):
+            shape = network.find_hyperparameter(["shape"])
+            network.create_vw(
+                "default",
+                is_shared=True,
+                shape=shape,
+                inits=[]
+            )
+
+    network = tn.SequentialNode(
+        "s",
+        [tn.SequentialNode(
+            "s1",
+            [CustomNode("c1", shape=(2,)),
+             CustomNode("c2", shape=(2, 2))]),
+         tn.SequentialNode(
+             "s2",
+             [CustomNode("c3", shape=(2,)),
+              CustomNode("c4", shape=(2, 2))])]
+    ).network()
+
+    fn = canopy.handlers.handled_fn(
+        network,
+        [canopy.handlers.monitor_shared_in_subtree("s2")],
+        {},
+        {})
+
+    res = fn({"x": np.array([2, 3], dtype=fX)})
+    ans = set()
+    for i in range(2):
+        ans.add("c3:default_%d" % i)
+    for i in range(4):
+        ans.add("c4:default_%d" % i)
+    nt.assert_equal(ans, set(res.keys()))
