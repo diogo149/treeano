@@ -89,8 +89,6 @@ def test_monitor_network_state():
             )
 
     network = CustomNode("c").network()
-    # build eagerly to share weights
-    network.build()
 
     fn = canopy.handlers.handled_fn(
         network,
@@ -103,3 +101,16 @@ def test_monitor_network_state():
     assert any("mean" in k for k in res.keys())
     # assert that there is a key that has "std" in it
     assert any("std" in k for k in res.keys())
+
+
+def test_monitor_variable():
+    network = tn.InputNode("i", shape=(2,)).network()
+    fn = canopy.handlers.handled_fn(
+        network,
+        [canopy.handlers.monitor_variable("i")],
+        {"x": "i"},
+        {})
+
+    res = fn({"x": np.array([2, 3], dtype=fX)})
+    ans = {"i:default_0": 2, "i:default_1": 3}
+    nt.assert_equal(ans, res)

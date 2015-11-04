@@ -1,5 +1,6 @@
 import time
 
+import six
 import numpy as np
 
 from .. import network_utils
@@ -102,3 +103,41 @@ class MonitorNetworkState(base.NetworkHandlerImpl):
         return res
 
 monitor_network_state = MonitorNetworkState
+
+
+class MonitorVariable(base.NetworkHandlerImpl):
+
+    """
+    monitors a variable in a graph by raveling it into multiple scalars
+    """
+
+    def __init__(self, query, fmt="%s_%d"):
+        self.query = query
+        self.fmt = fmt
+
+    def transform_compile_function_kwargs(self, state, **kwargs):
+        if isinstance(self.query, six.string_types):
+            node_name = self.query
+            from_key = "default"
+        elif isinstance(self.query, tuple):
+            node_name, from_key = self.query
+        else:
+            assert False
+
+        vw = state.network[node_name].get_variable(from_key)
+        self.vw_name_ = vw.name
+        self.output_key_ = self.fmt % (self.vw_name_, 0)
+        assert self.output_key_ not in kwargs["outputs"]
+        kwargs["outputs"][self.output_key_] = (node_name, from_key)
+        return kwargs
+
+    def call(self, fn, in_dict, *args, **kwargs):
+        res = fn(in_dict, *args, **kwargs)
+        val = res.pop(self.output_key_)
+        for i, v in enumerate(val.ravel()):
+            output_key = self.fmt % (self.vw_name_, i)
+            assert output_key not in res
+            res[output_key] = v
+        return res
+
+monitor_variable = MonitorVariable
