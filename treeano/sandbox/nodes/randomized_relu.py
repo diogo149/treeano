@@ -1,7 +1,4 @@
-"""
-from "Empirical Evaluation of Rectified Activations in Convolutional Network"
-http://arxiv.org/abs/1505.00853
-"""
+import toolz
 import numpy as np
 import theano
 import theano.tensor as T
@@ -13,6 +10,11 @@ from theano.sandbox.rng_mrg import MRG_RandomStreams
 @treeano.register_node("randomized_relu")
 class RandomizedReLUNode(treeano.NodeImpl):
 
+    """
+    from "Empirical Evaluation of Rectified Activations in Convolutional
+    Network"
+    http://arxiv.org/abs/1505.00853
+    """
     hyperparameter_names = ("alpha_lower",
                             "alpha_upper",
                             "deterministic")
@@ -84,3 +86,57 @@ class UniformRandomizedReLUNode(treeano.NodeImpl):
             shape=in_vw.shape,
             tags={"output"},
         )
+
+
+@treeano.register_node("random_walk_relu")
+class RandomWalkReLUNode(treeano.NodeImpl):
+
+    """
+    leaky ReLU node, where leak alpha changes randomly over time
+    """
+
+    hyperparameter_names = ("step_size",
+                            "initial_alpha",
+                            "inits")
+
+    def compute_output(self, network, in_vw):
+        # gather hyperparameters
+        initial_alpha = network.find_hyperparameter(
+            ["initial_alpha"],
+            0)
+        inits = list(toolz.concat(network.find_hyperparameters(
+            ["inits"],
+            [treeano.inits.ConstantInit(initial_alpha)])))
+
+        alpha = network.create_vw(
+            "alpha",
+            is_shared=True,
+            shape=(in_vw.shape[1],),
+            tags={"state"},
+            inits=inits,
+        ).variable
+
+        pattern = ["x"] * in_vw.ndim
+        pattern[1] = 0
+        alpha_b = alpha.dimshuffle(*pattern)
+
+        # return output
+        network.create_vw(
+            "default",
+            variable=treeano.utils.rectify(in_vw.variable,
+                                           negative_coefficient=alpha_b),
+            shape=in_vw.shape,
+            tags={"output"},
+        )
+
+    def new_update_deltas(self, network):
+        alpha_vw = network.get_variable("alpha")
+        step_size = network.find_hyperparameter(["step_size"])
+        # NOTE: each MRG_RandomStreams has the same seed, so
+        # all nodes with the same shape end up with the same alphas
+        srng = MRG_RandomStreams()
+        steps = srng.uniform(size=alpha_vw.shape,
+                             low=-step_size,
+                             high=step_size)
+        # TODO clip value of alpha (to prevent it becoming linear)
+        return treeano.UpdateDeltas({alpha_vw.variable: steps})
