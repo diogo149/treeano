@@ -101,3 +101,31 @@ def test_piecewise_log_linear_schedule():
     ans = np.array([1, 1, 1e-1, 1e-2, 1e-3, 1e-3, 1e-3, 1e-3, 1e-3, 1e-3])
     res = np.array([s(None, None) for _ in range(10)])
     np.testing.assert_allclose(ans, res)
+
+
+def test_cyclic_linear_schedule_wrap():
+    s = canopy.schedules.CyclicLinearSchedule(
+        v0_initial=-1,
+        v1_initial=1,
+        frequency=3,
+        boundary="wrap",
+        v0_decay=0.5,
+        v1_decay=0.5,
+    )
+    ans = np.array([-1, 0, 1, -0.5, 0, 0.5, -0.25, 0, 0.25, -0.125])
+    res = np.array([s(None, None) for _ in range(10)])
+    np.testing.assert_allclose(ans, res)
+
+
+def test_cyclic_linear_schedule_mirror():
+    s = canopy.schedules.CyclicLinearSchedule(
+        v0_initial=-1,
+        v1_initial=1,
+        frequency=3,
+        boundary="mirror",
+        v0_decay=0.5,
+        v1_decay=0.5,
+    )
+    ans = np.array([-1, 0, 1, 0.25, -0.5, 0, 0.5, 0.125, -0.25, 0])
+    res = np.array([s(None, None) for _ in range(10)])
+    np.testing.assert_allclose(ans, res)

@@ -223,3 +223,73 @@ class PiecewiseLogLinearSchedule(object):
     def __call__(self, in_dict, previous_output_dict):
         res = self.sub_schedule_(in_dict, previous_output_dict)
         return np.exp(res)
+
+
+class CyclicLinearSchedule(object):
+
+    def __init__(self,
+                 v0_initial,
+                 v1_initial,
+                 frequency,
+                 boundary,
+                 v0_decay=1,
+                 v1_decay=1):
+        """
+        returns values cycling between v0 and v1
+
+        v0_initial:
+        initial value
+
+        v1_initial:
+        target value for initial cycle
+
+        frequency:
+        number of steps in between v0 and v1
+
+        boundary:
+        one of:
+        - "wrap": when reaching v1, start at the new value of v0
+        - "mirror": when reaching v1, linearly move towards v0
+
+        v0_decay:
+        value to multiply to v0 upon reaching v1
+
+        v1_decay:
+        value to multiply to v1 upon reaching v0
+        """
+        self.v0 = v0_initial
+        self.v1 = v1_initial
+        self.frequency = frequency
+        self.boundary = boundary
+        self.v0_decay = v0_decay
+        self.v1_decay = v1_decay
+        self.num_ = 0
+        self.v0_to_v1_ = True
+        self.from_ = self.v0
+        self.to_ = self.v1
+
+    def __call__(self, in_dict, previous_output_dict):
+        progress = self.num_ / (self.frequency - 1)
+        val = progress * (self.to_ - self.from_) + self.from_
+        self.num_ += 1
+        if self.num_ == self.frequency:
+            if self.boundary == "wrap":
+                self.num_ = 0
+                self.v0 *= self.v0_decay
+                self.v1 *= self.v1_decay
+                self.from_ = self.v0
+                self.to_ = self.v1
+            elif self.boundary == "mirror":
+                self.num_ = 1
+                if self.v0_to_v1_:
+                    self.v0 *= self.v0_decay
+                    self.from_ = self.v1
+                    self.to_ = self.v0
+                else:
+                    self.v1 *= self.v1_decay
+                    self.from_ = self.v0
+                    self.to_ = self.v1
+                self.v0_to_v1_ = not self.v0_to_v1_
+            else:
+                raise ValueError("Unknown boundary: {}".format(self.boundary))
+        return val
