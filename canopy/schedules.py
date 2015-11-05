@@ -231,7 +231,7 @@ class CyclicLinearSchedule(object):
                  v0_initial,
                  v1_initial,
                  frequency,
-                 boundary,
+                 boundary="mirror",
                  v0_decay=1,
                  v1_decay=1):
         """
