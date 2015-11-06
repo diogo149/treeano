@@ -59,8 +59,9 @@ def test_adamax_node():
     tn.test_utils.check_updates_node(tn.AdaMaxNode)
 
 
-def test_nag_node():
-    tn.test_utils.check_updates_node(tn.NAGNode, learning_rate=0.01)
+def test_nesterovs_accelerated_gradient_node():
+    tn.test_utils.check_updates_node(tn.NesterovsAcceleratedGradientNode,
+                                     learning_rate=0.01)
 
 
 def test_weight_decay_node():

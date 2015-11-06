@@ -156,27 +156,32 @@ class NesterovMomentumNode(core.Wrapper1NodeImpl):
                 update_deltas[var] = delta + momentum * new_velocity
 
 
-# TODO make a real node
-def NAGNode(name, children, learning_rate=None, momentum=None):
+@core.register_node("nesterovs_accelerated_gradient")
+class NesterovsAcceleratedGradientNode(core.WrapperNodeImpl):
+
     """
-    Node for Nesterov's Accelerated Gradient Descent
+    node that provides updates via SGD Nesterov's Accelerated Gradient Descent
     """
-    subtree = children["subtree"]
-    cost = children["cost"]
-    if learning_rate is None:
-        sgd_kwargs = {}
-    else:
-        sgd_kwargs = {"learning_rate": learning_rate}
-    if momentum is None:
-        momentum_kwargs = {}
-    else:
-        momentum_kwargs = {"momentum": momentum}
-    momentum_node = NesterovMomentumNode(name + "_momentum",
-                                         subtree,
-                                         **momentum_kwargs)
-    new_children = {"subtree": momentum_node,
-                    "cost": cost}
-    return SGDNode(name, new_children, **sgd_kwargs)
+
+    children_container = core.DictChildrenContainerSchema(
+        cost=core.ChildContainer,
+        subtree=core.ChildContainer,
+    )
+
+    hyperparameter_names = (SGDNode.hyperparameter_names
+                            + NesterovMomentumNode.hyperparameter_names)
+
+    def architecture_children(self):
+        subtree = self._children["subtree"].children
+        cost = self._children["cost"].children
+        momentum_node = NesterovMomentumNode(self.name + "_momentum", subtree)
+        new_children = {"subtree": momentum_node,
+                        "cost": cost}
+        return [SGDNode(self.name + "_sgd", new_children)]
+
+# alias
+NAGNode = NesterovsAcceleratedGradientNode
+
 
 # ############################### weight decay ###############################
 
