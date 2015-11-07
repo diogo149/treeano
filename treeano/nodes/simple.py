@@ -6,7 +6,6 @@ implementation, but simple in that they do a single thing
 from __future__ import division, absolute_import
 from __future__ import print_function, unicode_literals
 
-import toolz
 import theano
 import theano.tensor as T
 
@@ -160,10 +159,6 @@ class AddBiasNode(core.NodeImpl):
                             "broadcastable",)
 
     def compute_output(self, network, in_vw):
-        inits = list(toolz.concat(network.find_hyperparameters(
-            ["bias_inits",
-             "inits"],
-            [])))
         # gather hyperparameters
         broadcastable = network.find_hyperparameter(["broadcastable"],
                                                     None)
@@ -196,7 +191,8 @@ class AddBiasNode(core.NodeImpl):
             is_shared=True,
             shape=shape,
             tags={"parameter", "bias"},
-            inits=inits,
+            default_inits=[],
+            default_inits_hyperparameters=["bias_inits", "inits"],
         )
         b_var = b.variable
         # not calling patternbroadcast if not broadcastable, because it seems
@@ -224,10 +220,6 @@ class LinearMappingNode(core.NodeImpl):
                             "output_dim")
 
     def compute_output(self, network, in_vw):
-        inits = list(toolz.concat(network.find_hyperparameters(
-            ["linear_mapping_inits",
-             "inits"],
-            [])))
         output_dim = network.find_hyperparameter(["output_dim"])
         weight_shape = (in_vw.shape[-1], output_dim)
         output_shape = tuple(in_vw.shape[:-1]) + (output_dim, )
@@ -236,7 +228,8 @@ class LinearMappingNode(core.NodeImpl):
             is_shared=True,
             shape=weight_shape,
             tags={"parameter", "weight"},
-            inits=inits,
+            default_inits=[],
+            default_inits_hyperparameters=["linear_mapping_inits", "inits"]
         )
         network.create_vw(
             name="default",

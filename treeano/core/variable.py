@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import
 from __future__ import print_function, unicode_literals
 
+import toolz
 import numpy as np
 import theano
 import theano.tensor as T
@@ -35,7 +36,9 @@ class VariableWrapper(object):
                  ndim=None,
                  variable=None,
                  inits=None,
-                 relative_network=None):
+                 relative_network=None,
+                 default_inits=None,
+                 default_inits_hyperparameters=("inits",)):
         self.name = name
         self.shape_ = shape
         self.dtype_ = dtype
@@ -44,6 +47,14 @@ class VariableWrapper(object):
         self.tags_ = tags
         self.ndim_ = ndim
         self.variable_ = variable
+        if default_inits is not None:
+            # replace inits with calculated inits from network
+            assert inits is None
+            assert relative_network is not None
+            assert isinstance(default_inits, (list, tuple))
+            inits = list(toolz.concat(relative_network.find_hyperparameters(
+                default_inits_hyperparameters,
+                default_inits)))
         self.inits = inits
         # relative_network is provided so that variables can auto-compute
         # their shape
