@@ -26,7 +26,7 @@ def wrap_lasagne_node(network, in_vw, param_kwargs, constructor, kwargs):
         name = param.name
         assert name in param_kwargs
         assert "tags" in param_kwargs[name]
-        assert "inits" in param_kwargs[name]
+        assert "default_inits" in param_kwargs[name]
         vw = network.create_vw(
             name=name,
             is_shared=True,

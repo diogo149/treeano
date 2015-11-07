@@ -36,14 +36,14 @@ class SMORMS3Node(tn.StandardUpdatesNode):
                 shape=parameter_vw.shape,
                 is_shared=True,
                 tags={"state"},
-                inits=inits,
+                default_inits=[],
             )
             g2_vw = network.create_vw(
                 "smorms3_g2(%s)" % parameter_vw.name,
                 shape=parameter_vw.shape,
                 is_shared=True,
                 tags={"state"},
-                inits=inits,
+                default_inits=[],
             )
             parameter = parameter_vw.variable
             mem = mem_vw.variable

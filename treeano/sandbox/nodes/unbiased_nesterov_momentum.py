@@ -38,7 +38,7 @@ class UnbiasedNesterovMomentumNode(treeano.Wrapper1NodeImpl):
                     shape=vw.shape,
                     is_shared=True,
                     tags={"state"},
-                    inits=inits,
+                    default_inits=[],
                 )
                 velocity = velocity_vw.variable
                 delta = update_deltas[var]

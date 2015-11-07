@@ -31,7 +31,6 @@ class SimpleBatchNormalizationNode(treeano.NodeImpl):
             is_shared=True,
             shape=(in_vw.shape[1],),
             tags={"parameter"},
-            inits=inits,
             default_inits=[],
         ).variable.dimshuffle("x", 0, *(["x"] * (in_vw.ndim - 2)))
 
