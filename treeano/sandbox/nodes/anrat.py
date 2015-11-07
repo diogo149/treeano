@@ -5,7 +5,6 @@ http://arxiv.org/abs/1506.02690
 """
 import functools
 
-import toolz
 import numpy as np
 import theano
 import theano.tensor as T
@@ -121,9 +120,6 @@ class ANRATNode(treeano.WrapperNodeImpl):
     def init_state(self, network):
         super(ANRATNode, self).init_state(network)
 
-        inits = list(toolz.concat(network.find_hyperparameters(
-            ["inits"],
-            [])))
         # setting initial lambda to 5 instead of 10, because 10 is too large
         # for the default parameters
         # TODO might also want to add clipping to cap the value of lambda
@@ -137,7 +133,7 @@ class ANRATNode(treeano.WrapperNodeImpl):
             is_shared=True,
             shape=(),
             tags={"parameter"},
-            inits=inits + [treeano.inits.ConstantInit(initial_lambda)],
+            default_inits=[treeano.inits.ConstantInit(initial_lambda)],
         )
         p = network.find_hyperparameter(["nrae_p"], 2)
         q = network.find_hyperparameter(["nrae_q"], 2)

@@ -1,4 +1,3 @@
-import toolz
 import treeano
 
 
@@ -15,9 +14,6 @@ class UnbiasedNesterovMomentumNode(treeano.Wrapper1NodeImpl):
 
     def mutate_update_deltas(self, network, update_deltas):
         momentum = network.find_hyperparameter(["momentum"], 0.9)
-        inits = list(toolz.concat(network.find_hyperparameters(
-            ["inits"],
-            [])))
         shared_vws = network.find_vws_in_subtree(is_shared=True)
 
         # keep count state only once
@@ -26,7 +22,7 @@ class UnbiasedNesterovMomentumNode(treeano.Wrapper1NodeImpl):
             shape=(),
             is_shared=True,
             tags={"state"},
-            inits=inits,
+            default_inits=[],
         )
         t = t_vw.variable
         new_t = t + 1

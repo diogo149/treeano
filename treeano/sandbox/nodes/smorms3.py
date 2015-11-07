@@ -22,9 +22,6 @@ class SMORMS3Node(tn.StandardUpdatesNode):
     def _new_update_deltas(self, network, parameter_vws, grads):
         learning_rate = network.find_hyperparameter(["learning_rate"], 0.001)
         epsilon = network.find_hyperparameter(["epsilon"], 1e-16)
-        inits = list(toolz.concat(network.find_hyperparameters(
-            ["inits"],
-            [])))
         update_deltas = treeano.UpdateDeltas()
         for parameter_vw, grad in zip(parameter_vws, grads):
             mem_vw = network.create_vw(
@@ -32,7 +29,7 @@ class SMORMS3Node(tn.StandardUpdatesNode):
                 shape=parameter_vw.shape,
                 is_shared=True,
                 tags={"state"},
-                inits=inits + [treeano.inits.ConstantInit(1)],
+                default_inits=[treeano.inits.ConstantInit(1)],
             )
             g_vw = network.create_vw(
                 "smorms3_g(%s)" % parameter_vw.name,

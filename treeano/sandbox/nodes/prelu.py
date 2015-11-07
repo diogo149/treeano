@@ -3,7 +3,6 @@ from "Delving Deep into Rectifiers: Surpassing Human-Level Performance on
 ImageNet Classification"
 http://arxiv.org/abs/1502.01852
 """
-import toolz
 import numpy as np
 import theano
 import theano.tensor as T
@@ -30,9 +29,6 @@ class PReLUNode(treeano.NodeImpl):
         initial_alpha = network.find_hyperparameter(
             ["initial_alpha"],
             0.25)
-        inits = list(toolz.concat(network.find_hyperparameters(
-            ["inits"],
-            [treeano.inits.ConstantInit(initial_alpha)])))
 
         # calculate_shape
         ndim = in_vw.ndim
@@ -53,7 +49,7 @@ class PReLUNode(treeano.NodeImpl):
             is_shared=True,
             shape=shape,
             tags={"parameter", "bias"},
-            inits=inits,
+            default_inits=[treeano.inits.ConstantInit(initial_alpha)],
         )
         alpha = T.patternbroadcast(alpha_vw.variable, broadcastable)
 
@@ -112,9 +108,6 @@ class DropoutPReLUNode(treeano.NodeImpl):
         initial_alpha = network.find_hyperparameter(
             ["initial_alpha"],
             0.25)
-        inits = list(toolz.concat(network.find_hyperparameters(
-            ["inits"],
-            [treeano.inits.ConstantInit(initial_alpha)])))
 
         # calculate_shape
         ndim = in_vw.ndim
@@ -135,7 +128,7 @@ class DropoutPReLUNode(treeano.NodeImpl):
             is_shared=True,
             shape=shape,
             tags={"parameter", "bias"},
-            inits=inits,
+            default_inits=[treeano.inits.ConstantInit(initial_alpha)],
         )
         # HACK this line is new:
         alpha = self.dropout_alpha(network, alpha_vw)

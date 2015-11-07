@@ -1,4 +1,3 @@
-import toolz
 import numpy as np
 import lasagne
 
@@ -86,9 +85,6 @@ class DenseNode(core.NodeImpl):
                             "num_units")
 
     def compute_output(self, network, in_vw):
-        inits = list(toolz.concat(network.find_hyperparameters(
-            ["inits"],
-            [])))
         num_units = network.find_hyperparameter(["dense_num_units",
                                                  "num_units"])
         wrap_lasagne_node(
@@ -96,9 +92,9 @@ class DenseNode(core.NodeImpl):
             in_vw=in_vw,
             param_kwargs=dict(
                 W=dict(tags={"parameter", "weight"},
-                       inits=inits),
+                       default_inits=[]),
                 b=dict(tags={"parameter", "bias"},
-                       inits=inits)
+                       default_inits=[])
             ),
             constructor=lasagne.layers.DenseLayer,
             kwargs=dict(
@@ -172,17 +168,14 @@ class Conv2DNode(core.NodeImpl):
                             "untie_biases")
 
     def compute_output(self, network, in_vw):
-        inits = list(toolz.concat(network.find_hyperparameters(
-            ["inits"],
-            [])))
         wrap_lasagne_node(
             network=network,
             in_vw=in_vw,
             param_kwargs=dict(
                 W=dict(tags={"parameter", "weight"},
-                       inits=inits),
+                       default_inits=[]),
                 b=dict(tags={"parameter", "bias"},
-                       inits=inits)
+                       default_inits=[])
             ),
             constructor=lasagne.layers.Conv2DLayer,
             kwargs=dict(
@@ -220,17 +213,14 @@ class Conv2DDNNNode(core.NodeImpl):
 
     def compute_output(self, network, in_vw):
         import lasagne.layers.dnn
-        inits = list(toolz.concat(network.find_hyperparameters(
-            ["inits"],
-            [])))
         wrap_lasagne_node(
             network=network,
             in_vw=in_vw,
             param_kwargs=dict(
                 W=dict(tags={"parameter", "weight"},
-                       inits=inits),
+                       default_inits=[]),
                 b=dict(tags={"parameter", "bias"},
-                       inits=inits)
+                       default_inits=[])
             ),
             constructor=lasagne.layers.dnn.Conv2DDNNLayer,
             kwargs=dict(

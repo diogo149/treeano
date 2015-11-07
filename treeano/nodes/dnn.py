@@ -3,7 +3,6 @@ nodes based on cuDNN
 http://deeplearning.net/software/theano/library/sandbox/cuda/dnn.html
 """
 
-import toolz
 from theano.sandbox.cuda import dnn
 
 from .. import core
@@ -101,9 +100,6 @@ class DnnConv2DNode(core.NodeImpl):
         # by default, do convolution instead of cross-correlation
         # rationale: be compatible with standard (non-cuDNN) conv2d
         conv_mode = network.find_hyperparameter(["conv_mode"], "conv")
-        inits = list(toolz.concat(network.find_hyperparameters(
-            ["inits"],
-            [])))
         assert len(filter_size) == 2
         assert conv_mode in ["conv", "cross"]
 
@@ -114,7 +110,7 @@ class DnnConv2DNode(core.NodeImpl):
             is_shared=True,
             shape=(num_filters, num_channels) + tuple(filter_size),
             tags={"parameter", "weight"},
-            inits=inits,
+            default_inits=[],
         ).variable
 
         out_var = dnn.dnn_conv(img=in_vw.variable,
@@ -164,9 +160,6 @@ class DnnConv3DNode(core.NodeImpl):
         # by default, do convolution instead of cross-correlation
         # rationale: be compatible with standard (non-cuDNN) conv2d
         conv_mode = network.find_hyperparameter(["conv_mode"], "conv")
-        inits = list(toolz.concat(network.find_hyperparameters(
-            ["inits"],
-            [])))
         assert len(filter_size) == 3
         assert conv_mode in ["conv", "cross"]
 
@@ -177,7 +170,7 @@ class DnnConv3DNode(core.NodeImpl):
             is_shared=True,
             shape=(num_filters, num_channels) + tuple(filter_size),
             tags={"parameter", "weight"},
-            inits=inits,
+            default_inits=[],
         ).variable
 
         out_var = dnn.dnn_conv3d(img=in_vw.variable,

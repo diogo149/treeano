@@ -3,7 +3,6 @@ nodes that provide updates for shared variables
 """
 import abc
 
-import toolz
 import six
 import numpy as np
 import theano
@@ -135,9 +134,6 @@ class NesterovMomentumNode(core.Wrapper1NodeImpl):
 
     def mutate_update_deltas(self, network, update_deltas):
         momentum = network.find_hyperparameter(["momentum"], 0.9)
-        inits = list(toolz.concat(network.find_hyperparameters(
-            ["inits"],
-            [])))
         shared_vws = network.find_vws_in_subtree(is_shared=True)
         for vw in shared_vws:
             var = vw.variable
@@ -147,7 +143,7 @@ class NesterovMomentumNode(core.Wrapper1NodeImpl):
                     shape=vw.shape,
                     is_shared=True,
                     tags={"state"},
-                    inits=inits,
+                    default_inits=[],
                 )
                 velocity = velocity_vw.variable
                 delta = update_deltas[var]
@@ -245,9 +241,6 @@ class AdamNode(StandardUpdatesNode):
         epsilon = network.find_hyperparameter(["adam_epsilon",
                                                "epsilon"],
                                               1e-8)
-        inits = list(toolz.concat(network.find_hyperparameters(
-            ["inits"],
-            [])))
 
         update_deltas = core.UpdateDeltas()
 
@@ -257,7 +250,7 @@ class AdamNode(StandardUpdatesNode):
             shape=(),
             is_shared=True,
             tags={"state"},
-            inits=inits,
+            default_inits=[],
         )
         t = t_vw.variable
         new_t = t + 1
@@ -279,7 +272,7 @@ class AdamNode(StandardUpdatesNode):
                 shape=parameter_vw.shape,
                 is_shared=True,
                 tags={"state"},
-                inits=inits,
+                default_inits=[],
             )
             # 2nd moment
             # moving average of squared gradient
@@ -288,7 +281,7 @@ class AdamNode(StandardUpdatesNode):
                 shape=parameter_vw.shape,
                 is_shared=True,
                 tags={"state"},
-                inits=inits,
+                default_inits=[],
             )
 
             m = m_vw.variable
@@ -343,9 +336,6 @@ class AdaMaxNode(StandardUpdatesNode):
         epsilon = network.find_hyperparameter(["adamax_epsilon",
                                                "epsilon"],
                                               1e-8)
-        inits = list(toolz.concat(network.find_hyperparameters(
-            ["inits"],
-            [])))
 
         update_deltas = core.UpdateDeltas()
 
@@ -355,7 +345,7 @@ class AdaMaxNode(StandardUpdatesNode):
             shape=(),
             is_shared=True,
             tags={"state"},
-            inits=inits,
+            default_inits=[],
         )
         t = t_vw.variable
         new_t = t + 1
@@ -374,7 +364,7 @@ class AdaMaxNode(StandardUpdatesNode):
                 shape=parameter_vw.shape,
                 is_shared=True,
                 tags={"state"},
-                inits=inits,
+                default_inits=[],
             )
             # exponentially weighted infinity norm
             u_vw = network.create_vw(
@@ -382,7 +372,7 @@ class AdaMaxNode(StandardUpdatesNode):
                 shape=parameter_vw.shape,
                 is_shared=True,
                 tags={"state"},
-                inits=inits,
+                default_inits=[],
             )
 
             m = m_vw.variable

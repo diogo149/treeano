@@ -1,4 +1,3 @@
-import toolz
 import theano
 import theano.tensor as T
 
@@ -25,25 +24,19 @@ class ClipScalingNode(treeano.NodeImpl):
         num_scales = mins.shape[0]
 
         if learnable:
-            mins_inits = list(toolz.concat(network.find_hyperparameters(
-                ["inits"],
-                [treeano.inits.ConstantInit(mins)])))
-            maxs_inits = list(toolz.concat(network.find_hyperparameters(
-                ["inits"],
-                [treeano.inits.ConstantInit(maxs)])))
             mins_var = network.create_vw(
                 "mins",
                 shape=mins.shape,
                 is_shared=True,
                 tags={"parameter"},
-                inits=mins_inits,
+                default_inits=[treeano.inits.ConstantInit(mins)],
             ).variable
             maxs_var = network.create_vw(
                 "maxs",
                 shape=maxs.shape,
                 is_shared=True,
                 tags={"parameter"},
-                inits=maxs_inits,
+                default_inits=[treeano.inits.ConstantInit(maxs)],
             ).variable
         else:
             if treeano.utils.is_variable(mins):
@@ -108,25 +101,19 @@ class TanhScalingNode(treeano.NodeImpl):
         num_scales = means.shape[0]
 
         if learnable:
-            means_inits = list(toolz.concat(network.find_hyperparameters(
-                ["inits"],
-                [treeano.inits.ConstantInit(means)])))
-            scales_inits = list(toolz.concat(network.find_hyperparameters(
-                ["inits"],
-                [treeano.inits.ConstantInit(scales)])))
             means_var = network.create_vw(
                 "means",
                 shape=means.shape,
                 is_shared=True,
                 tags={"parameter"},
-                inits=means_inits,
+                default_inits=[treeano.inits.ConstantInit(means)],
             ).variable
             scales_var = network.create_vw(
                 "scales",
                 shape=scales.shape,
                 is_shared=True,
                 tags={"parameter"},
-                inits=scales_inits,
+                default_inits=[treeano.inits.ConstantInit(scales)],
             ).variable
         else:
             if treeano.utils.is_variable(means):
@@ -189,25 +176,19 @@ class RBFScalingNode(treeano.NodeImpl):
         num_scales = means.shape[0]
 
         if learnable:
-            means_inits = list(toolz.concat(network.find_hyperparameters(
-                ["inits"],
-                [treeano.inits.ConstantInit(means)])))
-            scales_inits = list(toolz.concat(network.find_hyperparameters(
-                ["inits"],
-                [treeano.inits.ConstantInit(scales)])))
             means_var = network.create_vw(
                 "means",
                 shape=means.shape,
                 is_shared=True,
                 tags={"parameter"},
-                inits=means_inits,
+                default_inits=[treeano.inits.ConstantInit(means)],
             ).variable
             scales_var = network.create_vw(
                 "scales",
                 shape=scales.shape,
                 is_shared=True,
                 tags={"parameter"},
-                inits=scales_inits,
+                default_inits=[treeano.inits.ConstantInit(scales)],
             ).variable
         else:
             if treeano.utils.is_variable(means):

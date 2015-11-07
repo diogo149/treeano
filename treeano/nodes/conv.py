@@ -5,7 +5,6 @@ convolutional nodes
 from __future__ import division, absolute_import
 from __future__ import print_function, unicode_literals
 
-import toolz
 import numpy as np
 import theano
 import theano.tensor as T
@@ -84,9 +83,6 @@ class Conv2DNode(core.NodeImpl):
         num_filters = network.find_hyperparameter(["num_filters"])
         filter_size = network.find_hyperparameter(["filter_size"])
         stride = network.find_hyperparameter(["conv_stride", "stride"], (1, 1))
-        inits = list(toolz.concat(network.find_hyperparameters(
-            ["inits"],
-            [])))
         pad = network.find_hyperparameter(["conv_pad", "pad"], "valid")
 
         # convert numerical pad to valid or full
@@ -105,7 +101,7 @@ class Conv2DNode(core.NodeImpl):
             is_shared=True,
             shape=filter_shape,
             tags={"parameter", "weight"},
-            inits=inits,
+            default_inits=[],
         ).variable
 
         out_var = T.nnet.conv2d(input=in_vw.variable,
@@ -153,9 +149,6 @@ class Conv3DNode(core.NodeImpl):
         stride = network.find_hyperparameter(["conv_stride", "stride"],
                                              (1, 1, 1))
         pad = network.find_hyperparameter(["conv_pad", "pad"], "valid")
-        inits = list(toolz.concat(network.find_hyperparameters(
-            ["inits"],
-            [])))
         include_bias = network.find_hyperparameter(["include_bias"], False)
         assert len(filter_size) == 3
         assert pad == "valid"
@@ -168,7 +161,7 @@ class Conv3DNode(core.NodeImpl):
             is_shared=True,
             shape=filter_shape,
             tags={"parameter", "weight"},
-            inits=inits,
+            default_inits=[],
         ).variable
         # create bias
         if include_bias:
@@ -177,7 +170,7 @@ class Conv3DNode(core.NodeImpl):
                 is_shared=True,
                 shape=(num_filters,),
                 tags={"parameter", "bias"},
-                inits=inits,
+                default_inits=[],
             ).variable
         else:
             b = T.zeros(num_filters)
@@ -230,9 +223,6 @@ class Conv3D2DNode(core.NodeImpl):
         stride = network.find_hyperparameter(["conv_stride", "stride"],
                                              (1, 1, 1))
         pad = network.find_hyperparameter(["conv_pad", "pad"], "valid")
-        inits = list(toolz.concat(network.find_hyperparameters(
-            ["inits"],
-            [])))
         assert len(filter_size) == 3
         assert pad == "valid"
         assert stride == (1, 1, 1)
@@ -245,7 +235,7 @@ class Conv3D2DNode(core.NodeImpl):
             is_shared=True,
             shape=filter_shape,
             tags={"parameter", "weight"},
-            inits=inits,
+            default_inits=[],
         ).variable
 
         from theano.tensor.nnet.conv3d2d import conv3d

@@ -5,7 +5,6 @@ Gated, and Tree"
 http://arxiv.org/abs/1509.08985
 """
 
-import toolz
 import theano
 import theano.tensor as T
 
@@ -55,16 +54,12 @@ class MixedPoolNode(treeano.Wrapper0NodeImpl):
         # TODO parameterize init alpha
         alpha = 0.5
         if learnable:
-            inits = list(toolz.concat(network.find_hyperparameters(
-                ["inits"],
-                [treeano.inits.ConstantInit(alpha)])))
-
             alpha = network.create_vw(
                 "alpha",
                 shape=(),
                 is_shared=True,
                 tags = {"parameter"},
-                inits=inits
+                default_inits=[treeano.inits.ConstantInit(alpha)],
             ).variable
 
         network.set_hyperparameter(self.name + "_max_const_mult",

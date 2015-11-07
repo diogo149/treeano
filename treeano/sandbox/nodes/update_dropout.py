@@ -2,7 +2,6 @@
 technique that randomly 0's out the update deltas for each parameter
 """
 
-import toolz
 import theano
 import theano.tensor as T
 from theano.sandbox.rng_mrg import MRG_RandomStreams
@@ -66,10 +65,6 @@ class MomentumUpdateDropoutNode(treeano.Wrapper1NodeImpl):
         rescale_updates = network.find_hyperparameter(["rescale_updates"],
                                                       False)
         momentum = network.find_hyperparameter(["update_dropout_momentum"])
-        inits = list(toolz.concat(network.find_hyperparameters(
-            ["inits"],
-            # TODO: Should this be a random bool with prob p for each?
-            [treeano.inits.ConstantInit(1)])))
 
         keep_prob = 1 - p
         rescale_factor = 1 / keep_prob
@@ -85,7 +80,8 @@ class MomentumUpdateDropoutNode(treeano.Wrapper1NodeImpl):
                 shape=(),
                 is_shared=True,
                 tags={"state"},
-                inits=inits).variable
+                # TODO: Should this be a random bool with prob p for each?
+                default_inits=[treeano.inits.ConstantInit(1)]).variable
 
             keep_mask = srng.binomial(size=(), p=keep_prob, dtype=fX)
             momentum_mask = srng.binomial(size=(), p=momentum, dtype=fX)

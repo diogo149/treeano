@@ -1,4 +1,3 @@
-import toolz
 import numpy as np
 import theano
 import theano.tensor as T
@@ -104,16 +103,12 @@ class RandomWalkReLUNode(treeano.NodeImpl):
         initial_alpha = network.find_hyperparameter(
             ["initial_alpha"],
             0)
-        inits = list(toolz.concat(network.find_hyperparameters(
-            ["inits"],
-            [treeano.inits.ConstantInit(initial_alpha)])))
-
         alpha = network.create_vw(
             "alpha",
             is_shared=True,
             shape=(in_vw.shape[1],),
             tags={"state"},
-            inits=inits,
+            default_inits=[treeano.inits.ConstantInit(initial_alpha)],
         ).variable
 
         pattern = ["x"] * in_vw.ndim

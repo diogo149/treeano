@@ -766,6 +766,14 @@
           - beause arguments of total cost node are just passed into this
   - conclusion
     - optional argument to elementwise cost node
+- problem: all nodes with shared state need to make sure that they get inits from the network
+  - also requires the same concat line every time
+    #+BEGIN_SRC python
+      inits = list(toolz.concat(network.find_hyperparameters(
+          ["inits"],
+          [])))
+    #+END_SRC
+  - solution: default_inits kwarg to variable wrapper
 * canopy - general
 - treeano should not have hooks
   - there should be a clean separation of mapping from parameterization to theano variable and all the extra (modular) logic
@@ -1075,13 +1083,6 @@
 - hyperparameternode's seem unnecessary
   - maybe we should be able to add hyperparameters anywhere in the tree
 - having everything with "Node" at the end is unneccessary
-- all nodes with shared state need to make sure that they get inits from the network
-  - also requires the same concat line every time
-    #+BEGIN_SRC python
-      inits = list(toolz.concat(network.find_hyperparameters(
-          ["inits"],
-          [])))
-    #+END_SRC
 - the children container abstraction is ugly and unnecessary
   - how would we do this in clojure?
     - create children as data

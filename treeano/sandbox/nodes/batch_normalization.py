@@ -6,7 +6,6 @@ http://arxiv.org/abs/1502.03167
 """
 import warnings
 
-import toolz
 import numpy as np
 import theano
 import theano.tensor as T
@@ -27,13 +26,13 @@ class SimpleBatchNormalizationNode(treeano.NodeImpl):
     hyperparameter_names = ("epsilon", "inits")
 
     def _make_param(self, network, in_vw, name):
-        inits = list(toolz.concat(network.find_hyperparameters(["inits"], [])))
         return network.create_vw(
             name=name,
             is_shared=True,
             shape=(in_vw.shape[1],),
             tags={"parameter"},
             inits=inits,
+            default_inits=[],
         ).variable.dimshuffle("x", 0, *(["x"] * (in_vw.ndim - 2)))
 
     def compute_output(self, network, in_vw):
@@ -62,13 +61,12 @@ class NoScaleBatchNormalizationNode(treeano.NodeImpl):
     hyperparameter_names = ("epsilon", "inits")
 
     def _make_param(self, network, in_vw, name):
-        inits = list(toolz.concat(network.find_hyperparameters(["inits"], [])))
         return network.create_vw(
             name=name,
             is_shared=True,
             shape=(in_vw.shape[1],),
             tags={"parameter"},
-            inits=inits,
+            default_inits=[],
         ).variable.dimshuffle("x", 0, *(["x"] * (in_vw.ndim - 2)))
 
     def compute_output(self, network, in_vw):
@@ -178,35 +176,24 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
         # initialize shared state
         # -----------------------
 
-        gamma_inits = list(toolz.concat(network.find_hyperparameters(
-            ["gamma_inits",
-             "inits"],
-            # TODO uniform init between 0.95 and 1.05
-            [treeano.inits.ConstantInit(1.0)])))
-        beta_inits = list(toolz.concat(network.find_hyperparameters(
-            ["beta_inits",
-             "inits"],
-            [treeano.inits.ConstantInit(0.0)])))
-        mean_inits = list(toolz.concat(network.find_hyperparameters(
-            ["inits"],
-            [])))
-        var_inits = list(toolz.concat(network.find_hyperparameters(
-            ["inits"],
-            [treeano.inits.ConstantInit(1.0 if use_log_moving_var else 0.0)])))
-
         _gamma = network.create_vw(
             name="gamma",
             is_shared=True,
             shape=parameter_shape,
             tags={"parameter"},
-            inits=gamma_inits,
+            # TODO try uniform init between 0.95 and 1.05
+            default_inits=[treeano.inits.ConstantInit(1.0)],
+            default_inits_hyperparameters=["gamma_inits",
+                                           "inits"],
         )
         _beta = network.create_vw(
             name="beta",
             is_shared=True,
             shape=parameter_shape,
             tags={"parameter"},
-            inits=beta_inits,
+            default_inits=[],
+            default_inits_hyperparameters=["beta_inits",
+                                           "inits"],
         )
         gamma = T.patternbroadcast(_gamma.variable, parameter_broadcastable)
         beta = T.patternbroadcast(_beta.variable, parameter_broadcastable)
@@ -216,14 +203,16 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
             is_shared=True,
             shape=stats_shape,
             tags={"state"},
-            inits=mean_inits,
+            default_inits=[],
         )
         moving_var = network.create_vw(
             name="var",
             is_shared=True,
             shape=stats_shape,
             tags={"state"},
-            inits=var_inits,
+            default_inits=[treeano.inits.ConstantInit(1.0
+                                                      if use_log_moving_var
+                                                      else 0.0)],
         )
 
         # ------------------------

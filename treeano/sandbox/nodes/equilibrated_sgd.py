@@ -6,7 +6,6 @@ http://arxiv.org/abs/1502.04390
 NOTE: Rop doesn't work for many operations, and it often causes nan's
 """
 
-import toolz
 import numpy as np
 import theano
 import theano.tensor as T
@@ -31,9 +30,6 @@ class EquilibratedSGDNode(tn.StandardUpdatesNode):
         # NOTE: when doing hyperparameter selection in the paper,
         # they select from 1e-4, 1e-5, 1e-6
         damping_factor = network.find_hyperparameter(["damping_factor"], 1e-2)
-        inits = list(toolz.concat(network.find_hyperparameters(
-            ["inits"],
-            [])))
 
         update_deltas = treeano.UpdateDeltas()
 
@@ -42,7 +38,7 @@ class EquilibratedSGDNode(tn.StandardUpdatesNode):
             shape=(),
             is_shared=True,
             tags={"state"},
-            inits=inits,
+            default_inits=[],
         )
         k = k_vw.variable
         new_k = k + 1
@@ -54,7 +50,7 @@ class EquilibratedSGDNode(tn.StandardUpdatesNode):
                 shape=parameter_vw.shape,
                 is_shared=True,
                 tags={"state"},
-                inits=inits,
+                default_inits=[],
             )
 
             # TODO ESGD update should only occur every 20 iterations
