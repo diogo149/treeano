@@ -25,9 +25,18 @@ from ..core.inits import (SharedInit,
 DEFAULT_IN_AXES = (1,)
 DEFAULT_OUT_AXES = (0,)
 
+
+def leaky_relu_gain(leak_alpha):
+    """
+    from https://github.com/Lasagne/Lasagne/issues/468
+    """
+    return np.sqrt(2 / (1 + leak_alpha ** 2))
+
 # sane defaults for gains
 GAINS = dict(
-    relu=np.sqrt(2),
+    relu=leaky_relu_gain(0),
+    leaky_relu=leaky_relu_gain(0.01),
+    very_leaky_relu=leaky_relu_gain(1 / 3.),
     tanh=1.1,
     linear=1,
 )
