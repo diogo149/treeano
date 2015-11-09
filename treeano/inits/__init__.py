@@ -171,6 +171,8 @@ def he_magnitude(shape, in_axes, out_axes, gain):
     """
     http://arxiv.org/abs/1502.01852
 
+    NOTE: also called MSR init
+
     NOTE: does not differentiate between in_axes and out_axes, so they
     can be switched
     """
