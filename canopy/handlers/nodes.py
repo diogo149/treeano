@@ -167,6 +167,8 @@ class ScheduleHyperparameter(base.NetworkHandlerImpl):
     def call(self, fn, in_dict, *args, **kwargs):
         assert self.input_key not in in_dict
         hyperparameter_value = self.schedule(in_dict, self.previous_result_)
+        # make a copy of the dict, since we are mutating it
+        in_dict = dict(in_dict)
         in_dict[self.input_key] = np.array(hyperparameter_value,
                                            dtype=self.dtype)
         res = fn(in_dict, *args, **kwargs)
