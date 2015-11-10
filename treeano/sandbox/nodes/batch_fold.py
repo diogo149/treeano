@@ -91,8 +91,10 @@ class FoldUnfoldAxisIntoBatchNode(treeano.Wrapper1NodeImpl):
 
         # calculate new shape
         original_shape = original_vw.shape
-        in_shape = in_vw.shape
-        new_shape = (original_shape[0], original_shape[axis]) + in_shape[1:]
+        new_shape = list(in_vw.shape)
+        new_shape[0] = original_shape[0]
+        new_shape.insert(axis, original_shape[axis])
+        new_shape = tuple(new_shape)
 
         network.create_vw(
             "default",

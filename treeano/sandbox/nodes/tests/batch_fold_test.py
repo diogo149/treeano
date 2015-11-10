@@ -60,6 +60,22 @@ def test_fold_unfold_axis_into_batch_node():
     nt.assert_equal((2, 3, 11, 5), fu1.shape)
 
 
+def test_fold_unfold_axis_into_batch_node2():
+    network = tn.SequentialNode(
+        "s",
+        [tn.InputNode("i", shape=(2, 3, 4, 5)),
+         bf.FoldUnfoldAxisIntoBatchNode(
+             "fu",
+             tn.IdentityNode("id"),
+             axis=2)]
+    ).network()
+
+    fn = network.function(["i"], ["s"])
+    x = np.zeros((2, 3, 4, 5), dtype=fX)
+    nt.assert_equal(x.shape, fn(x)[0].shape)
+    nt.assert_equal(x.shape, network["s"].get_variable("default").shape)
+
+
 def test_add_remove_axis_node():
     network = tn.SequentialNode(
         "s",
