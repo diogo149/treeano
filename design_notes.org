@@ -1269,6 +1269,10 @@
     - the generated dataset
 - lasagne "Add recurrent layers" pull request
   - https://github.com/Lasagne/Lasagne/pull/294/files
+- http://nbviewer.ipython.org/github/craffel/Lasagne-tutorial/blob/master/examples/tutorial.ipynb
+  - shows the options available to lasagne LSTM
+- https://github.com/craffel/Lasagne-tutorial/blob/master/examples/recurrent.py
+  - code to generate data for the generic "add" task
 - https://github.com/DTU-deeplearning/day3-RNN/blob/master/decoder_attention.py
   - lasagne LSTM + soft attention
 - use batch_axis instead of batch_size
