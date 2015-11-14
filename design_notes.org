@@ -1436,9 +1436,6 @@
 - add testing files in examples/ to test cases
 - have children container verify every element is of type NodeAPI
 - rename UpdateScaleNode to MultiplyUpdatesNode
-- rename ChildrenContainer.children
-  - rationale: calling self._children.children looks like it's reading grandchildren
-  - maybe self._children should be renamed
 - make sure all register strings, node names, and to/from keys are in [a-zA-z_]
   - rationale: allows special symbols when creating nodes
     - eg. "dense#dense1"
