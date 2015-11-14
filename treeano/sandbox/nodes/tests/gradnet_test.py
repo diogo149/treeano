@@ -22,13 +22,10 @@ def test_grad_net_interpolation_node():
              "gradnet",
              {"early": tn.ReLUNode("r"),
               "late": tn.TanhNode("t")},
-             late_gate=0.5
-         )]).network()
+             late_gate=0.5)]
+    ).network()
 
     fn = network.function(["i"], ["s"])
-
-    x_test = np.random.randn(1, 10).astype(fX)
-
-    ans = 0.5 * np.clip(x_test, 0, np.inf) + 0.5 * np.tanh(x_test)
-
-    np.testing.assert_allclose(ans, fn(x_test)[0])
+    x = np.random.randn(1, 10).astype(fX)
+    ans = 0.5 * np.clip(x, 0, np.inf) + 0.5 * np.tanh(x)
+    np.testing.assert_allclose(ans, fn(x)[0])
