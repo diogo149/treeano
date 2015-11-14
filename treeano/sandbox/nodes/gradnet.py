@@ -13,7 +13,7 @@ fX = theano.config.floatX
 class GradNetInterpolationNode(treeano.NodeImpl):
 
     """
-    TODO
+    interpolates outputs between 2 nodes
     """
 
     hyperparameter_names = ("late_gate",)
@@ -21,7 +21,7 @@ class GradNetInterpolationNode(treeano.NodeImpl):
     children_container = treeano.core.DictChildrenContainerSchema(
         early=treeano.core.ChildContainer,
         late=treeano.core.ChildContainer)
-        
+
     input_keys = ("early", "late")
 
     def init_state(self, network):
@@ -53,10 +53,9 @@ class GradNetInterpolationNode(treeano.NodeImpl):
             else:
                 assert e == l
                 out_shape.append(e)
-        
+
         network.create_vw(
             "default",
             variable=out_var,
             shape=tuple(out_shape),
             tags={"output"})
-        
