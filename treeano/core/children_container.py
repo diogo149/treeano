@@ -156,12 +156,6 @@ class DictChildrenContainer(ChildrenContainer):
         return cls({k: serialization_state.children_container_from_data(v)
                     for k, v in data.items()})
 
-    def __getitem__(self, key):
-        return self._children[key]
-
-    def get(self, key, default=None):
-        return self._children.get(key, default)
-
 
 @serialization_state.register_children_container("dict_from_schema")
 class _DictChildrenContainerFromSchema(DictChildrenContainer):
