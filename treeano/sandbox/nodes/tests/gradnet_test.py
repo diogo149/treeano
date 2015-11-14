@@ -74,4 +74,4 @@ def test_grad_net_optimizer_interpolation_node():
                          (1, 0.5)]
     for gate, ans in gates_and_answers:
         fn1(gate)
-        np.testing.assert_allclose(ans, fn2()[0], rtol=1e-2)
+        np.testing.assert_allclose(ans, fn2()[0], rtol=1e-1)

@@ -68,8 +68,8 @@ class _GradNetOptimizerInterpolationNode(treeano.Wrapper1NodeImpl):
         super(_GradNetOptimizerInterpolationNode, self).init_state(network)
         late_gate = network.find_hyperparameter(["late_gate"], 1)
         # HACK
-        epsilon = network.find_hyperparameter(["epsilon"], 1e-6)
-        late_gate = treeano.utils.as_fX(late_gate + epsilon)
+        epsilon = network.find_hyperparameter(["epsilon"], 1e-3)
+        late_gate = treeano.utils.as_fX(late_gate)
         network.set_hyperparameter(self.name + "_late_update_scale",
                                    "update_scale_factor",
                                    late_gate)
@@ -77,7 +77,9 @@ class _GradNetOptimizerInterpolationNode(treeano.Wrapper1NodeImpl):
                                    "update_scale_factor",
                                    # these updates are also multiplied by
                                    # late_gate later on, so rescale them
-                                   (1 - late_gate) / late_gate)
+                                   (1 - late_gate) / T.clip(late_gate,
+                                                            epsilon,
+                                                            1))
 
 
 def GradNetOptimizerInterpolationNode(name,
