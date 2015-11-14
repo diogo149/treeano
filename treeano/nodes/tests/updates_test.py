@@ -61,7 +61,13 @@ def test_adamax_node():
 
 def test_nesterovs_accelerated_gradient_node():
     tn.test_utils.check_updates_node(tn.NesterovsAcceleratedGradientNode,
+                                     # NOTE: default learning rate can
+                                     # cause divergence
                                      learning_rate=0.01)
+
+
+def test_adadelta_node():
+    tn.test_utils.check_updates_node(tn.ADADELTANode)
 
 
 def test_weight_decay_node():

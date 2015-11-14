@@ -96,7 +96,8 @@ from .updates import (UpdateScaleNode,
                       NAGNode,
                       WeightDecayNode,
                       AdamNode,
-                      AdaMaxNode)
+                      AdaMaxNode,
+                      ADADELTANode)
 from .costs import (AggregatorNode,
                     ElementwiseCostNode,
                     TotalCostNode,

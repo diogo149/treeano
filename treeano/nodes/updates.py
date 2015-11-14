@@ -395,3 +395,58 @@ class AdaMaxNode(StandardUpdatesNode):
             update_deltas[parameter_vw.variable] = parameter_delta
 
         return update_deltas
+
+
+# ################################# ADADELTA #################################
+
+
+@core.register_node("adadelta")
+class ADADELTANode(StandardUpdatesNode):
+
+    """
+    node that provides updates via ADADELTA update rule
+    based on "ADADELTA: An Adaptive Learning Rate Method"
+    (http://arxiv.org/abs/1212.5701)
+    """
+
+    hyperparameter_names = ("rho",
+                            "epsilon")
+
+    def _new_update_deltas(self, network, parameter_vws, grads):
+        rho = network.find_hyperparameter(["rho"], 0.95)
+        epsilon = network.find_hyperparameter(["epsilon"], 1e-6)
+
+        update_deltas = core.UpdateDeltas()
+        for parameter_vw, grad in zip(parameter_vws, grads):
+            # exponential moving average of deltas squared
+            d2_avg = network.create_vw(
+                "adadelta_deltas_squared(%s)" % parameter_vw.name,
+                shape=parameter_vw.shape,
+                is_shared=True,
+                tags={"state"},
+                default_inits=[],
+            ).variable
+            # exponential moving average of gradients squared
+            g2_avg = network.create_vw(
+                "adadelta_gradients_squared(%s)" % parameter_vw.name,
+                shape=parameter_vw.shape,
+                is_shared=True,
+                tags={"state"},
+                default_inits=[],
+            ).variable
+
+            # updated gradients squared
+            new_g2_avg = rho * g2_avg + (1 - rho) * grad ** 2
+
+            # calculate update
+            deltas = -(grad * T.sqrt(d2_avg + epsilon)
+                       / T.sqrt(new_g2_avg + epsilon))
+
+            # updated deltas squared
+            new_d2_avg = rho * d2_avg + (1 - rho) * deltas ** 2
+
+            update_deltas[g2_avg] = new_g2_avg - g2_avg
+            update_deltas[d2_avg] = new_d2_avg - d2_avg
+            update_deltas[parameter_vw.variable] = deltas
+
+        return update_deltas
