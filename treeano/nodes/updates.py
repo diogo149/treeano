@@ -54,8 +54,9 @@ class StandardUpdatesNode(six.with_metaclass(abc.ABCMeta,
         by default, forward input to cost and subtree, and take output
         from the subtree
         """
-        subtree = self._children["subtree"].children
-        cost = self._children["cost"].children
+        children = self.raw_children()
+        subtree = children["subtree"]
+        cost = children["cost"]
         # forward input to both children
         network.forward_input_to(subtree.name)
         network.forward_input_to(cost.name)
@@ -66,11 +67,12 @@ class StandardUpdatesNode(six.with_metaclass(abc.ABCMeta,
         network.remove_dependency(cost.name, self.name)
 
     def new_update_deltas(self, network):
+        children = self.raw_children()
         # compute parameters
         # ---
         if False:
             # only computing for parameters in subtree, not in cost
-            subtree = self._children["subtree"].children
+            subtree = children["subtree"]
             parameters_network = network[subtree.name]
         else:
             # computing for parameters in "subtree" AND "cost"
@@ -81,7 +83,7 @@ class StandardUpdatesNode(six.with_metaclass(abc.ABCMeta,
             tags=["parameter"])
 
         # calculate cost
-        cost = self._children["cost"].children
+        cost = children["cost"]
         cost_var = network[cost.name].get_variable("default").variable
 
         # find gradients
@@ -168,11 +170,11 @@ class NesterovsAcceleratedGradientNode(core.WrapperNodeImpl):
                             + NesterovMomentumNode.hyperparameter_names)
 
     def architecture_children(self):
-        subtree = self._children["subtree"].children
-        cost = self._children["cost"].children
-        momentum_node = NesterovMomentumNode(self.name + "_momentum", subtree)
+        children = self.raw_children()
+        momentum_node = NesterovMomentumNode(self.name + "_momentum",
+                                             children["subtree"])
         new_children = {"subtree": momentum_node,
-                        "cost": cost}
+                        "cost": children["cost"]}
         return [SGDNode(self.name + "_sgd", new_children)]
 
 # alias

@@ -50,12 +50,12 @@ class ElementwiseCostNode(core.WrapperNodeImpl):
     input_keys = ("pred_output", "target_output", "weight_output")
 
     def architecture_children(self):
-        pred_node = self._children["pred"].children
-        target_node = self._children["target"].children
+        children = self.raw_children()
+        pred_node = children["pred"]
+        target_node = children["target"]
 
-        weight_container = self._children.get("weight")
-        if weight_container is not None:
-            weight_node = weight_container.children
+        if "weight" in children:
+            weight_node = children["weight"]
         else:
             weight_node = simple.ConstantNode(self.name + "_weight",
                                               value=1)
@@ -103,7 +103,7 @@ class TotalCostNode(core.WrapperNodeImpl):
             self.name + "_sequential",
             [ElementwiseCostNode(
                 self.name + "_elementwise",
-                self._children.children),
+                self.raw_children()),
              AggregatorNode(self.name + "_aggregator")])]
 
     def compute_output(self, network, in_vw):
@@ -131,14 +131,13 @@ class AuxiliaryCostNode(core.WrapperNodeImpl):
                             "cost_weight")
 
     def architecture_children(self):
-        target = self._children["target"].children
+        children = self.raw_children()
+        target = children["target"]
         nodes = []
 
         # allow for adding auxiliar nodes between input and cost
-        pre_cost_container = self._children.get("pre_cost")
-        if pre_cost_container is not None:
-            pre_cost_node = pre_cost_container.children
-            nodes.append(pre_cost_node)
+        if "pre_cost" in children:
+            nodes.append(children["pre_cost"])
 
         # TODO parameterize cost node (to one that may not just be a function)
         # ie. something stateful
