@@ -25,9 +25,9 @@ class GradNetInterpolationNode(treeano.NodeImpl):
     input_keys = ("early", "late")
 
     def init_state(self, network):
-
-        early = self._children["early"].children
-        late = self._children["late"].children
+        children = self.raw_children()
+        early = children["early"]
+        late = children["late"]
 
         network.forward_input_to(early.name)
         network.forward_input_to(late.name)
