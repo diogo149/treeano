@@ -28,8 +28,9 @@ class PairedConvNode(treeano.WrapperNodeImpl):
     )
 
     def architecture_children(self):
-        conv_node = self._children["conv"].children
-        separator_node = self._children["separator"].children
+        children = self.raw_children()
+        conv_node = children["conv"]
+        separator_node = children["separator"]
         return [tn.SequentialNode(
             self.name + "_sequential",
             [canopy.node_utils.suffix_node(conv_node, "_1"),
@@ -46,7 +47,7 @@ class PairedConvNode(treeano.WrapperNodeImpl):
         total_pad = tn.conv.conv_parse_pad(total_filter_size, pad)
         second_pad = tuple([p // 2 for p in total_pad])
         first_pad = tuple([p - p2 for p, p2 in zip(total_pad, second_pad)])
-        conv_node_name = self._children["conv"].children.name
+        conv_node_name = self.raw_children()["conv"].name
         network.set_hyperparameter(conv_node_name + "_1",
                                    "pad",
                                    first_pad)

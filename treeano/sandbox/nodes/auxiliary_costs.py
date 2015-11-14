@@ -16,7 +16,7 @@ class AuxiliaryDenseSoftmaxCCENode(treeano.WrapperNodeImpl):
     def architecture_children(self):
         return [tn.AuxiliaryCostNode(
             self.name + "_auxiliary",
-            {"target": self._children["target"].children,
+            {"target": self.raw_children()["target"],
              "pre_cost": tn.SequentialNode(
                  self.name + "_sequential",
                  [tn.DenseNode(self.name + "_dense"),

@@ -28,11 +28,11 @@ class InceptionNode(treeano.WrapperNodeImpl):
                             "num_filters_poolproj")
 
     def architecture_children(self):
-        activation_container = self._children.get("activation")
-        if activation_container is None:
-            activation = tn.ReLUNode(self.name + "_relu")
+        children = self.raw_children()
+        if "activation" in children:
+            activation = children["activation"]
         else:
-            activation = activation_container.children
+            activation = tn.ReLUNode(self.name + "_relu")
 
         path_1x1 = tn.SequentialNode(
             self.name + "_1x1",

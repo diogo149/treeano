@@ -20,7 +20,7 @@ class L2PoolNode(treeano.Wrapper1NodeImpl):
     def architecture_children(self):
         nodes = [
             tn.SqrNode(self.name + "_sqr"),
-            self._children.children,
+            self.raw_children(),
             # convert mean pool to sum pool by multiplying by pool size
             tn.MultiplyConstantNode(self.name + "_mul"),
             tn.SqrtNode(self.name + "_sqrt"),

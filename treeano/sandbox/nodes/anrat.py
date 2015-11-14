@@ -115,7 +115,7 @@ class ANRATNode(treeano.WrapperNodeImpl):
     def architecture_children(self):
         return [tn.ElementwiseCostNode(
             self.name + "_elementwise",
-            self._children.children)]
+            self.raw_children())]
 
     def init_state(self, network):
         super(ANRATNode, self).init_state(network)

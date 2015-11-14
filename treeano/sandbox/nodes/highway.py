@@ -28,8 +28,9 @@ class HighwayNode(treeano.WrapperNodeImpl):
     hyperparameter_names = ()  # TODO add initial bias parameter
 
     def architecture_children(self):
-        gate = self._children["gate"].children
-        transform = self._children["transform"].children
+        children = self.raw_children()
+        gate = children["gate"]
+        transform = children["transform"]
 
         # prepare gates
         transform_gate = tn.SequentialNode(

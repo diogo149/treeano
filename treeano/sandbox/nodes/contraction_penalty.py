@@ -78,7 +78,7 @@ class AuxiliaryContractionPenaltyNode(treeano.Wrapper1NodeImpl):
                             "cost_weight")
 
     def architecture_children(self):
-        inner = self._children.children
+        inner = self.raw_children()
         input_node = tn.IdentityNode(self.name + "_input")
         return [
             tn.SequentialNode(

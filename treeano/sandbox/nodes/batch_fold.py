@@ -63,7 +63,7 @@ class FoldUnfoldAxisIntoBatchNode(treeano.Wrapper1NodeImpl):
     input_keys = ("default",) + treeano.Wrapper1NodeImpl.input_keys
 
     def architecture_children(self):
-        node = self._children.children
+        node = self.raw_children()
         assert isinstance(node, treeano.core.NodeAPI)
         return [tn.SequentialNode(
             self.name + "_sequential",
