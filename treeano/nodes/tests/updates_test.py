@@ -70,6 +70,14 @@ def test_adadelta_node():
     tn.test_utils.check_updates_node(tn.ADADELTANode)
 
 
+def test_adagrad_node():
+    tn.test_utils.check_updates_node(tn.ADAGRADNode)
+
+
+def test_rmsprop_node():
+    tn.test_utils.check_updates_node(tn.RMSPropNode)
+
+
 def test_weight_decay_node():
     class WeightNode(treeano.NodeImpl):
         input_keys = ()

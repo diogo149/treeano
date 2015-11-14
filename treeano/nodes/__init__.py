@@ -97,7 +97,9 @@ from .updates import (UpdateScaleNode,
                       WeightDecayNode,
                       AdamNode,
                       AdaMaxNode,
-                      ADADELTANode)
+                      ADADELTANode,
+                      ADAGRADNode,
+                      RMSPropNode)
 from .costs import (AggregatorNode,
                     ElementwiseCostNode,
                     TotalCostNode,

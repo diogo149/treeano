@@ -404,8 +404,7 @@ class AdaMaxNode(StandardUpdatesNode):
 class ADADELTANode(StandardUpdatesNode):
 
     """
-    node that provides updates via ADADELTA update rule
-    based on "ADADELTA: An Adaptive Learning Rate Method"
+    from "ADADELTA: An Adaptive Learning Rate Method"
     (http://arxiv.org/abs/1212.5701)
     """
 
@@ -447,6 +446,87 @@ class ADADELTANode(StandardUpdatesNode):
 
             update_deltas[g2_avg] = new_g2_avg - g2_avg
             update_deltas[d2_avg] = new_d2_avg - d2_avg
+            update_deltas[parameter_vw.variable] = deltas
+
+        return update_deltas
+
+# ################################# ADAGRAD #################################
+
+
+@core.register_node("adagrad")
+class ADAGRADNode(StandardUpdatesNode):
+
+    """
+    from "Adaptive subgradient methods for online learning and stochastic
+    optimization"
+    """
+
+    hyperparameter_names = ("learning_rate",
+                            "epsilon")
+
+    def _new_update_deltas(self, network, parameter_vws, grads):
+        learning_rate = network.find_hyperparameter(["learning_rate"], 1e-3)
+        epsilon = network.find_hyperparameter(["epsilon"], 1e-6)
+
+        update_deltas = core.UpdateDeltas()
+        for parameter_vw, grad in zip(parameter_vws, grads):
+            # sum of gradients squared
+            g2_sum = network.create_vw(
+                "adagrad_gradients_squared(%s)" % parameter_vw.name,
+                shape=parameter_vw.shape,
+                is_shared=True,
+                tags={"state"},
+                default_inits=[],
+            ).variable
+
+            # updated gradients squared
+            new_g2_sum = g2_sum + grad ** 2
+
+            # calculate update
+            deltas = -learning_rate * grad / T.sqrt(new_g2_sum + epsilon)
+
+            update_deltas[g2_sum] = new_g2_sum - g2_sum
+            update_deltas[parameter_vw.variable] = deltas
+
+        return update_deltas
+
+# ################################# RMSprop #################################
+
+
+@core.register_node("rmsprop")
+class RMSPropNode(StandardUpdatesNode):
+
+    """
+    from Neural Networks for Machine Learning Coursera class (lecture 6.5)
+    """
+
+    hyperparameter_names = ("learning_rate",
+                            "rho",
+                            "epsilon")
+
+    def _new_update_deltas(self, network, parameter_vws, grads):
+        learning_rate = network.find_hyperparameter(["learning_rate"], 1e-2)
+        rho = network.find_hyperparameter(["rho"], 0.99)
+        epsilon = network.find_hyperparameter(["epsilon"], 1e-8)
+
+        update_deltas = core.UpdateDeltas()
+        for parameter_vw, grad in zip(parameter_vws, grads):
+            # exponential moving average of gradients squared
+            g2_avg = network.create_vw(
+                "adadelta_gradients_squared(%s)" % parameter_vw.name,
+                shape=parameter_vw.shape,
+                is_shared=True,
+                tags={"state"},
+                default_inits=[],
+            ).variable
+
+            # updated gradients squared
+            new_g2_avg = rho * g2_avg + (1 - rho) * grad ** 2
+
+            # calculate update
+            deltas = -learning_rate * grad / T.sqrt(new_g2_avg + epsilon)
+
+            update_deltas[g2_avg] = new_g2_avg - g2_avg
             update_deltas[parameter_vw.variable] = deltas
 
         return update_deltas
