@@ -103,6 +103,12 @@ class NodeImpl(NodeAPI):
         else:
             raise MissingHyperparameter
 
+    def raw_children(self):
+        """
+        convenience method to return children as they were inputted
+        """
+        return self._children.children
+
     def architecture_children(self):
         """
         by default, return children in children_container
