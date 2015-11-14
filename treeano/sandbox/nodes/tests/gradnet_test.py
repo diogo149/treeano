@@ -28,4 +28,4 @@ def test_grad_net_interpolation_node():
     fn = network.function(["i"], ["s"])
     x = np.random.randn(1, 10).astype(fX)
     ans = 0.5 * np.clip(x, 0, np.inf) + 0.5 * np.tanh(x)
-    np.testing.assert_allclose(ans, fn(x)[0])
+    np.testing.assert_allclose(ans, fn(x)[0], rtol=1e-5)
