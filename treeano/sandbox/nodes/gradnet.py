@@ -17,11 +17,10 @@ class GradNetInterpolationNode(treeano.NodeImpl):
     """
 
     hyperparameter_names = ("late_gate",)
-
     children_container = treeano.core.DictChildrenContainerSchema(
         early=treeano.core.ChildContainer,
-        late=treeano.core.ChildContainer)
-
+        late=treeano.core.ChildContainer,
+    )
     input_keys = ("early", "late")
 
     def init_state(self, network):
@@ -58,4 +57,5 @@ class GradNetInterpolationNode(treeano.NodeImpl):
             "default",
             variable=out_var,
             shape=tuple(out_shape),
-            tags={"output"})
+            tags={"output"},
+        )
