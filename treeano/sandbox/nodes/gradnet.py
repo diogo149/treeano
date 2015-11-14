@@ -4,8 +4,6 @@ import theano.tensor as T
 import treeano
 import treeano.nodes as tn
 
-from treeano.sandbox.nodes import batch_fold
-
 fX = theano.config.floatX
 
 
@@ -59,3 +57,48 @@ class GradNetInterpolationNode(treeano.NodeImpl):
             shape=tuple(out_shape),
             tags={"output"},
         )
+
+
+@treeano.register_node("grad_net_optimizer_interpolation")
+class _GradNetOptimizerInterpolationNode(treeano.Wrapper1NodeImpl):
+
+    hyperparameter_names = ("late_gate", "epsilon")
+
+    def init_state(self, network):
+        super(_GradNetOptimizerInterpolationNode, self).init_state(network)
+        late_gate = network.find_hyperparameter(["late_gate"], 1)
+        # HACK
+        epsilon = network.find_hyperparameter(["epsilon"], 1e-6)
+        late_gate = treeano.utils.as_fX(late_gate + epsilon)
+        network.set_hyperparameter(self.name + "_late_update_scale",
+                                   "update_scale_factor",
+                                   late_gate)
+        network.set_hyperparameter(self.name + "_early_update_scale",
+                                   "update_scale_factor",
+                                   # these updates are also multiplied by
+                                   # late_gate later on, so rescale them
+                                   (1 - late_gate) / late_gate)
+
+
+def GradNetOptimizerInterpolationNode(name,
+                                      children,
+                                      early,
+                                      late,
+                                      **kwargs):
+    """
+    interpolates updates from 2 optimizers nodes
+
+    NOTE: this is a hack to take in node constructors as arguments
+    """
+    assert set(children.keys()) == {"subtree", "cost"}
+    subtree = children["subtree"]
+    cost = children["cost"]
+
+    cost_ref = tn.ReferenceNode(name + "_costref", reference=cost.name)
+    late_subtree = tn.UpdateScaleNode(name + "_late_update_scale", subtree)
+    late_node = late(name + "_late", {"subtree": late_subtree, "cost": cost})
+    early_subtree = tn.UpdateScaleNode(name + "_early_update_scale", late_node)
+    early_node = early(name + "_early",
+                       {"subtree": early_subtree, "cost": cost_ref})
+    # NOTE: need separate node to forward hyperparameter
+    return _GradNetOptimizerInterpolationNode(name, early_node, **kwargs)
