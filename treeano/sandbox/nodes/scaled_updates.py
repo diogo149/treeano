@@ -1,7 +1,17 @@
+"""
+scaling updates by initial standard deviation similar to techniques from
+http://arxiv.org/abs/1511.00363
+
+NOTE: mostly copy-pasted from treeano.nodes.updates - changed lines are
+marked with a HACK
+"""
+
+
 import numpy as np
 import theano
 import theano.tensor as T
 import treeano
+import treeano.nodes as tn
 
 fX = theano.config.floatX
 
@@ -10,11 +20,8 @@ fX = theano.config.floatX
 class ScaledAdamNode(treeano.nodes.updates.StandardUpdatesNode):
 
     """
-    similar to Adam (http://arxiv.org/abs/1412.6980), but scaling
-    updates by initial standard deviation similar to technique from
-    http://arxiv.org/abs/1511.00363
-
-    NOTE: mostly copy-pasted from AdamNode
+    node that provides updates via Adam update rule
+    based on Adam update rule v7 (http://arxiv.org/abs/1412.6980)
     """
 
     hyperparameter_names = ("adam_learning_rate",
@@ -96,8 +103,8 @@ class ScaledAdamNode(treeano.nodes.updates.StandardUpdatesNode):
 
             parameter_delta = - alpha_t * new_m / (T.sqrt(new_v) + epsilon_hat)
 
-            # NOTE: this is the only part that is different from standard adam
-            initial_std = np.std(parameter_vw.value).astype(fX)
+            # HACK this is the only part that is different from standard adam
+            initial_std = treeano.utils.as_fX(np.std(parameter_vw.value))
             # prevent multiplying by 0 std
             if initial_std > 0:
                 parameter_delta *= initial_std
@@ -107,3 +114,54 @@ class ScaledAdamNode(treeano.nodes.updates.StandardUpdatesNode):
             update_deltas[parameter_vw.variable] = parameter_delta
 
         return update_deltas
+
+
+@treeano.register_node("scaled_sgd")
+class ScaledSGDNode(treeano.nodes.updates.StandardUpdatesNode):
+
+    """
+    node that provides updates via SGD
+    """
+
+    hyperparameter_names = ("sgd_learning_rate",
+                            "learning_rate")
+
+    def _new_update_deltas(self, network, parameter_vws, grads):
+        learning_rate = network.find_hyperparameter(["sgd_learning_rate",
+                                                     "learning_rate"],
+                                                    0.1)
+        # HACK changes the rest of this node... mostly restructuring
+        deltas = {}
+        for vw, grad in zip(parameter_vws, grads):
+            initial_std = np.std(vw.value)
+            # prevent multiplying by 0 std
+            if initial_std == 0:
+                initial_std = 1.0
+            factor = treeano.utils.as_fX(-learning_rate * initial_std ** 2)
+            deltas[vw.variable] = factor * grad
+        return treeano.UpdateDeltas(deltas)
+
+
+@treeano.register_node("scaled_nesterovs_accelerated_gradient")
+class ScaledNesterovsAcceleratedGradientNode(treeano.WrapperNodeImpl):
+
+    """
+    node that provides updates via SGD Nesterov's Accelerated Gradient Descent
+    """
+
+    children_container = treeano.core.DictChildrenContainerSchema(
+        cost=treeano.core.ChildContainer,
+        subtree=treeano.core.ChildContainer,
+    )
+
+    hyperparameter_names = (ScaledSGDNode.hyperparameter_names  # HACK
+                            + tn.NesterovMomentumNode.hyperparameter_names)
+
+    def architecture_children(self):
+        children = self.raw_children()
+        momentum_node = tn.NesterovMomentumNode(self.name + "_momentum",
+                                                children["subtree"])
+        new_children = {"subtree": momentum_node,
+                        "cost": children["cost"]}
+        # HACK
+        return [ScaledSGDNode(self.name + "_sgd", new_children)]
