@@ -23,7 +23,10 @@ def as_fX(x):
             return x.astype(fX)
     else:
         # assume theano variable
-        return x.astype(fX)
+        if x.dtype == fX:
+            return x
+        else:
+            return x.astype(fX)
 
 
 def is_nonshared_variable(x):
