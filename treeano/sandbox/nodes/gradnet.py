@@ -62,14 +62,30 @@ class GradNetInterpolationNode(treeano.NodeImpl):
 @treeano.register_node("grad_net_optimizer_interpolation")
 class _GradNetOptimizerInterpolationNode(treeano.Wrapper1NodeImpl):
 
-    hyperparameter_names = ("late_gate", "epsilon")
+    hyperparameter_names = ("late_gate",
+                            "gradnet_epsilon",
+                            "epsilon",
+                            "multiplicative_inverse_for_early_gate")
 
     def init_state(self, network):
         super(_GradNetOptimizerInterpolationNode, self).init_state(network)
+        epsilon = network.find_hyperparameter(["gradnet_epsilon",
+                                               "epsilon"],
+                                              1e-3)
         late_gate = network.find_hyperparameter(["late_gate"], 1)
-        # HACK
-        epsilon = network.find_hyperparameter(["epsilon"], 1e-3)
         late_gate = treeano.utils.as_fX(late_gate)
+        # NOTE: late gate cannot be 0 because the early gate is divide by it
+        # AND multiplied by it. Clipping only for the early gate will cause
+        # no updates to occur.
+        late_gate = T.clip(late_gate, epsilon, 1)
+
+        use_multiplicative_inverse = network.find_hyperparameter(
+            ["multiplicative_inverse_for_early_gate"], False)
+        if use_multiplicative_inverse:
+            early_gate = epsilon / late_gate
+        else:
+            early_gate = 1 - late_gate
+
         network.set_hyperparameter(self.name + "_late_update_scale",
                                    "update_scale_factor",
                                    late_gate)
@@ -77,9 +93,7 @@ class _GradNetOptimizerInterpolationNode(treeano.Wrapper1NodeImpl):
                                    "update_scale_factor",
                                    # these updates are also multiplied by
                                    # late_gate later on, so rescale them
-                                   (1 - late_gate) / T.clip(late_gate,
-                                                            epsilon,
-                                                            1))
+                                   early_gate / late_gate)
 
 
 def GradNetOptimizerInterpolationNode(name,
