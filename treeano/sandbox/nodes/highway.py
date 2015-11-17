@@ -72,3 +72,16 @@ def HighwayDenseNode(name, nonlinearity_node, **hyperparameters):
                  nonlinearity_node]),
              "gate": tn.DenseNode(name + "_gatedense")}),
         **hyperparameters)
+
+
+def HighwayDnnConv2DNode(name, nonlinearity_node, **hyperparameters):
+    return tn.HyperparameterNode(
+        name,
+        HighwayNode(
+            name + "_highway",
+            {"transform": tn.SequentialNode(
+                name + "_transform",
+                [tn.DnnConv2DNode(name + "_transformconv"),
+                 nonlinearity_node]),
+             "gate": tn.DnnConv2DNode(name + "_gateconv")}),
+        **hyperparameters)
