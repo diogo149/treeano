@@ -35,10 +35,12 @@ class GuidedBackpropReLUNode(tn.BaseActivationNode):
         return guided_backprop_relu(in_vw.variable)
 
 
-def replace_relu_with_guided_backprop_transform(network, **kwargs):
+def replace_relu_with_guided_backprop_transform(network,
+                                                nodes=(tn.ReLUNode,),
+                                                **kwargs):
 
     def inner(node):
-        if isinstance(node, tn.ReLUNode):
+        if isinstance(node, nodes):
             return GuidedBackpropReLUNode(node.name)
         else:
             return node
@@ -49,7 +51,10 @@ def replace_relu_with_guided_backprop_transform(network, **kwargs):
 
 class ReplaceReLUWithGuidedBackprop(canopy.handlers.NetworkHandlerImpl):
 
+    def __init__(self, nodes=(tn.ReLUNode,)):
+        self.nodes = nodes
+
     def transform_network(self, network):
-        return replace_relu_with_guided_backprop_transform(network)
+        return replace_relu_with_guided_backprop_transform(network, self.nodes)
 
 replace_relu_with_guided_backprop_handler = ReplaceReLUWithGuidedBackprop
