@@ -451,7 +451,7 @@
       - needs to go to ScanInputNode
     - find all outputs for node
       - outputs from graph
-        - find_variables_in_subtree(["output"])
+        - find_vws_in_subtree(["output"])
       - eg. the result of every node is an output
     - find all initial states for node
       - eg. ScanStateNode
@@ -1454,7 +1454,7 @@
 - cache gradient computation
 - use assertions for outputs that should not be used
 - test:
-  - find_variables
+  - find_vws
   - preallocatedinitialization
   - theano.tag.test_value
     - http://deeplearning.net/software/theano/tutorial/debug_faq.html
@@ -1563,7 +1563,6 @@
   - see https://groups.google.com/forum/#!topic/theano-dev/hLeaHBurJOg
 - consistent naming of VariableWrapper as vw
   - rename variable in network.py to vw
-    - eg. find_variables_in_subtree to find_vws_in_subtree
 - test serializing and recovering inner handlers
 - create function to test initialization strategies (just that they do not break)
 - PYTHONPATH=~/repos/treeano:$PYTHONPATH sniffer
