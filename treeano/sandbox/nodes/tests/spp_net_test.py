@@ -31,7 +31,7 @@ def test_spatial_pyramid_pooling_node():
     fn = network.function(["i"], ["s"])
     x = np.random.randn(3, 2, 17, 12).astype(fX)
     res = fn(x)[0]
-    nt.assert_equal(network["s"].get_variable("default").shape,
+    nt.assert_equal(network["s"].get_vw("default").shape,
                     ans_shape)
     nt.assert_equal(res.shape,
                     ans_shape)

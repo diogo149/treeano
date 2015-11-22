@@ -24,7 +24,7 @@ def test_variable_hyperparameter_node():
     network = tn.VariableHyperparameterNode(
         "a",
         tn.InputNode("b", shape=())).network()
-    hp = network["a"].get_variable("hyperparameter").variable
+    hp = network["a"].get_vw("hyperparameter").variable
     nt.assert_equal(hp.ndim, 0)
     fn = network.function([("a", "hyperparameter")], [hp])
     x = 42
@@ -35,7 +35,7 @@ def test_shared_hyperparameter_node():
     network = tn.SharedHyperparameterNode(
         "a",
         tn.InputNode("b", shape=())).network()
-    hp = network["a"].get_variable("hyperparameter").variable
+    hp = network["a"].get_vw("hyperparameter").variable
     nt.assert_equal(hp.ndim, 0)
     fn1 = network.function([("a", "hyperparameter")],
                            [hp],

@@ -81,7 +81,7 @@ def test_toy_updater_node():
 
         def new_update_deltas(self, network):
             return UpdateDeltas({
-                network.get_variable("default").variable: 42
+                network.get_vw("default").variable: 42
             })
 
     network = ToyUpdaterNode("a").network()

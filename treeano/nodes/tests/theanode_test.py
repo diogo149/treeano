@@ -48,7 +48,7 @@ def test_tile_node():
     res = fn(x)[0]
     correct_ans = np.tile(x, (2, 3, 4))
     np.testing.assert_allclose(res, correct_ans)
-    assert correct_ans.shape == network["t"].get_variable("default").shape
+    assert correct_ans.shape == network["t"].get_vw("default").shape
 
 
 def test_to_one_hot_node():
@@ -63,7 +63,7 @@ def test_to_one_hot_node():
     np.testing.assert_equal(np.argmax(res, axis=1),
                             x)
     nt.assert_equal((3, 8),
-                    network["ohe"].get_variable("default").shape)
+                    network["ohe"].get_vw("default").shape)
 
 
 def test_reshape_node():
@@ -107,12 +107,12 @@ def test_zero_grad_node():
 
     fn1 = n1.function(["i"],
                       ["i",
-                       T.grad(n1["s"].get_variable("default").variable,
-                              n1["i"].get_variable("default").variable)])
+                       T.grad(n1["s"].get_vw("default").variable,
+                              n1["i"].get_vw("default").variable)])
     fn2 = n2.function(["i"],
                       ["i",
-                       T.grad(n2["s"].get_variable("default").variable,
-                              n2["i"].get_variable("default").variable)])
+                       T.grad(n2["s"].get_vw("default").variable,
+                              n2["i"].get_vw("default").variable)])
 
     # gradient should be 1 w/o zero grad node
     np.testing.assert_equal(1, fn1(3)[1])
@@ -129,7 +129,7 @@ def test_disconnected_grad_node():
 
     @nt.raises(theano.gradient.DisconnectedInputError)
     def should_fail():
-        T.grad(network["s"].get_variable("default").variable,
-               network["i"].get_variable("default").variable)
+        T.grad(network["s"].get_vw("default").variable,
+               network["i"].get_vw("default").variable)
 
     should_fail()

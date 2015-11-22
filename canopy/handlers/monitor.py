@@ -124,7 +124,7 @@ class MonitorVariable(base.NetworkHandlerImpl):
         else:
             assert False
 
-        vw = state.network[node_name].get_variable(from_key)
+        vw = state.network[node_name].get_vw(from_key)
         self.vw_name_ = vw.name
         self.output_key_ = self.fmt % (self.vw_name_, 0)
         assert self.output_key_ not in kwargs["outputs"]

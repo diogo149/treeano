@@ -79,8 +79,8 @@ def test_glorot_uniform_initialization():
                                  inits=[GlorotUniformInit()])
     network = hp_node.network()
     fc_node = network["b"]
-    W_value = fc_node.get_variable("W").value
-    b_value = fc_node.get_variable("b").value
+    W_value = fc_node.get_vw("W").value
+    b_value = fc_node.get_vw("b").value
     np.testing.assert_allclose(0,
                                W_value.mean(),
                                atol=1e-2)

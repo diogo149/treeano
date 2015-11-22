@@ -100,7 +100,7 @@ class Network(object):
                 # the variable containing the input
                 node_name, from_key = self.graph.input_edge_for_node(node.name,
                                                                      input_key)
-                inputs.append(self[node_name].get_variable(from_key))
+                inputs.append(self[node_name].get_vw(from_key))
             # store input variables for the node
             # ---
             # there is no immediate reason to do so, but doing it just in case
@@ -164,7 +164,7 @@ class Network(object):
             # this should be a theano variable
             return query
 
-        return self[node_name].get_variable(from_key).variable
+        return self[node_name].get_vw(from_key).variable
 
     def function(self,
                  inputs,
@@ -264,7 +264,7 @@ class RelativeNetwork(object):
     def get_data(self, key):
         return self._state["additional_data"][key]
 
-    def get_variable(self, variable_name):
+    def get_vw(self, variable_name):
         return self._state["current_variables"][variable_name]
 
     def set_hyperparameter(self, node_name, key, value):

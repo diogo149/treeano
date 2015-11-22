@@ -84,7 +84,7 @@ class StandardUpdatesNode(six.with_metaclass(abc.ABCMeta,
 
         # calculate cost
         cost = children["cost"]
-        cost_var = network[cost.name].get_variable("default").variable
+        cost_var = network[cost.name].get_vw("default").variable
 
         # find gradients
         # ---

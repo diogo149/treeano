@@ -30,8 +30,8 @@ network = tn.SequentialNode(
 
 
 if compute_grad:
-    i = network["i"].get_variable("default").variable
-    s = network["s"].get_variable("default").variable
+    i = network["i"].get_vw("default").variable
+    s = network["s"].get_vw("default").variable
     fn = network.function(["i"], [T.grad(s.sum(), i)])
 else:
     fn = network.function(["i"], ["s"])

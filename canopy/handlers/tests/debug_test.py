@@ -193,7 +193,7 @@ def test_network_nanguard():
         {},
         {})
 
-    vw = network["c"].get_variable("default")
+    vw = network["c"].get_vw("default")
     for x in [3, 4, 1e9, 9e9, -9e9, 0]:
         vw.variable.set_value(treeano.utils.as_fX(x))
         fn({})

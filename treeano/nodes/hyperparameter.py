@@ -48,7 +48,7 @@ class VariableHyperparameterNode(core.Wrapper1NodeImpl):
         rel_network = network[self.name]
         hyperparameter = rel_network.find_hyperparameter(["hyperparameter"])
         if name == hyperparameter:
-            return rel_network.get_variable("hyperparameter").variable
+            return rel_network.get_vw("hyperparameter").variable
         else:
             return super(VariableHyperparameterNode, self).get_hyperparameter(
                 network, name)
@@ -92,8 +92,8 @@ class SharedHyperparameterNode(core.Wrapper1NodeImpl):
         )
 
     def new_update_deltas(self, network):
-        raw = network.get_variable("raw_hyperparameter").variable
-        actual = network.get_variable("hyperparameter").variable
+        raw = network.get_vw("raw_hyperparameter").variable
+        actual = network.get_vw("hyperparameter").variable
         return core.UpdateDeltas.from_updates({raw: actual})
 
     def get_hyperparameter(self, network, name):
@@ -105,7 +105,7 @@ class SharedHyperparameterNode(core.Wrapper1NodeImpl):
         rel_network = network[self.name]
         hyperparameter = rel_network.find_hyperparameter(["hyperparameter"])
         if name == hyperparameter:
-            return rel_network.get_variable("hyperparameter").variable
+            return rel_network.get_vw("hyperparameter").variable
         else:
             return super(SharedHyperparameterNode, self).get_hyperparameter(
                 network, name)

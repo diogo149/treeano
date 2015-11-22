@@ -93,7 +93,7 @@ def test_pool_output_shape_custom_pool_2d_node():
                                  stride=strides,
                                  )]
         ).network()
-        ans = network["p"].get_variable("default").variable.shape.eval()
+        ans = network["p"].get_vw("default").variable.shape.eval()
         print(ans, res)
         np.testing.assert_equal(ans, res)
 
@@ -151,7 +151,7 @@ def test_mean_pool_2d_node():
                       [8 + 9 + 12 + 13, 10 + 11 + 14 + 15]]]], dtype=fX) / 4
     np.testing.assert_equal(ans, fn(x)[0])
     nt.assert_equal(ans.shape,
-                    network["m"].get_variable("default").shape)
+                    network["m"].get_vw("default").shape)
 
 
 def test_max_pool_2d_node():
@@ -165,7 +165,7 @@ def test_max_pool_2d_node():
                       [13, 15]]]], dtype=fX)
     np.testing.assert_equal(ans, fn(x)[0])
     nt.assert_equal(ans.shape,
-                    network["m"].get_variable("default").shape)
+                    network["m"].get_vw("default").shape)
 
 
 # sum pool doesn't work with cudnn
@@ -181,7 +181,7 @@ if "gpu" not in theano.config.device:
                           [8 + 9 + 12 + 13, 10 + 11 + 14 + 15]]]], dtype=fX)
         np.testing.assert_equal(ans, fn(x)[0])
         nt.assert_equal(ans.shape,
-                        network["m"].get_variable("default").shape)
+                        network["m"].get_vw("default").shape)
 
 
 def test_custom_global_pool_node():

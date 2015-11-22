@@ -67,7 +67,7 @@ class TiedInit(SharedInit):
         node_name2, vw_key = vw.name.split(":")
         # sanity check, just to be sure
         assert node_name2 == node_name
-        shared = network[target_node_name].get_variable(vw_key).variable
+        shared = network[target_node_name].get_vw(vw_key).variable
         assert shared.dtype == vw.dtype
         assert shared.get_value().shape == vw.shape
         assert shared.broadcastable == vw.broadcastable

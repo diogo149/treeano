@@ -314,10 +314,10 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
             def untransform_var(v):
                 return v
 
-        moving_mean = network.get_variable("mean").variable
-        moving_var = network.get_variable("var").variable
-        in_mean = network.get_variable("in_mean").variable
-        in_var = network.get_variable("in_var").variable
+        moving_mean = network.get_vw("mean").variable
+        moving_var = network.get_vw("var").variable
+        in_mean = network.get_vw("in_mean").variable
+        in_var = network.get_vw("in_var").variable
         alpha = network.find_hyperparameter(["alpha"], 0.05)
 
         updates = [

@@ -139,7 +139,7 @@ class ScanNode(core.Wrapper1NodeImpl):
 
         # for now, only the single ScanInputNode
         input_network = network[self._scan_input_node.name]
-        element_input = input_network.get_variable("default").variable
+        element_input = input_network.get_vw("default").variable
         element_input_vars = [element_input]
         # FIXME shuffle dimensions to use scan_axis
         # TODO assert ndim is right
@@ -174,7 +174,7 @@ class ScanNode(core.Wrapper1NodeImpl):
         # FIXME do not get state in a nested scan
         scan_state_nodes = network.find_nodes_in_subtree(ScanStateNode)
         scan_state_networks = [network[node.name] for node in scan_state_nodes]
-        scan_state_outputs = [net.get_variable("default")
+        scan_state_outputs = [net.get_vw("default")
                               for net in scan_state_networks]
         scan_state_vars = [variable_wrapper.variable
                            for variable_wrapper in scan_state_outputs]
@@ -193,12 +193,12 @@ class ScanNode(core.Wrapper1NodeImpl):
         assert len(scan_state_next_names) == len(set(scan_state_next_names))
         scan_state_next_networks = [network[name]
                                     for name in scan_state_next_names]
-        scan_state_next_vws = [net.get_variable("default")
+        scan_state_next_vws = [net.get_vw("default")
                                for net in scan_state_next_networks]
         scan_state_next_idxs = [all_outputs.index(var)
                                 for var in scan_state_next_vws]
         # finding initial states
-        scan_state_initial_vws = [net.get_variable("initial_state")
+        scan_state_initial_vws = [net.get_vw("initial_state")
                                   for net in scan_state_networks]
         # updates outputs_info to contain initial state
         for idx, node, init_vw, next_vw in zip(scan_state_idxs,

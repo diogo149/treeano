@@ -30,7 +30,7 @@ def test_stochastic_pool_2d_node1():
     np.testing.assert_allclose(fn(x)[0],
                                ans,
                                rtol=1e-5)
-    nt.assert_equal(network["m"].get_variable("default").shape,
+    nt.assert_equal(network["m"].get_vw("default").shape,
                     ans.shape)
 
 

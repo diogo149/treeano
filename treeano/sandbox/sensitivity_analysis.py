@@ -37,8 +37,8 @@ class SensitivityAnalysisOutput(canopy.handlers.NetworkHandlerImpl):
         assert self.idx_input_key not in kwargs["inputs"]
         assert self.output_key not in kwargs["outputs"]
         network = state.network
-        input_var = network[self.input_name].get_variable("default").variable
-        logit_var = network[self.logit_name].get_variable("default").variable
+        input_var = network[self.input_name].get_vw("default").variable
+        logit_var = network[self.logit_name].get_vw("default").variable
         idx_var = T.iscalar()
         target_var = logit_var[:, idx_var].sum()
         sensitivity_var = T.grad(target_var, input_var)

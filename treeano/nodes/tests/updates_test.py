@@ -29,7 +29,7 @@ def test_update_scale_node():
         value=5,
     ).network()
     ud = network.update_deltas
-    assert ud[network["fc_linear"].get_variable("weight").variable] == 5
+    assert ud[network["fc_linear"].get_vw("weight").variable] == 5
 
     # test update scale node
     network = tn.toy.ConstantUpdaterNode(
@@ -44,7 +44,7 @@ def test_update_scale_node():
         value=5,
     ).network()
     ud = network.update_deltas
-    assert ud[network["fc_linear"].get_variable("weight").variable] == -10
+    assert ud[network["fc_linear"].get_vw("weight").variable] == -10
 
 
 def test_sgd_node():

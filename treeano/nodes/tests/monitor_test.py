@@ -18,7 +18,7 @@ def test_monitor_variance_node():
         "s",
         [tn.InputNode("x", shape=(3, 4, 5)),
          tn.MonitorVarianceNode("mv")]).network()
-    vw = network["mv"].get_variable("var")
+    vw = network["mv"].get_vw("var")
     x = np.random.randn(3, 4, 5).astype(fX)
     ans = x.var()
     fn = network.function(["x"], [vw.variable])

@@ -25,10 +25,10 @@ if "gpu" in theano.config.device:
                 num_filters=7,
                 upsample_factor=(2, 2),
                 filter_size=(3, 3),
-                )]
+            )]
         ).network()
         fn = network.function(["i"], ["s"])
         res = fn(np.random.randn(3, 4, 5, 6).astype(fX))[0]
         np.testing.assert_equal((3, 7, 10, 12), res.shape)
         np.testing.assert_equal((3, 7, 10, 12),
-                                network['a'].get_variable('default').shape)
+                                network['a'].get_vw('default').shape)

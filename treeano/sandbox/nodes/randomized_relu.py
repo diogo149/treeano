@@ -125,7 +125,7 @@ class RandomWalkReLUNode(treeano.NodeImpl):
         )
 
     def new_update_deltas(self, network):
-        alpha_vw = network.get_variable("alpha")
+        alpha_vw = network.get_vw("alpha")
         step_size = network.find_hyperparameter(["step_size"])
         # NOTE: each MRG_RandomStreams has the same seed, so
         # all nodes with the same shape end up with the same alphas

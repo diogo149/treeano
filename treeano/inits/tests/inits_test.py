@@ -18,5 +18,5 @@ def test_tied_init():
     ).network()
     fn = network.function(["i"], ["s"])
     np.testing.assert_equal(84, fn(0)[0])
-    network["b1"].get_variable("bias").variable.set_value(43)
+    network["b1"].get_vw("bias").variable.set_value(43)
     np.testing.assert_equal(86, fn(0)[0])

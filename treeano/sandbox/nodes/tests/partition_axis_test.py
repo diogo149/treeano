@@ -30,5 +30,5 @@ def test_partition_axis_node():
     x = np.random.randn(4, 8, 12, 16, 20).astype(fX)
     ans = x[:, :, :, 8:12, :]
     res = fn(x)[0]
-    nt.assert_equal(ans.shape, network["pa"].get_variable("default").shape)
+    nt.assert_equal(ans.shape, network["pa"].get_vw("default").shape)
     np.testing.assert_equal(res, ans)

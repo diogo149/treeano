@@ -73,7 +73,7 @@ def test_fold_unfold_axis_into_batch_node2():
     fn = network.function(["i"], ["s"])
     x = np.zeros((2, 3, 4, 5), dtype=fX)
     nt.assert_equal(x.shape, fn(x)[0].shape)
-    nt.assert_equal(x.shape, network["s"].get_variable("default").shape)
+    nt.assert_equal(x.shape, network["s"].get_vw("default").shape)
 
 
 def test_add_remove_axis_node():

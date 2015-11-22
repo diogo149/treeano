@@ -124,7 +124,7 @@ def test_add_bias_node_broadcastable():
             (tn.AddBiasNode("b", broadcastable=broadcastable)
              if broadcastable is not None
              else tn.AddBiasNode("b"))
-        ]).network()["b"].get_variable("bias").shape
+        ]).network()["b"].get_vw("bias").shape
 
     nt.assert_equal((1, 4, 5),
                     get_bias_shape(None))
@@ -155,7 +155,7 @@ def test_add_bias_node():
         tn.InputNode("in", shape=(3, 4, 5)),
         tn.AddBiasNode("b", broadcastable_axes=())
     ]).network()
-    bias_var = network["b"].get_variable("bias")
+    bias_var = network["b"].get_vw("bias")
     fn = network.function(["in"], ["s"])
     x = np.random.randn(3, 4, 5).astype(fX)
     y = np.random.randn(3, 4, 5).astype(fX)
@@ -173,8 +173,8 @@ def test_linear_mapping_node_shape():
             tn.InputNode("in", shape=(3, 4, 5)),
             tn.LinearMappingNode("linear", output_dim=output_dim),
         ]).network()
-        weight_shape = network["linear"].get_variable("weight").shape
-        output_shape = network["s"].get_variable("default").shape
+        weight_shape = network["linear"].get_vw("weight").shape
+        output_shape = network["s"].get_vw("default").shape
         return weight_shape, output_shape
 
     nt.assert_equal(((5, 10), (3, 4, 10)), get_shapes(10))
@@ -187,7 +187,7 @@ def test_linear_mapping_node():
         tn.InputNode("in", shape=(3, 4, 5)),
         tn.LinearMappingNode("linear", output_dim=6),
     ]).network()
-    weight_var = network["linear"].get_variable("weight")
+    weight_var = network["linear"].get_vw("weight")
     fn = network.function(["in"], ["s"])
     x = np.random.randn(3, 4, 5).astype(fX)
     W = np.random.randn(5, 6).astype(fX)
