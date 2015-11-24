@@ -6,11 +6,9 @@ import theano.sandbox.cuda.dnn as dnn
 
 @treeano.register_node("deconv_upsample_2d")
 class DeconvUpsample2DNode(treeano.NodeImpl):
-    hyperparameter_names = (
-        'num_filters',
-        'filter_size',
-        'upsample_factor',
-    )
+    hyperparameter_names = ('num_filters',
+                            'filter_size',
+                            'upsample_factor')
 
     def compute_output(self, network, in_vw):
         num_filters = network.find_hyperparameter(['num_filters'])
@@ -60,11 +58,9 @@ class DeconvUpsample2DNode(treeano.NodeImpl):
 
 @treeano.register_node("deconv_upsample_3d")
 class DeconvUpsample3DNode(treeano.NodeImpl):
-    hyperparameter_names = (
-        'num_filters',
-        'filter_size',
-        'upsample_factor',
-    )
+    hyperparameter_names = ('num_filters',
+                            'filter_size',
+                            'upsample_factor')
 
     def compute_output(self, network, in_vw):
         num_filters = network.find_hyperparameter(['num_filters'])
