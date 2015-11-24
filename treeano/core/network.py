@@ -98,9 +98,7 @@ class Network(object):
             for input_key in input_keys:
                 # find which node our input comes from, and the name of
                 # the variable containing the input
-                node_name, from_key = self.graph.input_edge_for_node(node.name,
-                                                                     input_key)
-                inputs.append(self[node_name].get_vw(from_key))
+                inputs.append(rel_network.get_input_vw(input_key))
             # store input variables for the node
             # ---
             # there is no immediate reason to do so, but doing it just in case
@@ -543,3 +541,11 @@ class RelativeNetwork(object):
             if to_key is not None:
                 edges[to_key] = edge_from
         return edges
+
+    def get_input_vw(self, input_key):
+        """
+        return vw for given input key
+        """
+        node_name, from_key = self.graph.input_edge_for_node(self._name,
+                                                             input_key)
+        return self[node_name].get_vw(from_key)
