@@ -11,6 +11,25 @@ from .. import theano_extensions
 fX = theano.config.floatX
 
 
+@core.register_node("clip")
+class ClipNode(core.NodeImpl):
+
+    """
+    like theano.tensor.clip
+    """
+
+    hyperparameter_names = ("bounds",)
+
+    def compute_output(self, network, in_vw):
+        bounds = network.find_hyperparameter(["bounds"])
+        network.create_vw(
+            "default",
+            variable=T.clip(in_vw.variable, *bounds),
+            shape=in_vw.shape,
+            tags={"output"},
+        )
+
+
 @core.register_node("sqr")
 class SqrNode(core.NodeImpl):
 
