@@ -28,7 +28,7 @@ def size_to_tree(size):
         # eg. lower = 0, upper = 4
         if lower == upper - 1:
             return []
-        midpoint = (lower + upper) / 2
+        midpoint = (lower + upper) // 2
         assert isinstance(midpoint, int)
         assert midpoint * 2 == lower + upper
         return ([(lower, midpoint, upper)]
