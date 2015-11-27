@@ -14,6 +14,11 @@ from treeano.theano_extensions import tree_probability
 @treeano.register_node("probability_linear_combination")
 class ProbabilityLinearCombinationNode(treeano.NodeImpl):
 
+    """
+    takes inputs as weights for a weighted linear combination of probability
+    tensors
+    """
+
     hyperparameter_names = ("num_units",
                             "inits")
 
@@ -49,6 +54,13 @@ def is_power_of_2(num):
 
 @treeano.register_node("theano_split_probabilities_to_leaf_probabilities")
 class TheanoSplitProbabilitiesToLeafProbabilitiesNode(treeano.NodeImpl):
+
+    """
+    convert tensor of probabilities of going left at each node of a decision
+    tree into a tensor of probabilities of landing at each of the leafs
+
+    this Op is implemented in pure Theano
+    """
 
     hyperparameter_names = ()
 
@@ -91,6 +103,14 @@ class TheanoSplitProbabilitiesToLeafProbabilitiesNode(treeano.NodeImpl):
 @treeano.register_node("numpy_split_probabilities_to_leaf_probabilities")
 class NumpySplitProbabilitiesToLeafProbabilitiesNode(treeano.NodeImpl):
 
+    """
+    convert tensor of probabilities of going left at each node of a decision
+    tree into a tensor of probabilities of landing at each of the leafs
+
+    this Op is implemented in numpy and should be more memory efficient than
+    the Theano version, and compile faster, but performed in Python (on CPU)
+    """
+
     hyperparameter_names = ()
 
     def compute_output(self, network, in_vw):
@@ -106,6 +126,11 @@ class NumpySplitProbabilitiesToLeafProbabilitiesNode(treeano.NodeImpl):
             tags={"output"},
         )
 
+
+# NOTE: setting the numpy version as the default, because the
+# theano version is very inefficent for large trees
+SplitProbabilitiesToLeafProbabilitiesNode \
+    = NumpySplitProbabilitiesToLeafProbabilitiesNode
 
 # NOTE: setting the numpy version as the default, because the
 # theano version is very inefficent for large trees
