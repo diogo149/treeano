@@ -93,6 +93,15 @@ def rectify(x, negative_coefficient=0):
     return T.nnet.relu(x, alpha=negative_coefficient)
 
 
+def newaxis(x, axis):
+    """
+    inserts a new broadcastable axis into a tensor
+    """
+    axes = list(range(x.ndim))
+    axes.insert(axis, "x")
+    return x.dimshuffle(*axes)
+
+
 def root_mean_square(x, axis=None):
     return T.sqrt(T.mean(T.sqr(x), axis=axis))
 
