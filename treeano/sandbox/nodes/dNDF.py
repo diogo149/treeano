@@ -3,9 +3,13 @@ from "Deep Neural Decision Forests"
 http://research.microsoft.com/apps/pubs/default.aspx?id=255952
 """
 
+import warnings
+
 import numpy as np
 import theano
 import theano.tensor as T
+from theano.sandbox.rng_mrg import MRG_RandomStreams
+
 import treeano
 import treeano.nodes as tn
 from treeano.theano_extensions import tree_probability
@@ -47,9 +51,50 @@ class ProbabilityLinearCombinationNode(treeano.NodeImpl):
         )
 
 
-def is_power_of_2(num):
-    # bit arithmetic check
-    return (num > 0) and ((num & (num - 1)) == 0)
+@treeano.register_node("select_one_along_axis")
+class SelectOneAlongAxisNode(treeano.NodeImpl):
+
+    """
+    given an axis, selects one tensor along that axis, or
+    if deterministic == True, returns the average of tensors along
+    that axis
+
+    use case:
+    - creating a final layer that is a decision forest, but only training
+      one random tree at a time at train time
+    """
+
+    hyperparameter_names = ("axis", "deterministic")
+
+    def compute_output(self, network, in_vw):
+        axis = network.find_hyperparameter(["axis"])
+        deterministic = network.find_hyperparameter(["deterministic"], False)
+
+        # calculate output shape
+        output_shape = list(in_vw.shape)
+        output_shape.pop(axis)
+
+        if deterministic:
+            out_var = in_vw.variable.mean(axis=axis)
+        else:
+            # TODO save this state so that we can seed the rng
+            srng = MRG_RandomStreams()
+            if in_vw.shape[axis] is None:
+                # NOTE: this uses symbolic shape - can be an issue with
+                # theano.clone and random numbers
+                # https://groups.google.com/forum/#!topic/theano-users/P7Mv7Fg0kUs
+                warnings.warn("using symbolic shape for random variable size "
+                              "which can be an issue with theano.clone")
+            idx = T.argmax(srng.normal([in_vw.symbolic_shape()[axis]]))
+            slices = tuple([slice(None) for _ in range(axis)] + [idx])
+            out_var = in_vw.variable[slices]
+
+        network.create_vw(
+            "default",
+            variable=out_var,
+            shape=tuple(output_shape),
+            tags={"output"},
+        )
 
 
 @treeano.register_node("theano_split_probabilities_to_leaf_probabilities")
