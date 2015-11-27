@@ -31,6 +31,7 @@ from .simple import (ReferenceNode,
                      AddConstantNode,
                      MultiplyConstantNode)
 from .theanode import (ClipNode,
+                       SwapAxesNode,
                        SqrNode,
                        SqrtNode,
                        TileNode,

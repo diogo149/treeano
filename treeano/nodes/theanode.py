@@ -30,6 +30,27 @@ class ClipNode(core.NodeImpl):
         )
 
 
+@core.register_node("swapaxes")
+class SwapAxesNode(core.NodeImpl):
+
+    """
+    like theano.tensor.swapaxes
+    """
+
+    hyperparameter_names = ("axes",)
+
+    def compute_output(self, network, in_vw):
+        axis1, axis2 = network.find_hyperparameter(["axes"])
+        out_shape = list(in_vw.shape)
+        out_shape[axis1], out_shape[axis2] = out_shape[axis2], out_shape[axis1]
+        network.create_vw(
+            "default",
+            variable=T.swapaxes(in_vw.variable, axis1, axis2),
+            shape=out_shape,
+            tags={"output"},
+        )
+
+
 @core.register_node("sqr")
 class SqrNode(core.NodeImpl):
 
