@@ -176,8 +176,3 @@ class NumpySplitProbabilitiesToLeafProbabilitiesNode(treeano.NodeImpl):
 # theano version is very inefficent for large trees
 SplitProbabilitiesToLeafProbabilitiesNode \
     = NumpySplitProbabilitiesToLeafProbabilitiesNode
-
-# NOTE: setting the numpy version as the default, because the
-# theano version is very inefficent for large trees
-SplitProbabilitiesToLeafProbabilitiesNode \
-    = NumpySplitProbabilitiesToLeafProbabilitiesNode
