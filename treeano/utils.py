@@ -176,6 +176,14 @@ def categorical_crossentropy_i32(pred, target):
     return T.nnet.categorical_crossentropy(pred, target)
 
 
+def linspace(start, stop, num):
+    """
+    like numpy.linspace
+    """
+    range_01 = as_fX(T.arange(num)) / as_fX(num - 1)
+    return start + range_01 * (stop - start)
+
+
 def deep_clone(output, replace, **kwargs):
     """
     like theano.clone, but makes sure to replace in the default_update of

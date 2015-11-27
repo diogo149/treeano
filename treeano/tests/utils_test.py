@@ -36,6 +36,12 @@ def test_stable_softmax_grad():
     np.testing.assert_allclose(g1.eval(), g2.eval(), rtol=1e-5)
 
 
+def test_linspace():
+    np.testing.assert_allclose(np.linspace(-2, 42, 10).astype(fX),
+                               treeano.utils.linspace(-2, 42, 10).eval(),
+                               rtol=1e-5)
+
+
 def _clone_test_case(clone_fn):
     x = T.matrix("x")
     y = T.matrix("y")
