@@ -85,6 +85,9 @@ class NormalREINFORCECostNode(treeano.NodeImpl):
         constant_state = theano.gradient.disconnected_grad(state)
         baseline = ((weight.dimshuffle("x", 0) * constant_state).sum(axis=1)
                     + bias)
+        # NOTE: uncomment this line to try REINFORCE without the baseline
+        # network
+        # baseline = baseline * 0
         # TODO monitor baseline
         constant_baseline = theano.gradient.disconnected_grad(baseline)
 
