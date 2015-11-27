@@ -1,5 +1,6 @@
 __all__ = """
 fractional_max_pooling
+tree_probability
 """.split()
 
 
