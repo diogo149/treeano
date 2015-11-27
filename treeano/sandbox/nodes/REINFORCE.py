@@ -14,26 +14,31 @@ fX = theano.config.floatX
 class NormalSampleNode(treeano.NodeImpl):
 
     input_keys = ("mu", "sigma")
+    hyperparameter_names = ("deterministic",)
 
     def compute_output(self, network, mu_vw, sigma_vw):
-        # TODO look at shape of both mu and sigma
-        shape = mu_vw.shape
-        if any(s is None for s in shape):
-            # NOTE: this uses symbolic shape - can be an issue with
-            # theano.clone and random numbers
-            # https://groups.google.com/forum/#!topic/theano-users/P7Mv7Fg0kUs
-            warnings.warn("using symbolic shape for random number shape, "
-                          "which can be an issue with theano.clone")
-            shape = mu_vw.variable.shape
-        # TODO save this state so that we can seed the rng
-        srng = MRG_RandomStreams()
-        sampled = srng.normal(shape,
+        deterministic = network.find_hyperparameter(["deterministic"], False)
+        if deterministic:
+            res = mu_vw.variable
+        else:
+            # TODO look at shape of both mu and sigma
+            shape = mu_vw.shape
+            if any(s is None for s in shape):
+                # NOTE: this uses symbolic shape - can be an issue with
+                # theano.clone and random numbers
+                # https://groups.google.com/forum/#!topic/theano-users/P7Mv7Fg0kUs
+                warnings.warn("using symbolic shape for random number shape, "
+                              "which can be an issue with theano.clone")
+                shape = mu_vw.variable.shape
+            # TODO save this state so that we can seed the rng
+            srng = MRG_RandomStreams()
+            res = srng.normal(shape,
                               avg=mu_vw.variable,
                               std=sigma_vw.variable,
                               dtype=fX)
         network.create_vw(
             "default",
-            variable=theano.gradient.disconnected_grad(sampled),
+            variable=theano.gradient.disconnected_grad(res),
             shape=mu_vw.shape,
             tags={"output"},
         )
