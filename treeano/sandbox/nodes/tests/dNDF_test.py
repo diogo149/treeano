@@ -66,7 +66,6 @@ def test_split_probabilities_to_leaf_probabilities_node_grad():
     n1, n2 = [dNDF.TheanoSplitProbabilitiesToLeafProbabilitiesNode,
               dNDF.NumpySplitProbabilitiesToLeafProbabilitiesNode]
 
-    print node_to_grad(n1)
     np.testing.assert_allclose(node_to_grad(n1),
                                node_to_grad(n2),
                                rtol=1e-5)
