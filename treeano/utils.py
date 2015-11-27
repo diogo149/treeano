@@ -119,7 +119,6 @@ def stable_softmax(x, axis=1):
         # that end with last (eg. 2,3), not only when starting with axis 1
         return stable_softmax(x.flatten(2)).reshape(x.shape)
     else:
-        # TODO add warning for axis with tuple that it is not differntiable
         e_x = T.exp(x - x.max(axis=axis, keepdims=True))
         out = e_x / e_x.sum(axis=axis, keepdims=True)
         return out
