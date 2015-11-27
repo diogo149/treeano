@@ -86,3 +86,22 @@ def cifar10(random_state=42, base_dir="~/cifar10"):
     train = {"x": x1, "y": y1}
     valid = {"x": x2, "y": y2}
     return train, valid, test
+
+
+def cluttered_mnist(base_dir="~/cluttered_mnist"):
+    base_dir = os.path.expanduser(base_dir)
+    # use the one from lasagne:
+    # https://github.com/Lasagne/Recipes/blob/master/examples/spatial_transformer_network.ipynb
+    CLUTTERED_MNIST_PATH = ("https://s3.amazonaws.com/lasagne/recipes/"
+                            "datasets/mnist_cluttered_60x60_6distortions.npz")
+    subprocess.call(["wget", "-N", CLUTTERED_MNIST_PATH, "-P", base_dir])
+    data = np.load(os.path.join(base_dir,
+                                "mnist_cluttered_60x60_6distortions.npz"))
+    X_train, X_valid, X_test = [data[n].reshape((-1, 1, 60, 60))
+                                for n in ["x_train", "x_valid", "x_test"]]
+    y_train, y_valid, y_test = [np.argmax(data[n], axis=-1).astype('int32')
+                                for n in ["y_train", "y_valid", "y_test"]]
+    train = {"x": X_train, "y": y_train}
+    valid = {"x": X_valid, "y": y_valid}
+    test = {"x": X_test, "y": y_test}
+    return train, valid, test
