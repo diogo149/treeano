@@ -104,7 +104,7 @@ class TheanoSplitProbabilitiesToLeafProbabilitiesNode(treeano.NodeImpl):
     convert tensor of probabilities of going left at each node of a decision
     tree into a tensor of probabilities of landing at each of the leafs
 
-    this Op is implemented in pure Theano
+    this node is implemented in pure Theano
     """
 
     hyperparameter_names = ()
@@ -152,7 +152,7 @@ class NumpySplitProbabilitiesToLeafProbabilitiesNode(treeano.NodeImpl):
     convert tensor of probabilities of going left at each node of a decision
     tree into a tensor of probabilities of landing at each of the leafs
 
-    this Op is implemented in numpy and should be more memory efficient than
+    this node is implemented in numpy and should be more memory efficient than
     the Theano version, and compile faster, but performed in Python (on CPU)
     """
 
