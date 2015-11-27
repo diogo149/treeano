@@ -124,3 +124,16 @@ class VeryLeakyReLUNode(BaseActivationNode):
                                              "alpha"],
                                             1. / 3)
         return utils.rectify(in_vw.variable, negative_coefficient=alpha)
+
+
+@core.register_node("spatial_softmax")
+class SpatialSoftmaxNode(BaseActivationNode):
+
+    """
+    performs a softmax over non-batch or channel dimensions
+    (ie. all except first 2)
+    """
+
+    def activation(self, network, in_vw):
+        axes = tuple(range(2, in_vw.ndim))
+        return utils.stable_softmax(in_vw.variable, axis=axes)
