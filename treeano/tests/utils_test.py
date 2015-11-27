@@ -23,6 +23,19 @@ def test_stable_softmax():
     np.testing.assert_equal(s1, s2)
 
 
+def test_stable_softmax_grad():
+    x = theano.shared(np.random.randn(50, 50).astype(fX))
+    s1 = T.nnet.softmax(x)
+    s2 = treeano.utils.stable_softmax(
+        x.reshape([50, 1, 5, 10]),
+        axis=(2, 3)
+    ).reshape([50, 50])
+    np.testing.assert_allclose(s1.eval(), s2.eval(), rtol=1e-5)
+    g1 = T.grad(s1[:10, :10].sum(), x)
+    g2 = T.grad(s2[:10, :10].sum(), x)
+    np.testing.assert_allclose(g1.eval(), g2.eval(), rtol=1e-5)
+
+
 def _clone_test_case(clone_fn):
     x = T.matrix("x")
     y = T.matrix("y")
