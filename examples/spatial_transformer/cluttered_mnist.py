@@ -12,13 +12,14 @@ import treeano
 import treeano.nodes as tn
 from treeano.sandbox.nodes import spatial_transformer as st
 from treeano.sandbox.nodes import batch_normalization as bn
+from treeano.sandbox.nodes import spatial_attention
 import canopy
 import canopy.sandbox.datasets
 
 fX = theano.config.floatX
 
 UPDATE_SCALE_FACTOR = 1.0
-MAX_ITERS = 50
+MAX_ITERS = 100
 BATCH_SIZE = 500
 
 train, valid, _ = canopy.sandbox.datasets.cluttered_mnist()
@@ -35,8 +36,9 @@ localization_network = tn.HyperparameterNode(
          bn.NoScaleBatchNormalizationNode("loc_bn1"),
          tn.ReLUNode("loc_relu1"),
          tn.DnnConv2DWithBiasNode("loc_conv2"),
-         bn.NoScaleBatchNormalizationNode("loc_bn2"),
-         tn.ReLUNode("loc_relu2"),
+         bn.SimpleBatchNormalizationNode("loc_bn2"),
+         tn.SpatialSoftmaxNode("loc_spatial_softmax"),
+         spatial_attention.SpatialFeaturePointNode("loc_feature_point"),
          tn.DenseNode("loc_fc1", num_units=50),
          bn.NoScaleBatchNormalizationNode("loc_bn3"),
          tn.ReLUNode("loc_relu3"),
