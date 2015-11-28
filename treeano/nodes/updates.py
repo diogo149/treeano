@@ -541,6 +541,8 @@ class RpropNode(StandardUpdatesNode):
     """
     from "A Direct Adaptive Method for Faster Backpropagation Learning:
     The RPROP Algorithm"
+
+    also called Rprop+ (Rprop w/ weight-backtracking)
     """
 
     hyperparameter_names = ("initial_step",
@@ -604,6 +606,8 @@ class RpropNode(StandardUpdatesNode):
             # if grad product is negative:
             # - revert previous update
             # - set gradient to 0
+            # NOTE: remove this part to get the Rprop- algorithm
+            # (Rprop w/o weight-backtracking)
             parameter_delta = (non_neg_mask * parameter_delta
                                - neg_mask * prev_delta)
             grad = non_neg_mask * grad
