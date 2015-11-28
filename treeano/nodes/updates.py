@@ -513,7 +513,7 @@ class RMSPropNode(StandardUpdatesNode):
         for parameter_vw, grad in zip(parameter_vws, grads):
             # exponential moving average of gradients squared
             g2_avg = network.create_vw(
-                "adadelta_gradients_squared(%s)" % parameter_vw.name,
+                "rmsprop_gradients_squared(%s)" % parameter_vw.name,
                 shape=parameter_vw.shape,
                 is_shared=True,
                 tags={"state"},
