@@ -9,6 +9,7 @@ import theano
 import theano.tensor as T
 
 from .. import core
+from .. import inits
 
 
 @core.register_node("update_scale")
@@ -528,5 +529,88 @@ class RMSPropNode(StandardUpdatesNode):
 
             update_deltas[g2_avg] = new_g2_avg - g2_avg
             update_deltas[parameter_vw.variable] = deltas
+
+        return update_deltas
+
+# ################################## Rprop ##################################
+
+
+@core.register_node("rprop")
+class RpropNode(StandardUpdatesNode):
+
+    """
+    from "A Direct Adaptive Method for Faster Backpropagation Learning:
+    The RPROP Algorithm"
+    """
+
+    hyperparameter_names = ("initial_step",
+                            "learning_rate",
+                            "eta_plus",
+                            "eta_minus",
+                            "step_min",
+                            "step_max")
+
+    def _new_update_deltas(self, network, parameter_vws, grads):
+        initial_step = network.find_hyperparameter(["initial_step",
+                                                    "learning_rate"], 0.1)
+        eta_plus = network.find_hyperparameter(["eta_plus"], 1.2)
+        eta_minus = network.find_hyperparameter(["eta_minus"], 0.5)
+        step_min = network.find_hyperparameter(["step_min"], 1e-6)
+        step_max = network.find_hyperparameter(["step_max"], 50)
+
+        plus_delta = eta_plus - 1
+        minus_delta = eta_minus - 1
+
+        update_deltas = core.UpdateDeltas()
+        for parameter_vw, grad in zip(parameter_vws, grads):
+
+            step = network.create_vw(
+                "rprop_step(%s)" % parameter_vw.name,
+                shape=parameter_vw.shape,
+                is_shared=True,
+                tags={"state"},
+                default_inits=[inits.ConstantInit(initial_step)],
+            ).variable
+
+            prev_grad = network.create_vw(
+                "rprop_prev_grad(%s)" % parameter_vw.name,
+                shape=parameter_vw.shape,
+                is_shared=True,
+                tags={"state"},
+                default_inits=[],
+            ).variable
+
+            prev_delta = network.create_vw(
+                "rprop_prev_delta(%s)" % parameter_vw.name,
+                shape=parameter_vw.shape,
+                is_shared=True,
+                tags={"state"},
+                default_inits=[],
+            ).variable
+
+            grad_product = grad * prev_grad
+            pos_mask = grad_product > 0
+            neg_mask = grad_product < 0
+            non_neg_mask = 1 - neg_mask
+
+            # change step size based on sign change of gradient
+            step_delta = (plus_delta * pos_mask
+                          + minus_delta * neg_mask) * step
+            new_step = T.clip(step + step_delta, step_min, step_max)
+
+            # update in direction of negative gradient
+            parameter_delta = -T.sgn(grad) * new_step
+
+            # if grad product is negative:
+            # - revert previous update
+            # - set gradient to 0
+            parameter_delta = (non_neg_mask * parameter_delta
+                               - neg_mask * prev_delta)
+            grad = non_neg_mask * grad
+
+            update_deltas[step] = new_step - step
+            update_deltas[prev_grad] = grad - prev_grad
+            update_deltas[prev_delta] = parameter_delta - prev_delta
+            update_deltas[parameter_vw.variable] = parameter_delta
 
         return update_deltas

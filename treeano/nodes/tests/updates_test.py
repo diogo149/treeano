@@ -78,6 +78,10 @@ def test_rmsprop_node():
     tn.test_utils.check_updates_node(tn.RMSPropNode)
 
 
+def test_rprop_node():
+    tn.test_utils.check_updates_node(tn.RpropNode, learning_rate=0.001)
+
+
 def test_weight_decay_node():
     class WeightNode(treeano.NodeImpl):
         input_keys = ()
