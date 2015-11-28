@@ -79,7 +79,12 @@ def test_rmsprop_node():
 
 
 def test_rprop_node():
-    tn.test_utils.check_updates_node(tn.RpropNode, learning_rate=0.001)
+    tn.test_utils.check_updates_node(tn.RpropNode,
+                                     learning_rate=0.001,
+                                     rprop_type="Rprop")
+    tn.test_utils.check_updates_node(tn.RpropNode,
+                                     learning_rate=0.001,
+                                     rprop_type="iRprop-")
 
 
 def test_weight_decay_node():
