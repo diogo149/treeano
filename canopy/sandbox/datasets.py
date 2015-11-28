@@ -88,6 +88,62 @@ def cifar10(random_state=42, base_dir="~/cifar10"):
     return train, valid, test
 
 
+def cifar100(random_state=42,
+             base_dir="~/cifar100",
+             fine_label_key="y",
+             coarse_label_key=None):
+    """
+    x is in [0, 1] with shape (b, 3, 32, 32) and dtype floatX
+    y is an int32 vector in range(100)
+    """
+    URL = "http://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz"
+    base_dir = os.path.expanduser(base_dir)
+    batch_dir = os.path.join(base_dir, "cifar-100-python")
+    train_file = os.path.join(batch_dir, "train")
+    test_file = os.path.join(batch_dir, "test")
+    if not os.path.isfile(test_file):
+        tar_gz = os.path.join(base_dir, "cifar-100-python.tar.gz")
+        try:
+            os.mkdir(base_dir)
+        except OSError:
+            pass
+        if not os.path.isfile(tar_gz):
+            print("Downloading {} to {}".format(URL, tar_gz))
+            urllib.urlretrieve(URL, tar_gz)
+        subprocess.call(["tar", "xvzf", tar_gz, "-C", base_dir])
+
+    def read_file(filename):
+        with open(filename, 'rb') as f:
+            raw = cPickle.load(f)
+
+        res = {}
+
+        res["x"] = raw["data"].reshape(-1, 3, 32, 32).astype(fX) / 255.0
+
+        if fine_label_key is not None:
+            res[fine_label_key] = np.array(raw["fine_labels"], dtype="int32")
+
+        if coarse_label_key is not None:
+            res[coarse_label_key] = np.array(
+                raw["coarse_labels"], dtype="int32")
+
+        return res
+
+    # read test data
+    test = read_file(test_file)
+    # read train data
+    old_train = read_file(train_file)
+    # split train and valid
+    train_idx, valid_idx = iter(sklearn.cross_validation.ShuffleSplit(
+        len(old_train["x"]),
+        n_iter=1,
+        test_size=10000,
+        random_state=random_state)).next()
+    train = {k: v[train_idx] for k, v in old_train.iteritems()}
+    valid = {k: v[valid_idx] for k, v in old_train.iteritems()}
+    return train, valid, test
+
+
 def cluttered_mnist(base_dir="~/cluttered_mnist"):
     base_dir = os.path.expanduser(base_dir)
     # use the one from lasagne:
