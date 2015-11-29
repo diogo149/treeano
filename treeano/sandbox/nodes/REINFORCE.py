@@ -47,6 +47,16 @@ class NormalSampleNode(treeano.NodeImpl):
 @treeano.register_node("normal_REINFORCE")
 class NormalREINFORCECostNode(treeano.NodeImpl):
 
+    """
+    cost node to implement REINFORCE algorithm
+
+    include_baseline: whether or not to include a baseline network
+    backprop_baseline: whether or not to backprop the baseline update to
+                       the rest of the network
+    """
+
+    hyperparameter_names = ("include_baseline",
+                            "backprop_baseline")
     input_keys = ("state", "mu", "sigma", "reward", "sampled")
 
     def compute_output(self,
@@ -82,12 +92,13 @@ class NormalREINFORCECostNode(treeano.NodeImpl):
             tags={"parameter", "weight"},
             default_inits=[],
         ).variable
-        constant_state = theano.gradient.disconnected_grad(state)
-        baseline = ((weight.dimshuffle("x", 0) * constant_state).sum(axis=1)
+        if not network.find_hyperparameter(["backprop_baseline"], False):
+            state = theano.gradient.disconnected_grad(state)
+        baseline = ((weight.dimshuffle("x", 0) * state).sum(axis=1)
                     + bias)
-        # NOTE: uncomment this line to try REINFORCE without the baseline
-        # network
-        # baseline = baseline * 0
+        if not network.find_hyperparameter(["include_baseline"], True):
+            # to try REINFORCE without the baseline network
+            baseline = baseline * 0
         # TODO monitor baseline
         constant_baseline = theano.gradient.disconnected_grad(baseline)
 
