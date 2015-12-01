@@ -313,3 +313,34 @@ class SparseInit(WeightInit):
         # TODO should outputs be rescaled by 1 / self.ratio
         # (to keep variance between layers ~1)
         return res
+
+
+class RandomWalkInit(WeightInit):
+
+    """
+    from
+    "Random Walk Initialization for Training Very Deep Feedforward Networks"
+    http://arxiv.org/abs/1412.6558
+    """
+
+    def __init__(self,
+                 activation="relu",
+                 in_axes=DEFAULT_IN_AXES,
+                 out_axes=DEFAULT_OUT_AXES):
+        assert activation in {"relu", "linear"}
+        self.activation = activation
+        self.in_axes = in_axes
+        self.out_axes = out_axes
+
+    def initialize_value(self, vw):
+        N = np.prod([s
+                     for dim, s in enumerate(vw.shape)
+                     if dim in self.out_axes])
+        if self.activation == "linear":
+            g = np.exp(1. / (2 * N))
+        elif self.activation == "relu":
+            g = np.sqrt(2) * np.exp(1.2 / (max(N, 6) - 2.4))
+        magnitude = g / N
+        return np.random.normal(loc=0,
+                                scale=magnitude,
+                                size=vw.shape)
