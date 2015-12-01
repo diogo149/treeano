@@ -1,5 +1,8 @@
 * treeano
-WARNING: Treeano changes extremely frequently with breaking features. Furthermore, it is designed for advanced users: i.e. not newb-friendly. However, if you are interested in the most modular, composable DL library around, then contact me at diogo at enlitic.com.
+WARNING:
+- Treeano changes extremely frequently with breaking features
+- Treeano is designed for advanced users i.e. not newb-friendly
+- Treeano is 100% focused on composability
 
 [[https://travis-ci.org/diogo149/treeano.svg]]
 * Dependencies
