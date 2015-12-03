@@ -11,20 +11,13 @@ import theano.tensor as T
 import treeano
 import treeano.nodes as tn
 import canopy
+import canopy.sandbox.datasets
 
 fX = theano.config.floatX
 
 # ############################### prepare data ###############################
 
-mnist = sklearn.datasets.fetch_mldata('MNIST original')
-# theano has a constant float type that it uses (float32 for GPU)
-# also rescaling to [0, 1] instead of [0, 255]
-X = mnist['data'].reshape(-1, 1, 28, 28).astype(fX) / 255.0
-y = mnist['target'].astype("int32")
-X_train, X_valid, y_train, y_valid = sklearn.cross_validation.train_test_split(
-    X, y, random_state=42)
-in_train = {"x": X_train, "y": y_train}
-in_valid = {"x": X_valid, "y": y_valid}
+train, valid, test = canopy.sandbox.datasets.mnist()
 
 # ############################## prepare model ##############################
 # architecture:
@@ -93,13 +86,13 @@ valid_fn = canopy.handled_fn(
 
 
 def validate(in_dict, results_dict):
-    valid_out = valid_fn(in_valid)
+    valid_out = valid_fn(valid)
     probabilities = valid_out["pred"]
     predicted_classes = np.argmax(probabilities, axis=1)
     results_dict["valid_cost"] = valid_out["cost"]
     results_dict["valid_time"] = valid_out["valid_time"]
     results_dict["valid_accuracy"] = sklearn.metrics.accuracy_score(
-        y_valid, predicted_classes)
+        valid["y"], predicted_classes)
 
 train_fn = canopy.handled_fn(
     network,
@@ -117,5 +110,5 @@ train_fn = canopy.handled_fn(
 
 print("Starting training...")
 canopy.evaluate_until(fn=train_fn,
-                      gen=itertools.repeat(in_train),
+                      gen=itertools.repeat(train),
                       max_iters=25)

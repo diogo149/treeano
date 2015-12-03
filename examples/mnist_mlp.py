@@ -11,20 +11,13 @@ import theano.tensor as T
 import treeano
 import treeano.nodes as tn
 import canopy
+import canopy.sandbox.datasets
 
 fX = theano.config.floatX
 
 # ############################### prepare data ###############################
 
-mnist = sklearn.datasets.fetch_mldata('MNIST original')
-# theano has a constant float type that it uses (float32 for GPU)
-# also rescaling to [0, 1] instead of [0, 255]
-X = mnist['data'].astype(fX) / 255.0
-y = mnist['target'].astype("int32")
-X_train, X_valid, y_train, y_valid = sklearn.cross_validation.train_test_split(
-    X, y, random_state=42)
-in_train = {"x": X_train, "y": y_train}
-in_valid = {"x": X_valid, "y": y_valid}
+train, valid, test = canopy.sandbox.datasets.mnist()
 
 # ############################## prepare model ##############################
 # architecture:
@@ -43,7 +36,7 @@ model = tn.HyperparameterNode(
     "model",
     tn.SequentialNode(
         "seq",
-        [tn.InputNode("x", shape=(None, 28 * 28)),
+        [tn.InputNode("x", shape=(None, 1, 28, 28)),
          tn.DenseNode("fc1"),
          tn.ReLUNode("relu1"),
          tn.DropoutNode("do1"),
@@ -98,12 +91,12 @@ print("Starting training...")
 NUM_EPOCHS = 25
 for epoch_num in range(NUM_EPOCHS):
     start_time = time.time()
-    train_loss = train_fn(in_train)["cost"]
-    valid_out = valid_fn(in_valid)
+    train_loss = train_fn(train)["cost"]
+    valid_out = valid_fn(valid)
     valid_loss, probabilities = valid_out["cost"], valid_out["pred"]
     predicted_classes = np.argmax(probabilities, axis=1)
     # calculate accuracy for this epoch
-    accuracy = sklearn.metrics.accuracy_score(y_valid, predicted_classes)
+    accuracy = sklearn.metrics.accuracy_score(valid["y"], predicted_classes)
     total_time = time.time() - start_time
     print("Epoch: %d, train_loss=%f, valid_loss=%f, accuracy=%f, time=%fs"
           % (epoch_num + 1, train_loss, valid_loss, accuracy, total_time))

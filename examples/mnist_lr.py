@@ -10,18 +10,13 @@ import theano.tensor as T
 import treeano
 import treeano.nodes as tn
 import canopy
+import canopy.sandbox.datasets
 
 fX = theano.config.floatX
 
 # ############################### prepare data ###############################
 
-mnist = sklearn.datasets.fetch_mldata('MNIST original')
-# theano has a constant float type that it uses (float32 for GPU)
-# also rescaling to [0, 1] instead of [0, 255]
-X = mnist['data'].astype(fX) / 255.0
-y = mnist['target'].astype("int32")
-X_train, X_valid, y_train, y_valid = sklearn.cross_validation.train_test_split(
-    X, y, random_state=42)
+train, valid, test = canopy.sandbox.datasets.mnist()
 
 # ############################## prepare model ##############################
 # architecture:
@@ -34,7 +29,7 @@ model = tn.HyperparameterNode(
     "model",
     tn.SequentialNode(
         "seq",
-        [tn.InputNode("x", shape=(None, 28 * 28)),
+        [tn.InputNode("x", shape=(None, 1, 28, 28)),
          tn.DenseNode("fc3", num_units=10),
          tn.SoftmaxNode("pred"),
          ]),
@@ -66,13 +61,13 @@ num_epochs = 25
 batch_size = 100
 for epoch_num in range(num_epochs):
     # iterate over training minibatches and update the weights
-    num_batches_train = int(np.ceil(len(X_train) / batch_size))
+    num_batches_train = int(np.ceil(len(train["x"]) / batch_size))
     train_losses = []
     for batch_num in range(num_batches_train):
         batch_slice = slice(batch_size * batch_num,
                             batch_size * (batch_num + 1))
-        X_batch = X_train[batch_slice]
-        y_batch = y_train[batch_slice]
+        X_batch = train["x"][batch_slice]
+        y_batch = train["y"][batch_slice]
 
         loss, = train_fn(X_batch, y_batch)
         train_losses.append(loss)
@@ -80,14 +75,14 @@ for epoch_num in range(num_epochs):
     train_loss = np.mean(train_losses)
 
     # calculate validation loss
-    num_batches_valid = int(np.ceil(len(X_valid) / batch_size))
+    num_batches_valid = int(np.ceil(len(valid["x"]) / batch_size))
     valid_losses = []
     list_of_probabilities_batch = []
     for batch_num in range(num_batches_valid):
         batch_slice = slice(batch_size * batch_num,
                             batch_size * (batch_num + 1))
-        X_batch = X_valid[batch_slice]
-        y_batch = y_valid[batch_slice]
+        X_batch = valid["x"][batch_slice]
+        y_batch = valid["y"][batch_slice]
 
         loss, probabilities_batch = valid_fn(X_batch, y_batch)
         valid_losses.append(loss)
@@ -98,7 +93,7 @@ for epoch_num in range(num_epochs):
     # calculate classes from the probabilities
     predicted_classes = np.argmax(probabilities, axis=1)
     # calculate accuracy for this epoch
-    accuracy = sklearn.metrics.accuracy_score(y_valid, predicted_classes)
+    accuracy = sklearn.metrics.accuracy_score(valid["y"], predicted_classes)
 
     print("Epoch: %d, train_loss=%f, valid_loss=%f, valid_accuracy=%f"
           % (epoch_num + 1, train_loss, valid_loss, accuracy))
