@@ -25,4 +25,4 @@ cache:
   - apt
   - directories:
     - $HOME/.cache/pip
-    - $HOME/.theano
+    # - $HOME/.theano
