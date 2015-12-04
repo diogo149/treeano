@@ -11,6 +11,7 @@ addons:
     - gfortran
 before_install:
   - pip install -U pip
+  - theano-cache purge
 install:
   - pip install numpy
   - pip install https://github.com/theano/theano/archive/master.zip
@@ -25,4 +26,4 @@ cache:
   - apt
   - directories:
     - $HOME/.cache/pip
-    # - $HOME/.theano
+    - $HOME/.theano
