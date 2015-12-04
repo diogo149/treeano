@@ -11,7 +11,6 @@ addons:
     - gfortran
 before_install:
   - pip install -U pip
-  - theano-cache purge
 install:
   - pip install numpy
   - pip install https://github.com/theano/theano/archive/master.zip
@@ -21,7 +20,9 @@ install:
   - pip install lasagne
   - pip install scikit-image
   - pip install nose
-script: nosetests -v
+script:
+  - theano-cache purge
+  - nosetests -v
 cache:
   - apt
   - directories:
