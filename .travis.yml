@@ -21,10 +21,10 @@ install:
   - pip install scikit-image
   - pip install nose
 script:
-  - theano-cache purge
+  # - theano-cache purge
   - nosetests -v
-cache:
-  - apt
-  - directories:
-    - $HOME/.cache/pip
-    - $HOME/.theano
+# cache:
+#   - apt
+#   - directories:
+#     - $HOME/.cache/pip
+#     - $HOME/.theano
