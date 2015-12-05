@@ -137,3 +137,21 @@ class SpatialSoftmaxNode(BaseActivationNode):
     def activation(self, network, in_vw):
         axes = tuple(range(2, in_vw.ndim))
         return utils.stable_softmax(in_vw.variable, axis=axes)
+
+
+@core.register_node("elu")
+class ELUNode(BaseActivationNode):
+
+    """
+    exponential linear unit
+    from "Fast and Accurate Deep Network Learning by Exponential Linear Units"
+    http://arxiv.org/abs/1511.07289
+    """
+    hyperparameter_names = ("alpha",)
+
+    def activation(self, network, in_vw):
+        alpha = network.find_hyperparameter(["alpha"], 1.)
+        x = in_vw.variable
+        pos = (x + abs(x)) / 2
+        neg = (-x + abs(-x)) / 2
+        return pos + alpha * (T.exp(neg) - 1)

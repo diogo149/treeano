@@ -64,7 +64,8 @@ from .activations import (BaseActivationNode,
                           AbsNode,
                           LeakyReLUNode,
                           VeryLeakyReLUNode,
-                          SpatialSoftmaxNode)
+                          SpatialSoftmaxNode,
+                          ELUNode)
 from .downsample import (FeaturePoolNode,
                          MaxoutNode,
                          Pool2DNode,
