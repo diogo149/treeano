@@ -11,13 +11,13 @@ def elu1(x, alpha=1.):
 
 def elu2(x, alpha=1.):
     pos = (x + abs(x)) / 2
-    neg = (-x + abs(-x)) / 2
+    neg = (x + -abs(x)) / 2
     return pos + alpha * (T.exp(neg) - 1)
 
 
 # TODO change me
-elu = elu1
-# elu = elu2
+# elu = elu1
+elu = elu2
 
 x = T.matrix()
 f = elu(x)
@@ -29,9 +29,9 @@ X = np.random.randn(4096, 4096).astype(fX)
 
 %timeit f.eval({x: X})
 elu1 => 33.3 ms
-elu2 => 31.8 ms
+elu2 => 28.3 ms
 
 %timeit b.eval({x: X})
 elu1 => 161 ms
-elu2 => 32.2 ms
+elu2 => 29.2 ms
 """

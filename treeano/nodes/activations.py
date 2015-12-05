@@ -153,5 +153,5 @@ class ELUNode(BaseActivationNode):
         alpha = network.find_hyperparameter(["alpha"], 1.)
         x = in_vw.variable
         pos = (x + abs(x)) / 2
-        neg = (-x + abs(-x)) / 2
+        neg = (x + -abs(x)) / 2
         return pos + alpha * (T.exp(neg) - 1)
