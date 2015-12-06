@@ -23,8 +23,8 @@ install:
 script:
   # - theano-cache purge
   - nosetests -v
-# cache:
-#   - apt
-#   - directories:
-#     - $HOME/.cache/pip
-#     - $HOME/.theano
+cache:
+  - apt
+  - directories:
+    - $HOME/.cache/pip
+    - $HOME/.theano
