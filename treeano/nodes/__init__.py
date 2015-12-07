@@ -41,7 +41,8 @@ from .theanode import (ClipNode,
                        DimshuffleNode,
                        GradientReversalNode,
                        ZeroGradNode,
-                       DisconnectedGradNode)
+                       DisconnectedGradNode,
+                       MeanNode)
 from .combine import (BaseChildrenCombineNode,
                       BaseInputCombineNode,
                       InputFunctionCombineNode,

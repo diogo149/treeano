@@ -267,3 +267,33 @@ class DisconnectedGradNode(core.NodeImpl):
             shape=in_vw.shape,
             tags={"output"}
         )
+
+
+@core.register_node("mean")
+class MeanNode(core.NodeImpl):
+
+    """
+    like theano.tensor.mean
+    """
+
+    hyperparameter_names = ("axis",)
+
+    def compute_output(self, network, in_vw):
+        axis = network.find_hyperparameter(["axis"], None)
+        out_var = T.mean(in_vw.variable, axis=axis)
+
+        if axis is None:
+            out_shape = ()
+        elif isinstance(axis, int):
+            out_shape = list(in_vw.shape)
+            out_shape.pop(axis)
+            out_shape = tuple(out_shape)
+        else:
+            raise NotImplementedError()
+
+        network.create_vw(
+            "default",
+            variable=out_var,
+            shape=out_shape,
+            tags={"output"}
+        )
