@@ -106,7 +106,7 @@ class Conv2DNode(core.NodeImpl):
 
         out_var = T.nnet.conv2d(input=in_vw.variable,
                                 filters=W,
-                                image_shape=in_vw.shape,
+                                input_shape=in_vw.shape,
                                 filter_shape=filter_shape,
                                 border_mode=pad,
                                 subsample=stride)
