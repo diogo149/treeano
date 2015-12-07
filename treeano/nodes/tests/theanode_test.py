@@ -79,6 +79,18 @@ def test_reshape_node():
                                x.reshape(5, 12))
 
 
+def test_repeat_node():
+    network = tn.SequentialNode(
+        "s",
+        [tn.InputNode("in", shape=(3,)),
+         tn.RepeatNode("r", repeats=2, axis=0)]
+    ).network()
+    fn = network.function(["in"], ["s"])
+    x = np.random.randn(3).astype(fX)
+    np.testing.assert_allclose(np.repeat(x, 2, 0),
+                               fn(x)[0])
+
+
 def test_dimshuffle_node():
     network = tn.SequentialNode(
         "s",

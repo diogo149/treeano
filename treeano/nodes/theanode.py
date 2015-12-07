@@ -169,6 +169,33 @@ class ReshapeNode(core.NodeImpl):
         )
 
 
+@core.register_node("repeat")
+class RepeatNode(core.NodeImpl):
+
+    """
+    like theano.tensor.repeat
+    """
+
+    hyperparameter_names = ("repeats",
+                            "axis")
+
+    def compute_output(self, network, in_vw):
+        repeats = network.find_hyperparameter(["repeats"])
+        axis = network.find_hyperparameter(["axis"])
+
+        out_shape = list(in_vw.shape)
+        if out_shape[axis] is not None:
+            out_shape[axis] *= repeats
+        out_shape = tuple(out_shape)
+
+        network.create_vw(
+            "default",
+            variable=T.repeat(in_vw.variable, repeats=repeats, axis=axis),
+            shape=out_shape,
+            tags={"output"},
+        )
+
+
 @core.register_node("dimshuffle")
 class DimshuffleNode(core.NodeImpl):
 
