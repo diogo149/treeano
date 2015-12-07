@@ -15,6 +15,11 @@ def elu2(x, alpha=1.):
     return pos + alpha * (T.exp(neg) - 1)
 
 
+for _ in range(100):
+    tmp = np.random.randn()
+    np.testing.assert_allclose(elu1(tmp).eval(),
+                               elu2(tmp).eval())
+
 # TODO change me
 # elu = elu1
 elu = elu2
