@@ -22,6 +22,7 @@ install:
   - pip install nose
 script:
   # - theano-cache purge
+  - rm -rf /home/travis/.theano
   - nosetests -v
 cache:
   - apt
