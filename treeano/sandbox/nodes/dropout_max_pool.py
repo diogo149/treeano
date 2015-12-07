@@ -6,6 +6,7 @@ from theano.sandbox.rng_mrg import MRG_RandomStreams
 
 import treeano
 import treeano.nodes as tn
+from treeano.sandbox.nodes import batch_fold
 
 fX = theano.config.floatX
 
@@ -64,3 +65,52 @@ class DropoutMaxPool2DNode(treeano.Wrapper0NodeImpl):
         network.set_hyperparameter(self.name + "_pool2d",
                                    "pool_function",
                                    pool_fn)
+
+
+@treeano.register_node("average_samples")
+class AverageSamplesNode(treeano.Wrapper1NodeImpl):
+
+    """
+    node that has the wrapped node be evaluated multiple times, then
+    averages the outputs
+
+    how?
+    - repeat along batch (to simulate evaluating multiple times)
+    - perform operation
+    - split batch axis into original batch axis + sampled axis
+    - mean over sampled axis
+    """
+
+    hyperparameter_names = ("num_samples",)
+
+    def architecture_children(self):
+        node = self.raw_children()
+        return [tn.SequentialNode(
+            self.name + "_seq",
+            [tn.RepeatNode(self.name + "_repeat", axis=0),
+             node,
+             batch_fold.SplitAxisNode(self.name + "_split", axis=0),
+             tn.MeanNode(self.name + "_mean", axis=1)])]
+
+    def init_state(self, network):
+        super(AverageSamplesNode, self).init_state(network)
+        num_samples = network.find_hyperparameter(["num_samples"], 1)
+        network.set_hyperparameter(self.name + "_repeat",
+                                   "repeats",
+                                   num_samples)
+        network.set_hyperparameter(self.name + "_split",
+                                   "shape",
+                                   (-1, num_samples))
+
+
+def AverageSamplesDropoutDnnMaxPoolNode(name, *args, **kwargs):
+    return tn.HyperparameterNode(
+        name,
+        AverageSamplesNode(
+            name + "_samples",
+            tn.SequentialNode(
+                name + "_seq",
+                [tn.DropoutNode(name + "_dropout"),
+                 tn.DnnMaxPoolNode(name + "_maxpool")])),
+        *args,
+        **kwargs)
