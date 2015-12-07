@@ -86,6 +86,15 @@ def maximum(a, b):
         return np.maximum(a, b)
 
 
+def sign_non_zero(x):
+    """
+    returns the sign of the input variable as 1 or -1
+
+    arbitrarily sign_non_zero(0) = 1
+    """
+    return 2 * (x >= 0) - 1
+
+
 def rectify(x, negative_coefficient=0):
     """
     general way of performing ReLU-type activations

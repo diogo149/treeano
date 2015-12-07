@@ -3,7 +3,6 @@ SMORMS3 algorithm (squared mean over root mean squared cubed)
 based on http://sifter.org/~simon/journal/20150420.html
 """
 
-import toolz
 import numpy as np
 import theano
 import theano.tensor as T
