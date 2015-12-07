@@ -112,3 +112,17 @@ def test_remove_axis_node():
     fn = network.function(["i"], ["s"])
     x = np.zeros((1, 1, 1), dtype=fX)
     fn(x)
+
+
+def test_split_axis_node():
+    network = tn.SequentialNode(
+        "s",
+        [tn.InputNode("i", shape=(5, 12, 7)),
+         bf.SplitAxisNode("r1", axis=1, shape=(3, -1, 1, 2))]
+    ).network()
+
+    np.testing.assert_equal((5, 3, None, 1, 2, 7),
+                            network["s"].get_vw("default").shape)
+    fn = network.function(["i"], ["s"])
+    np.testing.assert_equal((5, 3, 2, 1, 2, 7),
+                            fn(np.zeros((5, 12, 7), dtype=fX))[0].shape)

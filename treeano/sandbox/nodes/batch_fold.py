@@ -163,3 +163,34 @@ class RemoveAxisNode(treeano.NodeImpl):
             shape=out_shape,
             tags={"output"},
         )
+
+
+@treeano.register_node("split_axis")
+class SplitAxisNode(treeano.NodeImpl):
+
+    """
+    splits a single axis into multiple axes with the given shape
+    """
+    hyperparameter_names = ("axis", "shape")
+
+    def compute_output(self, network, in_vw):
+        axis = network.find_hyperparameter(["axis"])
+        shape = network.find_hyperparameter(["shape"])
+        assert 0 <= axis < in_vw.ndim
+
+        # calculate shape
+        in_shape = in_vw.shape
+        shape_with_none = tuple([None if s == -1 else s for s in shape])
+        out_shape = in_shape[:axis] + shape_with_none + in_shape[axis + 1:]
+
+        # calculate variable
+        in_ss = in_vw.symbolic_shape()
+        ss = in_ss[:axis] + shape + in_ss[axis + 1:]
+        out_var = in_vw.variable.reshape(ss)
+
+        network.create_vw(
+            "default",
+            variable=out_var,
+            shape=out_shape,
+            tags={"output"},
+        )
