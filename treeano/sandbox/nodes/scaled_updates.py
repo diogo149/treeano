@@ -32,7 +32,8 @@ class ScaledAdamNode(treeano.nodes.updates.StandardUpdatesNode):
                             "adam_beta2",
                             "beta2",
                             "adam_epsilon",
-                            "epsilon")
+                            "epsilon",
+                            "scale_function",)
 
     def _new_update_deltas(self, network, parameter_vws, grads):
         # alpha / stepsize / learning rate are all the same thing
@@ -50,6 +51,9 @@ class ScaledAdamNode(treeano.nodes.updates.StandardUpdatesNode):
         epsilon = network.find_hyperparameter(["adam_epsilon",
                                                "epsilon"],
                                               1e-8)
+        # HACK part 1: different from adam
+        scale_fn = network.find_hyperparameter(["scale_function"],
+                                               treeano.utils.identity)
 
         update_deltas = treeano.UpdateDeltas()
 
@@ -103,11 +107,11 @@ class ScaledAdamNode(treeano.nodes.updates.StandardUpdatesNode):
 
             parameter_delta = - alpha_t * new_m / (T.sqrt(new_v) + epsilon_hat)
 
-            # HACK this is the only part that is different from standard adam
+            # HACK  part 2: different from standard adam
             initial_std = treeano.utils.as_fX(np.std(parameter_vw.value))
             # prevent multiplying by 0 std
             if initial_std > 0:
-                parameter_delta *= initial_std
+                parameter_delta *= scale_fn(initial_std)
 
             update_deltas[m] = new_m - m
             update_deltas[v] = new_v - v
