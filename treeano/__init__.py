@@ -9,7 +9,7 @@ from . import core
 from . import theano_extensions
 from . import nodes
 from . import inits
-from .import node_utils
+from . import node_utils
 
 from .core import (UpdateDeltas,
                    SharedInit,
