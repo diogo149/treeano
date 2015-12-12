@@ -85,6 +85,7 @@ class Conv2DNode(core.NodeImpl):
         stride = network.find_hyperparameter(["conv_stride", "stride"], (1, 1))
         pad = network.find_hyperparameter(["conv_pad", "pad"], "valid")
 
+        # HACK figure out if this is necessary
         # convert numerical pad to valid or full
         # if pad == (0, 0):
         #     pad = "valid"
