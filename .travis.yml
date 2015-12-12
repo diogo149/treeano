@@ -6,9 +6,10 @@ python:
 addons:
   apt:
     packages:
-    - libblas-dev
-    - liblapack-dev
     - gfortran
+    # - libblas-dev
+    - openblas
+    - liblapack-dev
 before_install:
   - pip install -U pip
 install:
