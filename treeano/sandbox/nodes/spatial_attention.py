@@ -19,6 +19,9 @@ class SpatialFeaturePointNode(treeano.NodeImpl):
     based on feature point layer from
     "End-to-End Training of Deep Visuomotor Policies"
     http://arxiv.org/abs/1504.00702
+
+    combined with spatial softmax results in something referred to as
+    a "spatial soft argmax"
     """
 
     def compute_output(self, network, in_vw):
