@@ -86,12 +86,12 @@ class Conv2DNode(core.NodeImpl):
         pad = network.find_hyperparameter(["conv_pad", "pad"], "valid")
 
         # convert numerical pad to valid or full
-        if pad == (0, 0):
-            pad = "valid"
-        elif pad == tuple([fs - 1 for fs in filter_size]):
-            pad = "full"
+        # if pad == (0, 0):
+        #     pad = "valid"
+        # elif pad == tuple([fs - 1 for fs in filter_size]):
+        #     pad = "full"
+        # assert pad in ["valid", "full"]
         assert len(filter_size) == 2
-        assert pad in ["valid", "full"]
 
         # create weight
         num_channels = in_vw.shape[1]
