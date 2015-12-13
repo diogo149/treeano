@@ -155,3 +155,28 @@ class ELUNode(BaseActivationNode):
         pos = (x + abs(x)) / 2
         neg = (x + -abs(x)) / 2
         return pos + alpha * (T.exp(neg) - 1)
+
+
+@core.register_node("hard_sigmoid")
+class HardSigmoidNode(BaseActivationNode):
+
+    def activation(self, network, in_vw):
+        return T.clip(in_vw.variable + 0.5, 0., 1.)
+
+
+@core.register_node("hard_tanh")
+class HardTanhNode(BaseActivationNode):
+
+    def activation(self, network, in_vw):
+        return T.clip(in_vw.variable, -1., 1.)
+
+
+@core.register_node("trec")
+class TRecNode(BaseActivationNode):
+
+    hyperparameter_names = ("t",)
+
+    def activation(self, network, in_vw):
+        t = network.find_hyperparameter(["t"], 1)
+        in_var = in_vw.variable
+        return in_var * (in_var > t)
