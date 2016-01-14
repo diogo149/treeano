@@ -42,7 +42,9 @@ from .theanode import (ClipNode,
                        GradientReversalNode,
                        ZeroGradNode,
                        DisconnectedGradNode,
-                       MeanNode)
+                       MeanNode,
+                       MaxNode,
+                       SumNode)
 from .combine import (BaseChildrenCombineNode,
                       BaseInputCombineNode,
                       InputFunctionCombineNode,
