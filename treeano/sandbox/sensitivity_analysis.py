@@ -51,6 +51,7 @@ def sensitivity_analysis_fn(input_name,
                             logit_name,
                             network,
                             handlers,
+                            extra_inputs={},
                             *args,
                             **kwargs):
     """
@@ -64,12 +65,18 @@ def sensitivity_analysis_fn(input_name,
         canopy.handlers.override_hyperparameters(deterministic=True)
     ] + handlers
 
+    inputs_dict = { "input": input_name }
+    
+    inputs_dict.update(extra_inputs)
+
     fn = canopy.handled_fn(network,
                            handlers=handlers,
-                           inputs={"input": input_name},
+                           inputs=inputs_dict,
                            outputs={})
 
-    def inner(in_val, idx_val):
-        return fn({"input": in_val, "idx": idx_val})["outputs"]
+    def inner(in_val, idx_val, extra_inputs={}):
+        input_dict = {"input": in_val, "idx": idx_val}
+        input_dict.update(extra_inputs)
+        return fn(input_dict)["outputs"]
 
     return inner
