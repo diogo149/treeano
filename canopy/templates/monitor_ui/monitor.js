@@ -249,11 +249,13 @@ function makeScaleFn(scaleData) {
 function createChartView() {
   $mainView.empty();
 
-  var $tabs = $("<div/>");
+  var $tabs = $("<div id='tabs'/>");
+  
   $mainView.append($tabs);
-  var $tabsList = $("<ul/>");
+  var $tabsList = $("<ul id='tabsList'/>");
+  
   $tabs.append($tabsList);
-
+  
   _.forEach(settings, function(chartData, chartIdx) {
     var chartId = "chart-" + chartIdx;
     $tabsList.append(
@@ -550,6 +552,10 @@ function createDataView() {
   $mainView.append($("<pre/>").text(JSON.stringify(monitorData, undefined, 2)));
 }
 
+
+var paramsPath = window.location.pathname.split("/").slice(0,-2).
+      concat(["params.json"]).join("/");
+
 $.getJSON("default_settings.json").done(function(data) {
   settings = data;
   // if view is saved, default to chart view
@@ -558,6 +564,30 @@ $.getJSON("default_settings.json").done(function(data) {
   console.log("no default settings found");
   settings = defaultSettings;
   loadMonitorData(createEditView);
+}).then(function() {
+  console.log("Loading params");
+
+  // Add in a simple tab to display json parameters to the run
+  $.getJSON(paramsPath).done(function(data) {
+    console.log("Got params");
+    console.log(data);
+    document.title = "Mon:" + data.notes.join(" ");
+
+    var $tab = $("<div id='param_tab'/>");
+    $tab.append($(
+      "<pre>" + JSON.stringify(data, null, 2) + "</pre>"));
+    
+    var tabs = $("#tabs").tabs();
+    var tabsUl = tabs.find("ul");
+    
+    $($tab).appendTo(tabs);
+    $("<li><a href='#param_tab'><b>params.json</b></a></li>").appendTo(tabsUl);
+    tabs.tabs("refresh");
+    console.log("Added tab and anchor");
+  }).fail(function(err) {
+    console.log("Could not load params.json from ", paramsPath);
+    console.log(err);
+  });
 });
 
 // })();
