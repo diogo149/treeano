@@ -141,7 +141,7 @@ function movingAvg(n) {
 
 
 function loadMonitorData(callback) {
-  $.get(
+ return $.get(
     "monitor.json",
     undefined,
     undefined,
@@ -248,6 +248,7 @@ function makeScaleFn(scaleData) {
 
 function createChartView() {
   $mainView.empty();
+  console.log("Create chart view");
 
   var $tabs = $("<div id='tabs'/>");
   
@@ -556,14 +557,16 @@ function createDataView() {
 var paramsPath = window.location.pathname.split("/").slice(0,-2).
       concat(["params.json"]).join("/");
 
+var loadMonitorDeferred = null;
+
 $.getJSON("default_settings.json").done(function(data) {
   settings = data;
   // if view is saved, default to chart view
-  loadMonitorData(createChartView);
+  loadMonitorDeferred = loadMonitorData(createChartView);
 }).fail(function(err) {
   console.log("no default settings found");
   settings = defaultSettings;
-  loadMonitorData(createEditView);
+  loadMonitorDeferred = loadMonitorData(createEditView);
 }).then(function() {
   console.log("Loading params");
 
@@ -571,19 +574,25 @@ $.getJSON("default_settings.json").done(function(data) {
   $.getJSON(paramsPath).done(function(data) {
     console.log("Got params");
     console.log(data);
-    document.title = "Mon:" + data.notes.join(" ");
 
-    var $tab = $("<div id='param_tab'/>");
-    $tab.append($(
-      "<pre>" + JSON.stringify(data, null, 2) + "</pre>"));
+    $.when(loadMonitorDeferred).then(function() {
+      document.title = "Mon:" + data.notes.join(" ");
+
+      var $tab = $("<div id='param_tab'/>");
+      $tab.append($(
+        "<pre>" + JSON.stringify(data, null, 2) + "</pre>"));
+      
+      var tabs = $("#tabs").tabs();
+      var tabsUl = tabs.find("ul");
+      
+      $(tabs).append($tab);
+      $(tabsUl).append(
+        $("<li><a href='#param_tab'><b>params.json</b></a></li>"));
+      
+      tabs.tabs("refresh");
+      console.log("Added params tab and anchor");
+    });
     
-    var tabs = $("#tabs").tabs();
-    var tabsUl = tabs.find("ul");
-    
-    $($tab).appendTo(tabs);
-    $("<li><a href='#param_tab'><b>params.json</b></a></li>").appendTo(tabsUl);
-    tabs.tabs("refresh");
-    console.log("Added tab and anchor");
   }).fail(function(err) {
     console.log("Could not load params.json from ", paramsPath);
     console.log(err);
