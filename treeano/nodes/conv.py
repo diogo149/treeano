@@ -52,7 +52,7 @@ def conv_parse_pad(filter_size, pad):
         return (0,) * len(filter_size)
     elif pad == "full":
         return tuple([x - 1 for x in filter_size])
-    elif pad == "same":
+    elif pad in ("same", "half"):
         new_pad = []
         for f in filter_size:
             assert f % 2
@@ -84,6 +84,8 @@ class Conv2DNode(core.NodeImpl):
         filter_size = network.find_hyperparameter(["filter_size"])
         stride = network.find_hyperparameter(["conv_stride", "stride"], (1, 1))
         pad = network.find_hyperparameter(["conv_pad", "pad"], "valid")
+
+        pad = conv_parse_pad(filter_size, pad)
 
         # HACK figure out if this is necessary
         # convert numerical pad to valid or full
@@ -117,7 +119,7 @@ class Conv2DNode(core.NodeImpl):
                                       axes=(2, 3),
                                       conv_shape=filter_size,
                                       strides=stride,
-                                      pads=conv_parse_pad(filter_size, pad))
+                                      pads=pad)
 
         network.create_vw(
             "default",
