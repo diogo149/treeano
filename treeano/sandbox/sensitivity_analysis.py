@@ -51,7 +51,7 @@ def sensitivity_analysis_fn(input_name,
                             logit_name,
                             network,
                             handlers,
-                            *args,
+                            inputs=None,
                             **kwargs):
     """
     returns a function from input to sensitivity analysis heatmap
@@ -73,3 +73,41 @@ def sensitivity_analysis_fn(input_name,
         return fn({"input": in_val, "idx": idx_val})["outputs"]
 
     return inner
+
+
+def customizable_sensitivity_analysis_fn(input_name,
+                                         logit_name,
+                                         network,
+                                         handlers,
+                                         inputs,
+                                         outputs=None,
+                                         *args,
+                                         **kwargs):
+    """
+    returns a function from input to sensitivity analysis heatmap
+
+    takes in additional keys for "input" and "idx"
+    """
+    if outputs is None:
+        outputs = {}
+
+    assert "outputs" not in outputs
+
+    handlers = [
+        SensitivityAnalysisOutput(idx_input_key="idx",
+                                  output_key="outputs",
+                                  input_name=input_name,
+                                  logit_name=logit_name),
+        canopy.handlers.override_hyperparameters(deterministic=True)
+    ] + handlers
+
+    assert "input" not in inputs
+    assert "idx" not in inputs
+
+    inputs["input"] = input_name
+    fn = canopy.handled_fn(network,
+                           handlers=handlers,
+                           inputs=inputs,
+                           outputs=outputs)
+
+    return fn
