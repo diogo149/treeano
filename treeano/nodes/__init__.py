@@ -112,7 +112,8 @@ from .updates import (UpdateScaleNode,
 from .costs import (AggregatorNode,
                     ElementwiseCostNode,
                     TotalCostNode,
-                    AuxiliaryCostNode)
+                    AuxiliaryCostNode,
+                    L2PenaltyNode)
 from .stochastic import (DropoutNode,
                          GaussianDropoutNode,
                          SpatialDropoutNode)

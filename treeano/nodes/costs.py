@@ -5,6 +5,7 @@ nodes for costs/losses
 import theano.tensor as T
 
 from .. import core
+from .. import utils
 from . import simple
 from . import containers
 
@@ -169,3 +170,40 @@ class AuxiliaryCostNode(core.WrapperNodeImpl):
         network.forward_hyperparameter(self.name + "_sendto",
                                        "send_to_reference",
                                        ["cost_reference"])
+
+
+@core.register_node("l2_penalty")
+class L2PenaltyNode(core.Wrapper1NodeImpl):
+
+    """
+    applies L2 penalty on weights
+    """
+
+    hyperparameter_names = ("l2_weight",
+                            "cost_reference",
+                            "to_key")
+
+    def init_long_range_dependencies(self, network):
+        network.forward_output_to(
+            network.find_hyperparameter(["cost_reference"]),
+            from_key="l2_penalty",
+            to_key=network.find_hyperparameter(["to_key"],
+                                               "l2"))
+
+    def compute_output(self, network, *args):
+        # have output pass through
+        super(L2PenaltyNode, self).compute_output(network, *args)
+
+        l2_weight = network.find_hyperparameter(["l2_weight"])
+
+        weight_vws = network.find_vws_in_subtree(tags=["weight"])
+        weights = [vw.variable for vw in weight_vws]
+
+        l2_penalty_var = utils.smart_sum([T.sum(w ** 2) for w in weights])
+
+        network.create_vw(
+            name="l2_penalty",
+            variable=l2_penalty_var * l2_weight,
+            shape=(),
+            tags={"monitor"},
+        )
