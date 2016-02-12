@@ -38,7 +38,7 @@ def mnist(random_state=42):
     return train, valid, test
 
 
-def cifar10(random_state=42, base_dir="~/cifar10"):
+def cifar10(random_state=42, base_dir="~/cifar10", include_valid_split=True):
     """
     x is in [0, 1] with shape (b, 3, 32, 32) and dtype floatX
     y is an int32 vector in range(10)
@@ -77,15 +77,19 @@ def cifar10(random_state=42, base_dir="~/cifar10"):
     # combine train+valid data
     x = np.concatenate(xs, axis=0)
     y = np.concatenate(ys, axis=0)
-    # split train and valid
-    x1, x2, y1, y2 = sklearn.cross_validation.train_test_split(
-        x,
-        y,
-        random_state=random_state,
-        test_size=10000)
-    train = {"x": x1, "y": y1}
-    valid = {"x": x2, "y": y2}
-    return train, valid, test
+    if include_valid_split:
+        # split train and valid
+        x1, x2, y1, y2 = sklearn.cross_validation.train_test_split(
+            x,
+            y,
+            random_state=random_state,
+            test_size=10000)
+        train = {"x": x1, "y": y1}
+        valid = {"x": x2, "y": y2}
+        return train, valid, test
+    else:
+        train = {"x": x, "y": y}
+        return train, test
 
 
 def cifar100(random_state=42,
