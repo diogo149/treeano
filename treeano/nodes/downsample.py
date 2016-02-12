@@ -230,7 +230,12 @@ class GlobalPool2DNode(core.NodeImpl):
         mode = network.find_hyperparameter(["mode"])
         out_shape = in_vw.shape[:2]
         pool_size = in_vw.shape[2:]
-        pooled = max_pool_2d(in_vw.variable, ds=pool_size, mode=mode)
+        pooled = max_pool_2d(in_vw.variable,
+                             ds=pool_size,
+                             mode=mode,
+                             # doesn't make a different here,
+                             # but allows using cuDNN
+                             ignore_border=True)
         out_var = pooled.flatten(2)
         network.create_vw(
             "default",
