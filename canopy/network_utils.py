@@ -53,3 +53,11 @@ def load_value_dict(network,
 
 def to_preallocated_init(network):
     return treeano.inits.PreallocatedInit(to_shared_dict(network))
+
+
+def num_parameters(network):
+    """
+    returns the number of "parameter"s in a network
+    """
+    vws = network.relative_network().find_vws_in_subtree(tags=["parameter"])
+    return sum(vw.value.size for vw in vws)
