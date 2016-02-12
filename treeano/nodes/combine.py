@@ -159,12 +159,11 @@ class ConcatenateNode(BaseChildrenCombineNode):
 
 def elementwise_sum(network, *in_vws):
     # calculate and verify shape
-    input_shapes = [vw.shape for vw in in_vws]
-    assert utils.all_equal(input_shapes)
+    shape = utils.vw_reduce_shape(in_vws)
     network.create_vw(
         "default",
         variable=utils.smart_sum([vw.variable for vw in in_vws]),
-        shape=input_shapes[0],
+        shape=shape,
         tags={"output"},
     )
 
@@ -193,12 +192,11 @@ class InputElementwiseSumNode(BaseInputCombineNode):
 
 def elementwise_product(network, *in_vws):
     # calculate and verify shape
-    input_shapes = [vw.shape for vw in in_vws]
-    assert utils.all_equal(input_shapes)
+    shape = utils.vw_reduce_shape(in_vws)
     network.create_vw(
         "default",
         variable=utils.smart_product([vw.variable for vw in in_vws]),
-        shape=input_shapes[0],
+        shape=shape,
         tags={"output"},
     )
 
