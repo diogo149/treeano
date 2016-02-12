@@ -269,6 +269,26 @@ def smart_mul(x, y):
 smart_sum = functools.partial(smart_reduce, smart_add)
 smart_product = functools.partial(smart_reduce, smart_mul)
 
+# ##################### utils for dealing with variable wrappers ############
+
+
+def vw_reduce_shape(vws):
+    """
+    checks that all vws have the same shape (or are broadcastable with each
+    other) and returns what the shape would be
+    """
+    assert all_equal([vw.ndim for vw in vws])
+    shape = []
+    for i in range(vws[0].ndim):
+        sizes = [vw.shape[i]
+                 for vw in vws
+                 if not vw.broadcastable[i]]
+        assert all_equal(sizes)
+        if sizes:
+            shape.append(sizes[0])
+        else:
+            shape.append(1)
+    return tuple(shape)
 
 # ##################### utils for dealing with networks #####################
 
