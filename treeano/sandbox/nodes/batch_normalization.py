@@ -17,7 +17,7 @@ fX = theano.config.floatX
 
 
 # seems to work better
-DEFAULT_USE_LOG_MOVING_VAR = True
+DEFAULT_MOVING_VAR_TYPE = "inv_std"
 
 
 @treeano.register_node("simple_batch_normalization")
@@ -114,9 +114,8 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
         # only one of normalization_axes and non_normalization_axes should be
         # set
         "non_normalization_axes",
-        # whether or not to keep the rolling average of the variance
-        # in log scale
-        "use_log_moving_var",
+        # how to keep moving var
+        "moving_var_type",
         # whether or not the mean should be backprop-ed through
         "consider_mean_constant",
         # whether or not the variance should be backprop-ed through
@@ -125,22 +124,34 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
     def compute_output(self, network, in_vw):
         deterministic = network.find_hyperparameter(["deterministic"])
 
-        use_log_moving_var = network.find_hyperparameter(
-            ["use_log_moving_var"], DEFAULT_USE_LOG_MOVING_VAR)
+        moving_var_type = network.find_hyperparameter(
+            ["moving_var_type"], DEFAULT_MOVING_VAR_TYPE)
+        epsilon = network.find_hyperparameter(["epsilon"], 1e-8)
 
-        if use_log_moving_var:
+        if moving_var_type == "log_var":
+            moving_var_init_value = 1.0
+
             def transform_var(v):
-                epsilon = network.find_hyperparameter(["epsilon"], 1e-8)
                 return T.log(v + epsilon)
 
             def untransform_var(v):
                 return T.exp(v)
-        else:
+        elif moving_var_type == "var":
+            moving_var_init_value = 0.0
+
             def transform_var(v):
                 return v
 
             def untransform_var(v):
                 return v
+        elif moving_var_type == "inv_std":
+            moving_var_init_value = 0.0
+
+            def transform_var(v):
+                return T.inv(T.sqrt(v) + epsilon)
+
+            def untransform_var(v):
+                return T.sqr(T.inv(v))
 
         # -----------------------------------------------
         # calculate axes to have parameters/normalization
@@ -209,9 +220,7 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
             is_shared=True,
             shape=stats_shape,
             tags={"state"},
-            default_inits=[treeano.inits.ConstantInit(1.0
-                                                      if use_log_moving_var
-                                                      else 0.0)],
+            default_inits=[treeano.inits.ConstantInit(moving_var_init_value)],
         )
 
         # ------------------------
@@ -297,28 +306,40 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
             return super(AdvancedBatchNormalizationNode,
                          self).new_update_deltas(network)
 
-        use_log_moving_var = network.find_hyperparameter(
-            ["use_log_moving_var"], DEFAULT_USE_LOG_MOVING_VAR)
+        moving_var_type = network.find_hyperparameter(
+            ["moving_var_type"], DEFAULT_MOVING_VAR_TYPE)
+        epsilon = network.find_hyperparameter(["epsilon"], 1e-8)
 
-        if use_log_moving_var:
+        if moving_var_type == "log_var":
+            moving_var_init_value = 1.0
+
             def transform_var(v):
-                epsilon = network.find_hyperparameter(["epsilon"], 1e-8)
                 return T.log(v + epsilon)
 
             def untransform_var(v):
                 return T.exp(v)
-        else:
+        elif moving_var_type == "var":
+            moving_var_init_value = 0.0
+
             def transform_var(v):
                 return v
 
             def untransform_var(v):
                 return v
+        elif moving_var_type == "inv_std":
+            moving_var_init_value = 0.0
+
+            def transform_var(v):
+                return T.inv(T.sqrt(v) + epsilon)
+
+            def untransform_var(v):
+                return T.sqr(T.inv(v))
 
         moving_mean = network.get_vw("mean").variable
         moving_var = network.get_vw("var").variable
         in_mean = network.get_vw("in_mean").variable
         in_var = network.get_vw("in_var").variable
-        alpha = network.find_hyperparameter(["alpha"], 0.05)
+        alpha = network.find_hyperparameter(["alpha"], 0.1)
 
         updates = [
             (moving_mean, moving_mean * (1 - alpha) + in_mean * alpha),
