@@ -44,7 +44,9 @@ from .theanode import (ClipNode,
                        DisconnectedGradNode,
                        MeanNode,
                        MaxNode,
-                       SumNode)
+                       SumNode,
+                       FlattenNode,
+                       AddBroadcastNode)
 from .combine import (BaseChildrenCombineNode,
                       BaseInputCombineNode,
                       InputFunctionCombineNode,

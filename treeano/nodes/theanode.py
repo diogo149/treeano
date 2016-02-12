@@ -2,6 +2,7 @@
 nodes which behave similar to theano functions
 """
 
+import numpy as np
 import theano
 import theano.tensor as T
 
@@ -355,5 +356,55 @@ class SumNode(core.NodeImpl):
             "default",
             variable=out_var,
             shape=out_shape,
+            tags={"output"}
+        )
+
+
+@core.register_node("flatten")
+class FlattenNode(core.NodeImpl):
+
+    """
+    like theano.tensor.flatten
+    """
+
+    hyperparameter_names = ("outdim",)
+
+    def compute_output(self, network, in_vw):
+        outdim = network.find_hyperparameter(["outdim"])
+
+        out_var = T.flatten(in_vw.variable, outdim=outdim)
+
+        trailing_axes = in_vw.shape[outdim - 1:]
+        if any(a is None for a in trailing_axes):
+            final_size = None
+        else:
+            final_size = np.prod(trailing_axes)
+
+        out_shape = in_vw.shape[:outdim - 1] + (final_size,)
+
+        network.create_vw(
+            "default",
+            variable=out_var,
+            shape=out_shape,
+            tags={"output"}
+        )
+
+
+@core.register_node("add_broadcast")
+class AddBroadcastNode(core.NodeImpl):
+
+    """
+    like theano.tensor.addbroadcast
+    """
+
+    hyperparameter_names = ("axes",)
+
+    def compute_output(self, network, in_vw):
+        axes = network.find_hyperparameter(["axes"])
+        out_var = T.addbroadcast(in_vw.variable, *axes)
+        network.create_vw(
+            "default",
+            variable=out_var,
+            shape=in_vw.shape,
             tags={"output"}
         )
