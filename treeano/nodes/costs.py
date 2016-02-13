@@ -186,7 +186,7 @@ class L2PenaltyNode(core.Wrapper1NodeImpl):
     def init_long_range_dependencies(self, network):
         network.forward_output_to(
             network.find_hyperparameter(["cost_reference"]),
-            from_key="l2_penalty",
+            from_key="l2_cost",
             to_key=network.find_hyperparameter(["to_key"],
                                                "l2"))
 
@@ -202,7 +202,7 @@ class L2PenaltyNode(core.Wrapper1NodeImpl):
         l2_penalty_var = utils.smart_sum([T.sum(w ** 2) for w in weights])
 
         network.create_vw(
-            name="l2_penalty",
+            name="l2_cost",
             variable=l2_penalty_var * l2_weight,
             shape=(),
             tags={"monitor"},
