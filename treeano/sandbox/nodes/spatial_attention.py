@@ -61,3 +61,43 @@ class SpatialFeaturePointNode(treeano.NodeImpl):
             shape=out_shape,
             tags={"output"},
         )
+
+
+def standard_tanh_spatial_attention_2d_node(name,
+                                            num_filters,
+                                            output_channels=None):
+    """
+    NOTE: if output_channels is not None, this should be the number
+    of input channels
+    """
+    conv2_filters = 1 if output_channels is None else output_channels
+
+    attention_nodes = [
+        tn.Conv2DWithBiasNode(name + "_conv1",
+                              filter_size=(1, 1),
+                              num_filters=num_filters),
+        tn.ScaledTanhNode(name + "_tanh"),
+        tn.Conv2DWithBiasNode(name + "_conv2",
+                              filter_size=(1, 1),
+                              num_filters=conv2_filters),
+        tn.SpatialSoftmaxNode(name + "_softmax"),
+    ]
+    if output_channels is None:
+        attention_nodes += [
+            tn.AddBroadcastNode(name + "_bcast", axes=(1,)),
+        ]
+
+    # multiply input by attention weights and sum across spatial dimensions
+    nodes = [
+        tn.ElementwiseProductNode(
+            name + "_combine",
+            [tn.IdentityNode(name + "_input"),
+             tn.SequentialNode(
+                 name + "_attention",
+                 attention_nodes
+            )]),
+        tn.FlattenNode(name + "_flatten", outdim=3),
+        tn.SumNode(name + "_sum", axis=2),
+    ]
+
+    return tn.SequentialNode(name, nodes)
