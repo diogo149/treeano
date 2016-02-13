@@ -25,12 +25,12 @@ class SimpleBatchNormalizationNode(treeano.NodeImpl):
 
     hyperparameter_names = ("epsilon", "inits")
 
-    def _make_param(self, network, in_vw, name):
+    def _make_param(self, network, in_vw, name, tags):
         return network.create_vw(
             name=name,
             is_shared=True,
             shape=(in_vw.shape[1],),
-            tags={"parameter"},
+            tags={"parameter"}.union(tags),
             default_inits=[],
         ).variable.dimshuffle("x", 0, *(["x"] * (in_vw.ndim - 2)))
 
@@ -40,8 +40,8 @@ class SimpleBatchNormalizationNode(treeano.NodeImpl):
         axis = tuple([i for i in range(in_vw.ndim) if i != 1])
         mean = in_var.mean(axis=axis, keepdims=True)
         std = T.sqrt(in_var.var(axis=axis, keepdims=True) + epsilon)
-        gamma = self._make_param(network, in_vw, "gamma")
-        beta = self._make_param(network, in_vw, "beta")
+        gamma = self._make_param(network, in_vw, "gamma", {"weight"})
+        beta = self._make_param(network, in_vw, "beta", {"bias"})
         network.create_vw(
             name="default",
             # NOTE: 20150907 it is faster to combine gamma + std
@@ -55,16 +55,16 @@ class SimpleBatchNormalizationNode(treeano.NodeImpl):
 @treeano.register_node("no_scale_batch_normalization")
 class NoScaleBatchNormalizationNode(treeano.NodeImpl):
 
-    # TODO copy-pasted from above
+    # TODO mostly copy-pasted from above
 
     hyperparameter_names = ("epsilon", "inits")
 
-    def _make_param(self, network, in_vw, name):
+    def _make_param(self, network, in_vw, name, tags):
         return network.create_vw(
             name=name,
             is_shared=True,
             shape=(in_vw.shape[1],),
-            tags={"parameter"},
+            tags={"parameter"}.union(tags),
             default_inits=[],
         ).variable.dimshuffle("x", 0, *(["x"] * (in_vw.ndim - 2)))
 
@@ -74,7 +74,7 @@ class NoScaleBatchNormalizationNode(treeano.NodeImpl):
         axis = tuple([i for i in range(in_vw.ndim) if i != 1])
         mean = in_var.mean(axis=axis, keepdims=True)
         std = T.sqrt(in_var.var(axis=axis, keepdims=True) + epsilon)
-        beta = self._make_param(network, in_vw, "beta")
+        beta = self._make_param(network, in_vw, "beta", {"bias"})
         network.create_vw(
             name="default",
             # NOTE: 20150907 it is faster to divide by std before
@@ -190,7 +190,7 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
             name="gamma",
             is_shared=True,
             shape=parameter_shape,
-            tags={"parameter"},
+            tags={"parameter", "weight"},
             # TODO try uniform init between -0.05 and 0.05
             default_inits=[],
             default_inits_hyperparameters=["gamma_inits",
@@ -200,7 +200,7 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
             name="beta",
             is_shared=True,
             shape=parameter_shape,
-            tags={"parameter"},
+            tags={"parameter", "bias"},
             default_inits=[],
             default_inits_hyperparameters=["beta_inits",
                                            "inits"],
