@@ -126,3 +126,5 @@ def GradualSimpleBatchNormalizationNode(name):
         name,
         {"early": bn.SimpleBatchNormalizationNode(name + "_bn"),
          "late": tn.IdentityNode(name + "_identity")})
+
+GradualBNNode = GradualSimpleBatchNormalizationNode
