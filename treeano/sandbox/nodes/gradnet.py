@@ -118,3 +118,11 @@ def GradNetOptimizerInterpolationNode(name,
                        {"subtree": early_subtree, "cost": cost_ref})
     # NOTE: need separate node to forward hyperparameter
     return _GradNetOptimizerInterpolationNode(name, early_node, **kwargs)
+
+
+def GradualSimpleBatchNormalizationNode(name):
+    from treeano.sandbox.nodes import batch_normalization as bn
+    return GradNetInterpolationNode(
+        name,
+        {"early": bn.SimpleBatchNormalizationNode(name + "_bn"),
+         "late": tn.IdentityNode(name + "_identity")})
