@@ -191,8 +191,8 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
             is_shared=True,
             shape=parameter_shape,
             tags={"parameter"},
-            # TODO try uniform init between 0.95 and 1.05
-            default_inits=[treeano.inits.ConstantInit(1.0)],
+            # TODO try uniform init between -0.05 and 0.05
+            default_inits=[],
             default_inits_hyperparameters=["gamma_inits",
                                            "inits"],
         )
@@ -293,7 +293,7 @@ class AdvancedBatchNormalizationNode(treeano.NodeImpl):
         epsilon = network.find_hyperparameter(["epsilon"], 1e-8)
         denom = T.sqrt(effective_var + epsilon)
         scaled = (in_vw.variable - effective_mean) / denom
-        output = gamma * scaled + beta
+        output = (1 + gamma) * scaled + beta
         network.create_vw(
             name="default",
             variable=output,
