@@ -63,6 +63,13 @@ class SpatialFeaturePointNode(treeano.NodeImpl):
         )
 
 
+def spatial_soft_argmax(name):
+    return tn.SequentialNode(
+        name,
+        [tn.SpatialSoftmaxNode(name + "_spatial_softmax"),
+         SpatialFeaturePointNode(name + "_feature_point")])
+
+
 def standard_tanh_spatial_attention_2d_node(name,
                                             num_filters,
                                             output_channels=None):
