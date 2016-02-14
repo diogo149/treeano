@@ -408,3 +408,22 @@ class AddBroadcastNode(core.NodeImpl):
             shape=in_vw.shape,
             tags={"output"}
         )
+
+
+@core.register_node("pow")
+class PowNode(core.NodeImpl):
+
+    """
+    like theano.tensor.pow
+    """
+
+    hyperparameter_names = ("exponent",)
+
+    def compute_output(self, network, in_vw):
+        exponent = network.find_hyperparameter(["exponent"])
+        network.create_vw(
+            "default",
+            variable=T.pow(in_vw.variable, exponent),
+            shape=in_vw.shape,
+            tags={"output"}
+        )
