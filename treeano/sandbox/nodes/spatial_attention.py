@@ -63,6 +63,33 @@ class SpatialFeaturePointNode(treeano.NodeImpl):
         )
 
 
+@treeano.register_node("pairwise_distance")
+class PairwiseDistanceNode(treeano.NodeImpl):
+
+    """
+    takes in output of spatial feature point node and computes
+    pairwise distances for all feature points
+    """
+
+    def compute_output(self, network, in_vw):
+        assert in_vw.ndim == 3
+        in_var = in_vw.variable
+
+        pairwise_diff = (in_var.dimshuffle(0, 1, "x", 2)
+                         - in_var.dimshuffle(0, "x", 1, 2))
+        pairwise_dist = T.sqrt(T.sqr(pairwise_diff).sum(axis=3) + 1e-8)
+        pairwise_dist = pairwise_dist.flatten(2)
+
+        out_shape = (in_vw.shape[0], in_vw.shape[1] ** 2)
+
+        network.create_vw(
+            "default",
+            variable=pairwise_dist,
+            shape=out_shape,
+            tags={"output"},
+        )
+
+
 def spatial_soft_argmax(name):
     return tn.SequentialNode(
         name,
