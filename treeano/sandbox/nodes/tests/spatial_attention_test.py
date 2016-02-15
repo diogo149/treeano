@@ -35,3 +35,19 @@ def test_spatial_feature_point_node():
                                fn(x)[0],
                                rtol=1e-5,
                                atol=1e-8)
+
+
+def test_pairwise_distance_node():
+    # NOTE: only tests shape calculation
+    network = tn.SequentialNode(
+        "s",
+        [tn.InputNode("i", shape=(2, 2, 2, 3)),
+         spatial_attention.SpatialFeaturePointNode("fp"),
+         spatial_attention.PairwiseDistanceNode("pd")]
+    ).network()
+
+    fn = network.function(["i"], ["s"])
+    x = np.zeros((2, 2, 2, 3), dtype=fX)
+
+    nt.assert_equal((2, 4),
+                    fn(x)[0].shape)
