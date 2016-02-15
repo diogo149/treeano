@@ -132,12 +132,13 @@ def residual_block_conv_2d(name,
                            activation_node=tn.ReLUNode,
                            input_num_filters=None,
                            projection_filter_size=(1, 1),
+                           increase_dim_stride=(2, 2),
                            no_identity=False):
     assert num_layers >= 2
 
     if increase_dim is not None:
         assert increase_dim in {"projection", "pad"}
-        first_stride = (2, 2)
+        first_stride = increase_dim_stride
         if increase_dim == "projection":
             identity_node = tn.SequentialNode(
                 name + "_projection",
@@ -146,7 +147,6 @@ def residual_block_conv_2d(name,
                            filter_size=projection_filter_size,
                            stride=first_stride,
                            pad="same"),
-                    # TODO try w/o bn
                     bn_node(name + "_projectionbn"),
                     # TODO try w/ relu
                  ])
