@@ -427,3 +427,28 @@ class PowNode(core.NodeImpl):
             shape=in_vw.shape,
             tags={"output"}
         )
+
+
+@core.register_node("pad")
+class PadNode(core.NodeImpl):
+
+    """
+    like treeano.theano_extensions.padding.pad
+    """
+
+    hyperparameter_names = ("padding",)
+
+    def compute_output(self, network, in_vw):
+        padding = network.find_hyperparameter(["padding"])
+
+        out_shape = list(in_vw.shape)
+        for i in range(in_vw.ndim):
+            if out_shape[i] is not None:
+                # FIXME make work for asymmetric padding
+                out_shape[i] += 2 * padding[i]
+        network.create_vw(
+            "default",
+            variable=theano_extensions.padding.pad(in_vw.variable, padding),
+            shape=out_shape,
+            tags={"output"}
+        )

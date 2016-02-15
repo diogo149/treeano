@@ -5,5 +5,6 @@ tree_probability
 
 
 from . import gradient
+from . import padding
 from . import tensor
 from .meshgrid import mgrid, ogrid
