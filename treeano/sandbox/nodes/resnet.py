@@ -147,8 +147,8 @@ def residual_block_conv_2d(name,
                            filter_size=projection_filter_size,
                            stride=first_stride,
                            pad="same"),
-                    bn_node(name + "_projectionbn"),
-                    # TODO try w/ relu
+                 bn_node(name + "_projectionbn"),
+                 # TODO try w/ relu
                  ])
         elif increase_dim == "pad":
             assert input_num_filters is not None
@@ -212,3 +212,27 @@ def resnet_init_block_conv_2d(*args, **kwargs):
     return residual_block_conv_2d(*args,
                                   conv_node=ResnetInitConv2DNode,
                                   **kwargs)
+
+
+def pool_with_projection_2d(name,
+                            projection_filters,
+                            stride=(2, 2),
+                            filter_size=(3, 3),
+                            bn_node=bn.BatchNormalizationNode):
+
+    pool_node = tn.MaxPool2DNode(name + "_pool",
+                                 pool_size=stride,
+                                 stride=stride)
+
+    projection_node = tn.SequentialNode(
+        name + "_projection",
+        [tn.Conv2DNode(name + "_projectionconv",
+                       num_filters=projection_filters,
+                       filter_size=filter_size,
+                       stride=stride,
+                       pad="same"),
+         bn_node(name + "_projectionbn"),
+         # TODO try w/ relu
+         ])
+
+    return tn.ConcatenateNode(name, [pool_node, projection_node])
