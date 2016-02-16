@@ -142,14 +142,16 @@ def residual_block_conv_2d(name,
         if increase_dim == "projection":
             identity_node = tn.SequentialNode(
                 name + "_projection",
-                [conv_node(name + "_projectionconv",
-                           num_filters=num_filters,
-                           filter_size=projection_filter_size,
-                           stride=first_stride,
-                           pad="same"),
-                 bn_node(name + "_projectionbn"),
-                 # TODO try w/ relu
-                 ])
+                [
+                    # TODO try using conv_node
+                    tn.Conv2DNode(name + "_projectionconv",
+                                  num_filters=num_filters,
+                                  filter_size=projection_filter_size,
+                                  stride=first_stride,
+                                  pad="same"),
+                    bn_node(name + "_projectionbn"),
+                    # TODO try w/ relu
+                ])
         elif increase_dim == "pad":
             assert input_num_filters is not None
             identity_node = tn.SequentialNode(
