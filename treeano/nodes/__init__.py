@@ -48,7 +48,8 @@ from .theanode import (ClipNode,
                        FlattenNode,
                        AddBroadcastNode,
                        PowNode,
-                       PadNode)
+                       PadNode,
+                       CumsumNode)
 from .combine import (BaseChildrenCombineNode,
                       BaseInputCombineNode,
                       InputFunctionCombineNode,

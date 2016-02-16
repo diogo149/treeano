@@ -452,3 +452,22 @@ class PadNode(core.NodeImpl):
             shape=out_shape,
             tags={"output"}
         )
+
+
+@core.register_node("cumsum")
+class CumsumNode(core.NodeImpl):
+
+    """
+    like theano.tensor.cumsum
+    """
+
+    hyperparameter_names = ("axis",)
+
+    def compute_output(self, network, in_vw):
+        axis = network.find_hyperparameter(["axis"])
+        network.create_vw(
+            "default",
+            variable=T.cumsum(in_vw.variable, axis=axis),
+            shape=in_vw.shape,
+            tags={"output"}
+        )
