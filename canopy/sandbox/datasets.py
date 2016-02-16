@@ -95,7 +95,8 @@ def cifar10(random_state=42, base_dir="~/cifar10", include_valid_split=True):
 def cifar100(random_state=42,
              base_dir="~/cifar100",
              fine_label_key="y",
-             coarse_label_key=None):
+             coarse_label_key=None,
+             include_valid_split=True):
     """
     x is in [0, 1] with shape (b, 3, 32, 32) and dtype floatX
     y is an int32 vector in range(100)
@@ -138,14 +139,17 @@ def cifar100(random_state=42,
     # read train data
     old_train = read_file(train_file)
     # split train and valid
-    train_idx, valid_idx = iter(sklearn.cross_validation.ShuffleSplit(
-        len(old_train["x"]),
-        n_iter=1,
-        test_size=10000,
-        random_state=random_state)).next()
-    train = {k: v[train_idx] for k, v in old_train.iteritems()}
-    valid = {k: v[valid_idx] for k, v in old_train.iteritems()}
-    return train, valid, test
+    if include_valid_split:
+        train_idx, valid_idx = iter(sklearn.cross_validation.ShuffleSplit(
+            len(old_train["x"]),
+            n_iter=1,
+            test_size=10000,
+            random_state=random_state)).next()
+        train = {k: v[train_idx] for k, v in old_train.iteritems()}
+        valid = {k: v[valid_idx] for k, v in old_train.iteritems()}
+        return train, valid, test
+    else:
+        return old_train, test
 
 
 def cluttered_mnist(base_dir="~/cluttered_mnist"):
