@@ -230,3 +230,17 @@ def pool_with_projection_2d(name,
          ])
 
     return tn.ConcatenateNode(name, [pool_node, projection_node])
+
+
+def forget_gate_conv_2d_node(name, num_filters, filter_size=(3, 3)):
+    return tn.ElementwiseProductNode(
+        name,
+        [tn.IdentityNode(name + "_identity"),
+         tn.SequentialNode(
+             name + "_forget",
+             [tn.Conv2DWithBiasNode(name + "_conv",
+                                    num_filters=num_filters,
+                                    filter_size=filter_size,
+                                    stride=(1, 1),
+                                    pad="same"),
+              tn.SigmoidNode(name + "_sigmoid")])])
