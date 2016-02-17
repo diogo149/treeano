@@ -134,8 +134,6 @@ def residual_block_conv_2d(name,
                            projection_filter_size=(1, 1),
                            increase_dim_stride=(2, 2),
                            no_identity=False):
-    assert num_layers >= 2
-
     if increase_dim is not None:
         assert increase_dim in {"projection", "pad"}
         first_stride = increase_dim_stride
@@ -181,24 +179,18 @@ def residual_block_conv_2d(name,
                 bn_node(name + "_bn%d" % i),
                 activation_node(name + "_activation%d" % i),
             ]
-        elif i == num_layers - 1:
-            # last conv
-            # ---
-            # same as middle convs, but no activation
-            nodes += [
-                conv_node(name + "_conv%d" % i,
-                          num_filters=num_filters,
-                          pad="same"),
-                bn_node(name + "_bn%d" % i),
-            ]
         else:
             nodes += [
                 conv_node(name + "_conv%d" % i,
                           num_filters=num_filters,
+                          stride=(1, 1),
                           pad="same"),
                 bn_node(name + "_bn%d" % i),
                 activation_node(name + "_activation%d" % i),
             ]
+    # for last conv, remove activation
+    nodes.pop()
+
     residual_node = tn.SequentialNode(name + "_seq", nodes)
 
     if no_identity:
