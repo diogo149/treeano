@@ -208,6 +208,42 @@ def resnet_init_block_conv_2d(*args, **kwargs):
                                   **kwargs)
 
 
+def resnet_init_projection_conv_2d(name,
+                                   num_filters,
+                                   num_layers,
+                                   bn_node=bn.BatchNormalizationNode,
+                                   activation_node=tn.ReLUNode,
+                                   stride=(1, 1)):
+    nodes = []
+    # first node
+    for i in range(num_layers):
+        if i == 0:
+            # first conv
+            # ---
+            # same as middle convs, but with stride
+            nodes += [
+                tn.Conv2DNode(name + "_conv%d" % i,
+                              num_filters=num_filters,
+                              stride=stride,
+                              pad="same"),
+                bn_node(name + "_bn%d" % i),
+                activation_node(name + "_activation%d" % i),
+            ]
+        else:
+            nodes += [
+                ResnetInitConv2DNode(name + "_conv%d" % i,
+                                     num_filters=num_filters,
+                                     stride=(1, 1),
+                                     pad="same"),
+                bn_node(name + "_bn%d" % i),
+                activation_node(name + "_activation%d" % i),
+            ]
+    # for last conv, remove activation
+    nodes.pop()
+
+    return tn.SequentialNode(name + "_seq", nodes)
+
+
 def pool_with_projection_2d(name,
                             projection_filters,
                             stride=(2, 2),
