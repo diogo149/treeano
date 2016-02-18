@@ -122,6 +122,62 @@ class SGDNode(StandardUpdatesNode):
                                                       grads)})
 
 
+# ############################ momentum ############################
+
+@core.register_node("momentum")
+class MomentumNode(core.Wrapper1NodeImpl):
+
+    """
+    node that transforms all incoming updates to parameters
+    in the subtree to use momentum
+    """
+
+    # TODO add way to filter parameters and only apply to a subset
+    hyperparameter_names = ("momentum",)
+
+    def mutate_update_deltas(self, network, update_deltas):
+        momentum = network.find_hyperparameter(["momentum"], 0.9)
+        shared_vws = network.find_vws_in_subtree(is_shared=True)
+        for vw in shared_vws:
+            var = vw.variable
+            if var in update_deltas:
+                velocity = network.create_vw(
+                    "momentum_velocity(%s)" % vw.name,
+                    shape=vw.shape,
+                    is_shared=True,
+                    tags={"state"},
+                    default_inits=[],
+                ).variable
+                delta = update_deltas[var]
+                new_velocity = momentum * velocity + delta
+                update_deltas[velocity] = new_velocity - velocity
+                update_deltas[var] = new_velocity
+
+
+@core.register_node("momentum_sgd")
+class MomentumSGDNode(core.WrapperNodeImpl):
+
+    """
+    node that provides updates via SGD + momentum
+    """
+
+    children_container = core.DictChildrenContainerSchema(
+        cost=core.ChildContainer,
+        subtree=core.ChildContainer,
+    )
+
+    hyperparameter_names = (SGDNode.hyperparameter_names
+                            + MomentumNode.hyperparameter_names)
+
+    def architecture_children(self):
+        children = self.raw_children()
+        momentum_node = MomentumNode(self.name + "_momentum",
+                                     children["subtree"])
+        new_children = {"subtree": momentum_node,
+                        "cost": children["cost"]}
+        return [SGDNode(self.name + "_sgd", new_children)]
+
+
 # ############################ nesterov momentum ############################
 
 @core.register_node("nesterov_momentum")
