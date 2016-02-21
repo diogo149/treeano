@@ -2,9 +2,7 @@ import numpy as np
 import theano
 import theano.tensor as T
 
-from treeano.sandbox.nodes.triplet_network import (triplet_network_indices,
-                                                   classification_triplet_loss,
-                                                   l2_norm)
+from treeano.sandbox.nodes import triplet_network as trip
 
 fX = theano.config.floatX
 
@@ -15,7 +13,7 @@ def test_triplet_network_indices():
               np.array([0, 1, 0, 1, 1, 1, 0], dtype=np.int32),
               np.array([0, 0, 1, 1], dtype=np.int32)]:
         y_true = T.constant(y)
-        symbolic_idxs = triplet_network_indices(y_true)
+        symbolic_idxs = trip.symmetric_idxs(y_true)
         idxs = symbolic_idxs.eval()
         assert np.alltrue(y[idxs[:, 0]] == y[idxs[:, 1]])
         assert np.alltrue(y[idxs[:, 2]] != y[idxs[:, 1]])
@@ -26,13 +24,14 @@ def test_classification_triplet_loss():
     y = np.array([0, 0, 1, 1], dtype=np.int32)
     y_true = T.constant(y)
     embeddings = theano.shared(np.random.randn(4, 128).astype(fX))
-    loss = classification_triplet_loss(embeddings, y_true)
+    loss = trip.deep_metric_learning_classification_triplet_loss(
+        embeddings, trip.symmetric_idxs(y_true))
     grad = T.grad(loss, [embeddings])[0]
     # SGD
     new_embeddings = (embeddings - 0.01 * grad)
     # set embeddings to have norm of 1
     new_embeddings2 = (new_embeddings
-                       / l2_norm(new_embeddings, axis=1, keepdims=True))
+                       / trip.l2_norm(new_embeddings, axis=1, keepdims=True))
     fn = theano.function([], [loss], updates={embeddings: new_embeddings2})
     prev_loss = np.inf
     for _ in range(200):
@@ -61,7 +60,8 @@ def test_classification_triplet_same_label():
     y = np.array([0, 0, 0], dtype=np.int32)
     y_true = T.constant(y)
     embeddings = theano.shared(np.random.randn(3, 128).astype(fX))
-    loss = classification_triplet_loss(embeddings, y_true)
+    loss = trip.deep_metric_learning_classification_triplet_loss(
+        embeddings, trip.symmetric_idxs(y_true))
     loss.eval()
 
 
@@ -71,6 +71,7 @@ def test_classification_triplet_same_embedding():
     y = np.array([0, 1, 0, 1], dtype=np.int32)
     y_true = T.constant(y)
     embeddings = theano.shared(np.zeros((4, 128), dtype=fX))
-    loss = classification_triplet_loss(embeddings, y_true)
+    loss = trip.deep_metric_learning_classification_triplet_loss(
+        embeddings, trip.symmetric_idxs(y_true))
     embeddings_g = T.grad(loss, embeddings)
     embeddings_g.eval()
