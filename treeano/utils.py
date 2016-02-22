@@ -185,6 +185,18 @@ def categorical_crossentropy_i32(pred, target):
     return T.nnet.categorical_crossentropy(pred, target)
 
 
+def weighted_binary_crossentropy(output, target, weight):
+    """
+    binary cross-entropy with a different weight for the positive class
+    """
+    return -(weight * target * T.log(output)
+             + (1.0 - target) * T.log(1.0 - output))
+
+
+def weighted_binary_crossentropy_fn(weight):
+    return functools.partial(weighted_binary_crossentropy, weight=weight)
+
+
 def linspace(start, stop, num):
     """
     like numpy.linspace
