@@ -88,3 +88,12 @@ def deep_metric_learning_classification_triplet_loss(embeddings, idxs):
     losses = pos_exp_dist / (pos_exp_dist + neg_exp_dist)
     loss_mean = T.mean(losses)
     return loss_mean
+
+
+def facenet_triplet_loss(embeddings, idxs, alpha=0.2):
+    """
+    loss based on http://arxiv.org/abs/1503.03832
+
+    alpha: margin
+    """
+    # FIXME
