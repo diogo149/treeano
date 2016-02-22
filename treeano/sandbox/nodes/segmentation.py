@@ -2,7 +2,7 @@ import theano
 import theano.tensor as T
 
 
-def negative_iou_differentiable(pred, target, epsilon=1e-3):
+def approximate_negative_iou(pred, target, epsilon=1e-3):
     """
     differentiable approximation to negative IOU
     """
