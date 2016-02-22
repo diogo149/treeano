@@ -12,7 +12,11 @@ def init_name_to_node(root_node):
         node = nodes.pop()
         name = node.name
         # make sure that all names are unique
-        assert name not in name_to_node
+        assert name not in name_to_node, dict(
+            name=name,
+            prev_node=name_to_node[name],
+            curr_node=node,
+        )
         name_to_node[name] = node
 
         # add children to stack
