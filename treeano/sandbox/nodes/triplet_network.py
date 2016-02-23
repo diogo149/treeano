@@ -96,4 +96,14 @@ def facenet_triplet_loss(embeddings, idxs, alpha=0.2):
 
     alpha: margin
     """
-    # FIXME
+    positives = embeddings[idxs[:, 0]]
+    references = embeddings[idxs[:, 1]]
+    negatives = embeddings[idxs[:, 2]]
+
+    def norm_squared(x):
+        return T.sum(T.sqr(x), axis=1)
+
+    losses = T.nnet.relu(norm_squared(references - positives)
+                         + alpha
+                         - norm_squared(references - negatives))
+    return T.mean(losses)
