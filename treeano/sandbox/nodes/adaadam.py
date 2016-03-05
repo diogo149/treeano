@@ -106,8 +106,12 @@ class AdaAdamNode(tn.StandardUpdatesNode):
             else:
                 denom_normalizer = 1
 
-            parameter_delta = - alpha_t * new_m / (denom * denom_normalizer
-                                                   + epsilon_hat)
+            if 1:
+                parameter_delta = - alpha_t * new_m / ((denom + epsilon_hat)
+                                                       * denom_normalizer)
+            else:
+                parameter_delta = - alpha_t * new_m / (denom * denom_normalizer
+                                                       + epsilon_hat)
 
             update_deltas[m] = new_m - m
             update_deltas[v] = new_v - v
