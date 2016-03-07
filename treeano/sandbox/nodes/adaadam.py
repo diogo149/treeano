@@ -102,7 +102,8 @@ class AdaAdamNode(tn.StandardUpdatesNode):
             denom = T.pow(new_v, 1. / w)
             # FIXME try w/ and w/o normalizer
             if 1:
-                denom_normalizer = orig_denom.sum() / denom.sum()
+                denom_normalizer = ((orig_denom.sum() + 1e-8)
+                                    / (denom.sum() + 1e-8))
             else:
                 denom_normalizer = 1
 
