@@ -28,6 +28,10 @@ class AdaAdamNode(tn.StandardUpdatesNode):
                                             0.999)
         epsilon = network.find_hyperparameter(["epsilon"],
                                               1e-8)
+        constant_root = network.find_hyperparameter(["constant_root"], None)
+        normalize_denominator = network.find_hyperparameter(
+            ["normalize_denominator"],
+            True)
 
         update_deltas = treeano.UpdateDeltas()
 
@@ -51,7 +55,7 @@ class AdaAdamNode(tn.StandardUpdatesNode):
         epsilon_hat = epsilon * v_unbias_term
         alpha_t = alpha * v_unbias_term / m_unbias_term
 
-        if 1:
+        if constant_root is None:
             h = network.find_hyperparameter(["half_life_batches"])
             # heuristic: set as half_life_batches by default
             c = network.find_hyperparameter(["clipped_batches"], h)
@@ -68,7 +72,7 @@ class AdaAdamNode(tn.StandardUpdatesNode):
             # TODO parameterize bounds
             w = T.clip(w_state, 2.0, 10000.0)
         else:
-            w = 3.0
+            w = constant_root
 
         for parameter_vw, grad in zip(parameter_vws, grads):
             # biased 1st moment estimate
@@ -101,7 +105,7 @@ class AdaAdamNode(tn.StandardUpdatesNode):
             orig_denom = T.sqrt(new_v)
             denom = T.pow(new_v, 1. / w)
             # FIXME try w/ and w/o normalizer
-            if 1:
+            if normalize_denominator:
                 denom_normalizer = ((orig_denom.sum() + 1e-8)
                                     / (denom.sum() + 1e-8))
             else:
