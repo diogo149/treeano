@@ -563,7 +563,7 @@ class RMSPropNode(StandardUpdatesNode):
 
     def _new_update_deltas(self, network, parameter_vws, grads):
         learning_rate = network.find_hyperparameter(["learning_rate"], 1e-2)
-        rho = network.find_hyperparameter(["rho"], 0.99)
+        rho = network.find_hyperparameter(["rho"], 0.9)
         epsilon = network.find_hyperparameter(["epsilon"], 1e-8)
 
         update_deltas = core.UpdateDeltas()
