@@ -22,8 +22,8 @@ install:
   - pip install nose
 script:
   - THEANO_FLAGS=floatX=float32 nosetests -v
-cache:
-  - apt
-  - directories:
-    - $HOME/.cache/pip
-    - $HOME/.theano
+# cache:
+#   - apt
+#   - directories:
+#     - $HOME/.cache/pip
+#     - $HOME/.theano
