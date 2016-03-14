@@ -20,6 +20,7 @@ install:
   - pip install -U lasagne
   - pip install -U scikit-image
   - pip install -U nose
+  - pip install -U matplotlib
 script:
   - THEANO_FLAGS=floatX=float32 nosetests -v
 cache:
