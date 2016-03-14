@@ -12,18 +12,18 @@ addons:
 before_install:
   - pip install -U pip
 install:
-  - pip install numpy
-  - pip install https://github.com/theano/theano/archive/master.zip
-  - pip install networkx
-  - pip install six
-  - pip install toolz
-  - pip install lasagne
-  - pip install scikit-image
-  - pip install nose
+  - pip install -U numpy
+  - pip install -U https://github.com/theano/theano/archive/master.zip
+  - pip install -U networkx
+  - pip install -U six
+  - pip install -U toolz
+  - pip install -U lasagne
+  - pip install -U scikit-image
+  - pip install -U nose
 script:
   - THEANO_FLAGS=floatX=float32 nosetests -v
-# cache:
-#   - apt
-#   - directories:
-#     - $HOME/.cache/pip
-#     - $HOME/.theano
+cache:
+  - apt
+  - directories:
+    - $HOME/.cache/pip
+    - $HOME/.theano
