@@ -15,6 +15,7 @@ WARNING:
 - optional
   - pydot
   - pygraphviz
+  - matplotlib
   - scikit-learn (for the examples)
   - nose (for tests)
   - scikit-image (for tests / spatial transformer)
