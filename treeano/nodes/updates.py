@@ -578,13 +578,126 @@ class RMSPropNode(StandardUpdatesNode):
             ).variable
 
             # updated gradients squared
-            new_g2_avg = rho * g2_avg + (1 - rho) * grad ** 2
+            new_g2_avg = rho * g2_avg + (1 - rho) * T.sqr(grad)
 
             # calculate update
             deltas = -learning_rate * grad / T.sqrt(new_g2_avg + epsilon)
 
             update_deltas[g2_avg] = new_g2_avg - g2_avg
             update_deltas[parameter_vw.variable] = deltas
+
+        return update_deltas
+
+
+@core.register_node("deepmind_rmsprop")
+class DeepMindRMSPropNode(StandardUpdatesNode):
+
+    """
+    see:
+    - https://github.com/soumith/deepmind-atari/blob/master/dqn/NeuralQLearner.lua
+    - https://groups.google.com/forum/#!topic/deep-q-learning/_RFrmUALBQo
+    """
+
+    hyperparameter_names = ("learning_rate",
+                            "rho",
+                            "epsilon")
+
+    def _new_update_deltas(self, network, parameter_vws, grads):
+        learning_rate = network.find_hyperparameter(["learning_rate"], 1e-2)
+        rho = network.find_hyperparameter(["rho"], 0.95)
+        epsilon = network.find_hyperparameter(["epsilon"], 0.01)
+
+        update_deltas = core.UpdateDeltas()
+        for parameter_vw, grad in zip(parameter_vws, grads):
+            # exponential moving average of gradients
+            g_avg = network.create_vw(
+                "deepmind_rmsprop_gradients(%s)" % parameter_vw.name,
+                shape=parameter_vw.shape,
+                is_shared=True,
+                tags={"state"},
+                default_inits=[],
+            ).variable
+            # exponential moving average of gradients squared
+            g2_avg = network.create_vw(
+                "deepmind_rmsprop_gradients_squared(%s)" % parameter_vw.name,
+                shape=parameter_vw.shape,
+                is_shared=True,
+                tags={"state"},
+                default_inits=[],
+            ).variable
+
+            # updated gradients squared
+            new_g_avg = rho * g_avg + (1 - rho) * grad
+            new_g2_avg = rho * g2_avg + (1 - rho) * T.sqr(grad)
+
+            # calculate update
+            std = T.sqrt(new_g2_avg - T.sqr(new_g_avg) + epsilon)
+            deltas = -learning_rate * grad / std
+
+            update_deltas[g_avg] = new_g_avg - g_avg
+            update_deltas[g2_avg] = new_g2_avg - g2_avg
+            update_deltas[parameter_vw.variable] = deltas
+
+        return update_deltas
+
+
+@core.register_node("graves_rmsprop")
+class GravesRMSPropNode(StandardUpdatesNode):
+
+    """
+    from http://arxiv.org/pdf/1308.0850v5.pdf
+    """
+
+    hyperparameter_names = ("learning_rate",
+                            "rho",
+                            "momentum",
+                            "epsilon")
+
+    def _new_update_deltas(self, network, parameter_vws, grads):
+        learning_rate = network.find_hyperparameter(["learning_rate"], 1e-4)
+        rho = network.find_hyperparameter(["rho"], 0.95)
+        momentum = network.find_hyperparameter(["momentum"], 0.9)
+        epsilon = network.find_hyperparameter(["epsilon"], 1e-4)
+
+        update_deltas = core.UpdateDeltas()
+        for parameter_vw, grad in zip(parameter_vws, grads):
+            # momentum term
+            delta = network.create_vw(
+                "graves_rmsprop_delta(%s)" % parameter_vw.name,
+                shape=parameter_vw.shape,
+                is_shared=True,
+                tags={"state"},
+                default_inits=[],
+            ).variable
+            # exponential moving average of gradients
+            g_avg = network.create_vw(
+                "graves_rmsprop_gradients(%s)" % parameter_vw.name,
+                shape=parameter_vw.shape,
+                is_shared=True,
+                tags={"state"},
+                default_inits=[],
+            ).variable
+            # exponential moving average of gradients squared
+            g2_avg = network.create_vw(
+                "graves_rmsprop_gradients_squared(%s)" % parameter_vw.name,
+                shape=parameter_vw.shape,
+                is_shared=True,
+                tags={"state"},
+                default_inits=[],
+            ).variable
+
+            # updated gradients squared
+            new_g_avg = rho * g_avg + (1 - rho) * grad
+            new_g2_avg = rho * g2_avg + (1 - rho) * T.sqr(grad)
+
+            # calculate update
+            std = T.sqrt(new_g2_avg - T.sqr(new_g_avg) + epsilon)
+            new_delta = momentum * delta - learning_rate * grad / std
+
+            update_deltas[g_avg] = new_g_avg - g_avg
+            update_deltas[g2_avg] = new_g2_avg - g2_avg
+            update_deltas[delta] = new_delta - delta
+            update_deltas[parameter_vw.variable] = new_delta
 
         return update_deltas
 

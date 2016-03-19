@@ -115,6 +115,8 @@ from .updates import (UpdateScaleNode,
                       ADADELTANode,
                       ADAGRADNode,
                       RMSPropNode,
+                      DeepMindRMSPropNode,
+                      GravesRMSPropNode,
                       RpropNode)
 from .costs import (AggregatorNode,
                     ElementwiseCostNode,
