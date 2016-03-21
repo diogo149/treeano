@@ -123,6 +123,34 @@ class ResnetInitConv2DWithBiasNode(treeano.Wrapper0NodeImpl):
                                 broadcastable_axes=(0, 2, 3))])]
 
 
+@treeano.register_node("zero_last_axis_partition")
+class _ZeroLastAxisPartitionNode(treeano.NodeImpl):
+
+    """
+    zeros out a fraction of a tensor
+    """
+
+    hyperparameter_names = ("zero_ratio",
+                            "axis")
+
+    def compute_output(self, network, in_vw):
+        zero_ratio = network.find_hyperparameter(["zero_ratio"])
+        axis = network.find_hyperparameter(["axis"], 1)
+
+        in_var = in_vw.variable
+        size = treeano.utils.as_fX(in_var.shape[axis])
+        num_zeros = T.round(zero_ratio * size).astype("int32")
+        idxs = [None] * (axis - 1) + [slice(-num_zeros, None)]
+        out_var = T.set_subtensor(in_var[idxs], 0)
+
+        network.create_vw(
+            "default",
+            variable=out_var,
+            shape=in_vw.shape,
+            tags={"output"},
+        )
+
+
 def residual_block_conv_2d(name,
                            num_filters,
                            num_layers,
