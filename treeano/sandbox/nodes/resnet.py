@@ -268,6 +268,177 @@ def resnet_init_projection_conv_2d(name,
     return tn.SequentialNode(name + "_seq", nodes)
 
 
+def preactivation_residual_block_conv_2d(name,
+                                         num_filters,
+                                         num_layers,
+                                         increase_dim=None,
+                                         initial_block=False,
+                                         conv_node=tn.Conv2DNode,
+                                         bn_node=bn.BatchNormalizationNode,
+                                         activation_node=tn.ReLUNode,
+                                         input_num_filters=None,
+                                         projection_filter_size=(1, 1),
+                                         increase_dim_stride=(2, 2),
+                                         no_identity=False):
+    """
+    from http://arxiv.org/abs/1603.05027
+    """
+    if increase_dim is not None:
+        assert increase_dim in {"projection", "pad"}
+        first_stride = increase_dim_stride
+        if increase_dim == "projection":
+            # TODO remove pre-activation when initial block
+            assert not initial_block
+            identity_node = tn.SequentialNode(
+                name + "_projection",
+                [
+                    bn_node(name + "_projectionbn"),
+                    activation_node(name + "_projectionactivation"),
+                    tn.Conv2DNode(name + "_projectionconv",
+                                  num_filters=num_filters,
+                                  filter_size=projection_filter_size,
+                                  stride=first_stride,
+                                  pad="same"),
+                ])
+        elif increase_dim == "pad":
+            assert input_num_filters is not None
+            identity_node = tn.SequentialNode(
+                name + "_pad",
+                [StridedDownsampleNode(
+                    name + "_stride",
+                    strides=(1, 1) + first_stride),
+                 tn.PadNode(
+                     name + "_addpad",
+                     padding=(0, (num_filters - input_num_filters) // 2, 0, 0))])
+    else:
+        first_stride = (1, 1)
+        identity_node = tn.IdentityNode(name + "_identity")
+
+    nodes = []
+    # first node
+    for i in range(num_layers):
+        if i == 0:
+            # first conv
+            # ---
+            # maybe remove initial activation
+            if not initial_block:
+                nodes += [
+                    bn_node(name + "_bn%d" % i),
+                    activation_node(name + "_activation%d" % i),
+                ]
+            # same as middle convs, but with stride
+            nodes += [
+                conv_node(name + "_conv%d" % i,
+                          num_filters=num_filters,
+                          stride=first_stride,
+                          pad="same"),
+            ]
+        else:
+            nodes += [
+                bn_node(name + "_bn%d" % i),
+                activation_node(name + "_activation%d" % i),
+                conv_node(name + "_conv%d" % i,
+                          num_filters=num_filters,
+                          stride=(1, 1),
+                          pad="same"),
+            ]
+
+    residual_node = tn.SequentialNode(name + "_seq", nodes)
+
+    if no_identity:
+        # ability to disable resnet connections
+        return residual_node
+    else:
+        return tn.ElementwiseSumNode(name,
+                                     [identity_node,
+                                      residual_node])
+
+
+def generalized_residual(name, nodes, identity_ratio=0.5):
+    return tn.ElementwiseSumNode(
+        name,
+        [_ZeroLastAxisPartitionNode(name + "_zero",
+                                    zero_ratio=(1 - identity_ratio)),
+         tn.SequentialNode(
+             name + "_seq",
+             nodes)])
+
+
+def generalized_residual_conv_2d(name,
+                                 num_filters,
+                                 include_preactivation=True,
+                                 bn_node=bn.BatchNormalizationNode,
+                                 activation_node=tn.ReLUNode,
+                                 conv_node=tn.Conv2DNode,
+                                 identity_ratio=0.5):
+    """
+    generalized resnet block based on pre-activation resnet
+    """
+    nodes = []
+    if include_preactivation:
+        # add pre-activation
+        nodes += [
+            bn_node(name + "_bn"),
+            activation_node(name + "_activation"),
+        ]
+    nodes += [conv_node(name + "_conv", num_filters=num_filters)]
+    return generalized_residual(name, nodes, identity_ratio)
+
+
+def generalized_residual_block_conv_2d(name,
+                                       num_filters,
+                                       num_layers,
+                                       increase_dim=None,
+                                       initial_block=False,
+                                       bn_node=bn.BatchNormalizationNode,
+                                       activation_node=tn.ReLUNode,
+                                       conv_node=tn.Conv2DNode,
+                                       identity_ratio=0.5,
+                                       input_num_filters=None,
+                                       projection_filter_size=(1, 1),
+                                       increase_dim_stride=(2, 2),
+                                       no_identity=False):
+    if no_identity:  # HACK for compatibility
+        identity_ratio = 0
+    nodes = []
+    if increase_dim is not None:
+        if increase_dim == "projection":
+            # TODO remove pre-activation when initial block
+            assert not initial_block
+            # TODO maybe reduce layers by 1 to have same depth
+            # num_layers -= 1
+            nodes += [tn.SequentialNode(
+                name + "_projection",
+                [bn_node(name + "_projectionbn"),
+                 activation_node(name + "_projectionactivation"),
+                 tn.Conv2DNode(name + "_projectionconv",
+                               num_filters=num_filters,
+                               filter_size=projection_filter_size,
+                               stride=increase_dim_stride,
+                               pad="same")])]
+        elif increase_dim == "pad":
+            assert input_num_filters is not None
+            nodes += [tn.SequentialNode(
+                name + "_pad",
+                [StridedDownsampleNode(
+                    name + "_stride",
+                    strides=(1, 1) + increase_dim_stride),
+                 tn.PadNode(
+                     name + "_addpad",
+                     padding=(0, (num_filters - input_num_filters) // 2, 0, 0))])]
+        else:
+            raise ValueError(increase_dim)
+    for i in range(num_layers):
+        include_preactivation = (not initial_block) or (i != 0)
+        nodes += [generalized_residual_conv_2d(
+            "%s_%d" % (name, i),
+            include_preactivation=include_preactivation,
+            num_filters=num_filters,
+            activation_node=activation_node,
+            identity_ratio=identity_ratio)]
+    return tn.SequentialNode(name, nodes)
+
+
 def pool_with_projection_2d(name,
                             projection_filters,
                             stride=(2, 2),
