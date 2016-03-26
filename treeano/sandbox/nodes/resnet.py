@@ -461,7 +461,10 @@ def pool_with_projection_2d(name,
     return tn.ConcatenateNode(name, [pool_node, projection_node])
 
 
-def forget_gate_conv_2d_node(name, num_filters, filter_size=(3, 3)):
+def forget_gate_conv_2d_node(name,
+                             num_filters,
+                             filter_size=(3, 3),
+                             initial_bias=0):
     return tn.ElementwiseProductNode(
         name,
         [tn.IdentityNode(name + "_identity"),
@@ -472,4 +475,5 @@ def forget_gate_conv_2d_node(name, num_filters, filter_size=(3, 3)):
                                     filter_size=filter_size,
                                     stride=(1, 1),
                                     pad="same"),
+              tn.AddConstantNode(name + "_initial_bias", value=initial_bias),
               tn.SigmoidNode(name + "_sigmoid")])])
