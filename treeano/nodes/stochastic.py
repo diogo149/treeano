@@ -20,7 +20,8 @@ class DropoutNode(core.NodeImpl):
 
     hyperparameter_names = ("dropout_probability",
                             "probability",
-                            "p")
+                            "p",
+                            "deterministic")
 
     def compute_output(self, network, in_vw):
         deterministic = network.find_hyperparameter(["deterministic"])
@@ -70,7 +71,8 @@ class GaussianDropoutNode(core.NodeImpl):
     hyperparameter_names = ("sigma",
                             "dropout_probability",
                             "probability",
-                            "p")
+                            "p",
+                            "deterministic")
 
     def compute_output(self, network, in_vw):
         deterministic = network.find_hyperparameter(["deterministic"])
