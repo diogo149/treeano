@@ -125,7 +125,8 @@ from .costs import (AggregatorNode,
                     L2PenaltyNode)
 from .stochastic import (DropoutNode,
                          GaussianDropoutNode,
-                         SpatialDropoutNode)
+                         SpatialDropoutNode,
+                         GaussianSpatialDropoutNode)
 from .composite import (DenseNode,
                         DenseCombineNode,
                         Conv2DWithBiasNode)

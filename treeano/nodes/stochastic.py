@@ -168,3 +168,46 @@ class SpatialDropoutNode(core.NodeImpl):
                 shape=in_vw.shape,
                 tags={"output"},
             )
+
+
+@core.register_node("gaussian_spatial_dropout")
+class GaussianSpatialDropoutNode(core.NodeImpl):
+
+    """
+    node that adds gaussian noise to each filters
+    """
+
+    hyperparameter_names = ("sigma",
+                            "deterministic")
+
+    def compute_output(self, network, in_vw):
+        deterministic = network.find_hyperparameter(["deterministic"])
+        sigma = network.find_hyperparameter(["sigma"], 0)
+        if deterministic or sigma == 0:
+            network.copy_vw(
+                name="default",
+                previous_vw=in_vw,
+                tags={"output"},
+            )
+        else:
+            mask_shape = in_vw.shape
+            if any(s is None for s in mask_shape):
+                # NOTE: this uses symbolic shape - can be an issue with
+                # theano.clone and random numbers
+                # https://groups.google.com/forum/#!topic/theano-users/P7Mv7Fg0kUs
+                warnings.warn("using symbolic shape for dropout mask, "
+                              "which can be an issue with theano.clone")
+                mask_shape = in_vw.symbolic_shape()
+            # FIXME generalize to other shape dimensions.
+            # assume this is of the form bc01 (batch, channel, width, height)
+            mask_shape = mask_shape[:2]
+            # TODO save this state so that we can seed the rng
+            srng = MRG_RandomStreams()
+            mask = srng.normal(mask_shape, avg=1.0, std=sigma, dtype=fX)
+            mask = mask.dimshuffle(0, 1, 'x', 'x')
+            network.create_vw(
+                "default",
+                variable=in_vw.variable * mask,
+                shape=in_vw.shape,
+                tags={"output"},
+            )
