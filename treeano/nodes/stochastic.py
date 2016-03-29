@@ -125,7 +125,8 @@ class SpatialDropoutNode(core.NodeImpl):
 
     hyperparameter_names = ("dropout_probability",
                             "probability",
-                            "p")
+                            "p",
+                            "deterministic")
 
     def compute_output(self, network, in_vw):
         deterministic = network.find_hyperparameter(["deterministic"])
