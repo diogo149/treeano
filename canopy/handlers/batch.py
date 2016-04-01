@@ -10,6 +10,24 @@ import treeano
 from . import base
 
 
+def datamap_batch_merge(datamaps, scalar_merge="mean"):
+    """
+    concatenates along the batch axis, and merges scalars using a given method
+    """
+    if scalar_merge == "mean":
+        scalar_merge = np.mean
+    elif scalar_merge == "identity":
+        scalar_merge = treeano.utils.identity
+    res = {}
+    for key in datamaps[0].keys():  # assumes at least 1 datamap
+        outputs = [r[key] for r in datamaps]
+        if treeano.utils.is_ndarray(outputs[0]) and outputs[0].shape:
+            res[key] = np.concatenate(outputs)
+        else:
+            res[key] = scalar_merge(outputs)
+    return res
+
+
 class SplitInput(base.NetworkHandlerImpl):
 
     """
@@ -29,8 +47,6 @@ class SplitInput(base.NetworkHandlerImpl):
                  scalar_merge="mean"):
         self.split_size = split_size
         self.keys = keys
-        if scalar_merge == "mean":
-            scalar_merge = np.mean
         self.scalar_merge = scalar_merge
 
     def call(self, fn, in_dict, *args, **kwargs):
@@ -54,14 +70,7 @@ class SplitInput(base.NetworkHandlerImpl):
                 inner_map[key] = in_dict[key][split_slice]
             result = fn(inner_map, *args, **kwargs)
             results.append(result)
-        res = {}
-        for key in results[0].keys():  # assumes at least 1 split
-            outputs = [r[key] for r in results]
-            if outputs[0].shape:
-                res[key] = np.concatenate(outputs)
-            else:
-                res[key] = self.scalar_merge(outputs)
-        return res
+        return datamap_batch_merge(results, scalar_merge=self.scalar_merge)
 
 split_input = SplitInput
 
@@ -96,10 +105,6 @@ class ChunkVariables(base.NetworkHandlerImpl):
         # TODO figure out serialization of theano vars
         self.variables = variables
         self.batch_size = batch_size
-        if scalar_merge == "mean":
-            scalar_merge = np.mean
-        elif scalar_merge == "identity":
-            scalar_merge = treeano.utils.identity
         self.scalar_merge = scalar_merge
         # TODO actually use cache
         self.cache = cache
@@ -170,13 +175,7 @@ class ChunkVariables(base.NetworkHandlerImpl):
             in_dict[self.BATCH_IDX_KEY] = i
             result = self._inner_handler(state, in_dict, *args, **kwargs)
             results.append(result)
-        res = {}
-        for key in results[0].keys():  # assumes at least 1 batch
-            outputs = [r[key] for r in results]
-            if outputs[0].shape:
-                res[key] = np.concatenate(outputs)
-            else:
-                res[key] = self.scalar_merge(outputs)
+        res = datamap_batch_merge(results, scalar_merge=self.scalar_merge)
         # free memory
         # may be inefficient if not necessary
         with state.time("data_free"):
