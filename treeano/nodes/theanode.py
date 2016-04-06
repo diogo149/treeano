@@ -487,7 +487,15 @@ class IndexNode(core.NodeImpl):
         idxs = network.find_hyperparameter(["idxs"])
 
         out_shape = []
-        for idx, s in zip(idxs, in_vw.shape):
+        for i, s in enumerate(in_vw.shape):
+            if i >= len(idxs):
+                # copy original shape if idxs does not have same length
+                # as shape
+                out_shape.append(s)
+                continue
+            else:
+                idx = idxs[i]
+
             if isinstance(idx, slice):
                 if s is None:
                     # we don't know input or output size
