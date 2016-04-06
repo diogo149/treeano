@@ -6,6 +6,7 @@ import numpy as np
 import theano
 import theano.tensor as T
 
+from .. import utils
 from .. import core
 from .. import theano_extensions
 
@@ -470,4 +471,41 @@ class CumsumNode(core.NodeImpl):
             variable=T.cumsum(in_vw.variable, axis=axis),
             shape=in_vw.shape,
             tags={"output"}
+        )
+
+
+@core.register_node("index")
+class IndexNode(core.NodeImpl):
+
+    """
+    like indexing a theano tensor
+    """
+
+    hyperparameter_names = ("idxs",)
+
+    def compute_output(self, network, in_vw):
+        idxs = network.find_hyperparameter(["idxs"])
+
+        out_shape = []
+        for idx, s in zip(idxs, in_vw.shape):
+            if isinstance(idx, slice):
+                if s is None:
+                    # we don't know input or output size
+                    out_shape.append(None)
+                else:
+                    # calculate number of indices
+                    out_shape.append(len(np.zeros(s)[idx]))
+            elif utils.is_integral(idx):
+                # lose this axis
+                pass
+            else:
+                # TODO can handle cases when idx is a tensor
+                raise ValueError
+
+        out_var = in_vw.variable[tuple(idxs)]
+        network.create_vw(
+            "default",
+            variable=out_var,
+            shape=tuple(out_shape),
+            tags={"output"},
         )
