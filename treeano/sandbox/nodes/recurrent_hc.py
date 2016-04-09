@@ -11,6 +11,18 @@ import treeano.nodes as tn
 fX = theano.config.floatX
 
 
+def bidirectional(name, node_constructor, axis=2, **kwargs):
+    """
+    eg.
+    bidirectional("birnn", RNNNode, num_units=32)
+    """
+    return tn.ConcatenateNode(
+        name,
+        [node_constructor(name + "_forward", backwards=False, **kwargs),
+         node_constructor(name + "_backward", backwards=True, **kwargs)],
+        axis=axis)
+
+
 @treeano.register_node("hc_rnn")
 class RNNNode(treeano.NodeImpl):
 
@@ -119,15 +131,3 @@ class RNNNode(treeano.NodeImpl):
                 shape=out_shape,
                 tags={"output"},
             )
-
-
-def bidirectional(name, node_constructor, axis=2, **kwargs):
-    """
-    eg.
-    bidirectional("birnn", RNNNode, num_units=32)
-    """
-    return tn.ConcatenateNode(
-        name,
-        [node_constructor(name + "_forward", backwards=False, **kwargs),
-         node_constructor(name + "_backward", backwards=True, **kwargs)],
-        axis=axis)
