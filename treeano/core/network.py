@@ -400,8 +400,8 @@ class RelativeNetwork(object):
         creates a new output variable for the current node
         """
         # we don't want to overwrite an existing value
-        assert name not in self._state['current_variables']
-        assert name not in self._state['original_variables']
+        assert name not in self._state['current_variables'], name
+        assert name not in self._state['original_variables'], name
         # FIXME have a defined name separator
         new_name = "%s:%s" % (self._name, name)
         # same metadata about the network
