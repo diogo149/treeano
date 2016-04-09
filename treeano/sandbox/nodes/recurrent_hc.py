@@ -158,27 +158,56 @@ class LSTMNode(treeano.NodeImpl):
         num_inputs = in_vw.shape[-1]
         assert num_inputs is not None
 
-        i_to_h_weight = network.create_vw(
-            name="i_to_h_weight",
-            is_shared=True,
-            shape=(num_inputs, 4 * num_units),
-            tags={"parameter", "weight"},
-            default_inits=[],
-        ).variable
-        h_to_h_weight = network.create_vw(
-            name="h_to_h_weight",
-            is_shared=True,
-            shape=(num_units, 4 * num_units),
-            tags={"parameter", "weight"},
-            default_inits=[],
-        ).variable
-        b = network.create_vw(
-            name="bias",
-            is_shared=True,
-            shape=(4 * num_units,),
-            tags={"parameter", "bias"},
-            default_inits=[],
-        ).variable
+        def make_bias(name):
+            return network.create_vw(
+                name=name + "_bias",
+                is_shared=True,
+                shape=(num_units,),
+                tags={"parameter", "bias"},
+                default_inits=[],
+            ).variable
+
+        def make_weight(name, in_units):
+            return network.create_vw(
+                name=name + "_weight",
+                is_shared=True,
+                shape=(in_units, num_units),
+                tags={"parameter", "weight"},
+                default_inits=[],
+            ).variable
+
+        def make_i_weight(name):
+            return make_weight("i_to_%s" % name, num_inputs)
+
+        def make_h_weight(name):
+            return make_weight("h_to_%s" % name, num_units)
+
+        i_to_update = make_i_weight("update")
+        i_to_forgetgate = make_i_weight("forgetgate")
+        i_to_inputgate = make_i_weight("inputgate")
+        i_to_outputgate = make_i_weight("outputgate")
+        h_to_update = make_h_weight("update")
+        h_to_forgetgate = make_h_weight("forgetgate")
+        h_to_inputgate = make_h_weight("inputgate")
+        h_to_outputgate = make_h_weight("outputgate")
+        update_bias = make_bias("update")
+        forgetgate_bias = make_bias("forgetgate") + forget_gate_bias
+        inputgate_bias = make_bias("inputgate")
+        outputgate_bias = make_bias("outputgate")
+
+        i_to_h = T.concatenate([i_to_update,
+                                i_to_forgetgate,
+                                i_to_inputgate,
+                                i_to_outputgate], axis=1)
+        nonsequences = [h_to_update,
+                        h_to_forgetgate,
+                        h_to_inputgate,
+                        h_to_outputgate]
+        h_to_h = T.concatenate(nonsequences, axis=1)
+        b = T.concatenate([update_bias,
+                           forgetgate_bias,
+                           inputgate_bias,
+                           outputgate_bias])
 
         def make_initial_state(name):
             if learn_init:
@@ -186,8 +215,8 @@ class LSTMNode(treeano.NodeImpl):
                     name=name,
                     is_shared=True,
                     shape=(num_units,),
-                    tags={"parameter", "bias"},
-                    default_inits=[],
+                    tags = {"parameter", "bias"},
+                    default_inits = [],
                 ).variable
             else:
                 initial_state = T.zeros((num_units,), dtype=fX)
@@ -202,12 +231,12 @@ class LSTMNode(treeano.NodeImpl):
 
         in_var = in_vw.variable
         # precompute i to h and bias
-        in_feats = T.dot(in_var, i_to_h_weight) + b.dimshuffle("x", "x", 0)
+        in_feats = T.dot(in_var, i_to_h) + b.dimshuffle("x", "x", 0)
         # convert axes to order (time, batch, features)
         in_feats = in_feats.dimshuffle(1, 0, 2)
 
-        def step(in_feat, c_prev, h_prev, _h_to_h_weight):
-            logit = in_feat + T.dot(h_prev, h_to_h_weight)
+        def step(in_feat, c_prev, h_prev, *_nonsequences):
+            logit = in_feat + T.dot(h_prev, h_to_h)
             if grad_clip is not None:
                 logit = theano.gradient.grad_clip(logit, -grad_clip, grad_clip)
 
@@ -229,7 +258,7 @@ class LSTMNode(treeano.NodeImpl):
                                     sequences=[in_feats],
                                     outputs_info=[initial_cell_state,
                                                   initial_hidden_state],
-                                    non_sequences=[h_to_h_weight],
+                                    non_sequences=nonsequences,
                                     go_backwards=backwards,
                                     strict=True)
 
