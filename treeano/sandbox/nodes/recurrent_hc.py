@@ -246,7 +246,7 @@ class LSTMNode(treeano.NodeImpl):
             output_logit = logit[:, num_units * 3:]
 
             update = T.tanh(update_logit)
-            forget_gate = T.nnet.sigmoid(forget_logit + forget_gate_bias)
+            forget_gate = T.nnet.sigmoid(forget_logit)
             input_gate = T.nnet.sigmoid(input_logit)
             output_gate = T.nnet.sigmoid(output_logit)
 
