@@ -1,5 +1,6 @@
 from . import simple
 from . import theanode
+from . import embedding
 from . import combine
 from . import containers
 from . import activations
@@ -51,6 +52,7 @@ from .theanode import (ClipNode,
                        PadNode,
                        CumsumNode,
                        IndexNode)
+from .embedding import (EmbeddingNode)
 from .combine import (BaseChildrenCombineNode,
                       BaseInputCombineNode,
                       InputFunctionCombineNode,
