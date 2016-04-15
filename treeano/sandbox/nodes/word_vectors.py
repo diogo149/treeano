@@ -1,6 +1,32 @@
+import numpy as np
+import scipy.sparse
 import theano
 import theano.tensor as T
 import treeano
+
+
+def coocurrence_matrix(data, vocabulary_size, window_size=5):
+    """
+    default hyperparameters based on insights from
+    "Improving Distributional Similarity with Lessons Learned from Word Embeddings"
+    - no dynamic context window
+    - no subsampling
+    - no deleting rare words
+
+    idxs:
+    list of list of indexes
+    """
+    m = scipy.sparse.lil_matrix((vocabulary_size,) * 2)
+    windows = list(range(-window_size, window_size + 1))
+    windows.remove(0)
+    for sentence in data:
+        for i, idx1 in enumerate(sentence):
+            for w in windows:
+                j = i + w
+                if 0 <= j < len(sentence):
+                    idx2 = sentence[j]
+                    m[idx1, idx2] += 1
+    return m
 
 
 def pointwise_mutual_information(counts_both,
