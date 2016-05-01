@@ -16,7 +16,7 @@ import treeano.nodes as tn
 fX = theano.config.floatX
 
 
-# seems to work better
+# done to match cuDNN
 DEFAULT_MOVING_VAR_TYPE = "inv_std"
 
 
