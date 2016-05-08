@@ -52,6 +52,16 @@ class WeightInit(SharedInit):
     def predicate(self, vw):
         return "weight" in vw.tags
 
+
+class LinearWeightInit(WeightInit):
+
+    """
+    base class for initializations that work on linear weights (ndim >= 2)
+    """
+
+    def predicate(self, vw):
+        return super(LinearWeightInit, self).predicate(vw) and vw.ndim >= 2
+
 # ############################# implementations #############################
 
 

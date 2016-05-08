@@ -7,6 +7,7 @@ import theano.tensor as T
 # for importing
 from ..core.inits import (SharedInit,
                           WeightInit,
+                          LinearWeightInit,
                           ConstantInit,
                           ZeroInit,
                           PreallocatedInit)
@@ -127,7 +128,7 @@ def xavier_magnitude(shape, in_axes, out_axes, gain):
     return base * gain
 
 
-class XavierNormalInit(WeightInit):
+class XavierNormalInit(LinearWeightInit):
 
     def __init__(self,
                  gain=1,
@@ -147,7 +148,7 @@ class XavierNormalInit(WeightInit):
                                 size=vw.shape)
 
 
-class XavierUniformInit(WeightInit):
+class XavierUniformInit(LinearWeightInit):
 
     def __init__(self,
                  gain=1,
@@ -156,6 +157,9 @@ class XavierUniformInit(WeightInit):
         self.gain = gain
         self.in_axes = in_axes
         self.out_axes = out_axes
+
+    def predicate(self, vw):
+        return super(XavierUniformInit, self).predicate(vw) and vw.ndim >= 2
 
     def initialize_value(self, vw):
         magnitude = np.sqrt(3) * xavier_magnitude(vw.shape,
@@ -186,7 +190,7 @@ def he_magnitude(shape, in_axes, out_axes, gain):
     return base * gain
 
 
-class HeNormalInit(WeightInit):
+class HeNormalInit(LinearWeightInit):
 
     def __init__(self,
                  gain=1,
@@ -195,6 +199,9 @@ class HeNormalInit(WeightInit):
         self.gain = gain
         self.in_axes = in_axes
         self.out_axes = out_axes
+
+    def predicate(self, vw):
+        return super(HeNormalInit, self).predicate(vw) and vw.ndim >= 2
 
     def initialize_value(self, vw):
         magnitude = he_magnitude(vw.shape,
@@ -206,7 +213,7 @@ class HeNormalInit(WeightInit):
                                 size=vw.shape)
 
 
-class HeUniformInit(WeightInit):
+class HeUniformInit(LinearWeightInit):
 
     def __init__(self,
                  gain=1,
@@ -226,7 +233,7 @@ class HeUniformInit(WeightInit):
                                  size=vw.shape)
 
 
-class OrthogonalInit(WeightInit):
+class OrthogonalInit(LinearWeightInit):
 
     """
     http://arxiv.org/abs/1312.6120
@@ -259,7 +266,7 @@ class OrthogonalInit(WeightInit):
         return self.gain * q.reshape(shape)
 
 
-class SparseInit(WeightInit):
+class SparseInit(LinearWeightInit):
 
     def __init__(self, ratio, weights_init, sparse_axes, sparse_init=None):
         """
@@ -315,7 +322,7 @@ class SparseInit(WeightInit):
         return res
 
 
-class RandomWalkInit(WeightInit):
+class RandomWalkInit(LinearWeightInit):
 
     """
     from
