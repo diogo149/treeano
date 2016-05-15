@@ -60,7 +60,7 @@ class OverwriteGrad(six.with_metaclass(abc.ABCMeta, object)):
         # memoizes an OpFromGraph instance per tensor type
         self.ops = {}
 
-    def __call__(self, x):
+    def __call__(self, *args):
         # OpFromGraph is oblique to Theano optimizations, so we need to move
         # things to GPU ourselves if needed.
         if theano.sandbox.cuda.cuda_enabled:
@@ -68,26 +68,26 @@ class OverwriteGrad(six.with_metaclass(abc.ABCMeta, object)):
         else:
             maybe_to_gpu = lambda x: x
         # move the input to GPU if needed.
-        x = maybe_to_gpu(x)
+        args = map(maybe_to_gpu, args)
         # note the tensor type of the input variable to the fn
         # (mainly dimensionality and dtype); we need to create a fitting Op.
-        tensor_type = x.type
+        tensor_types = tuple([arg.type for arg in args])
         # create a suitable Op if not yet done
-        if tensor_type not in self.ops:
+        if tensor_types not in self.ops:
             # create an input variable of the correct type
-            inp = tensor_type()
+            inps = [tensor_type() for tensor_type in tensor_types]
             # pass it through the fn (and move to GPU if needed)
-            outp = maybe_to_gpu(self.fn(inp))
+            outp = maybe_to_gpu(self.fn(*inps))
             # fix the forward expression
-            op = theano.OpFromGraph([inp], [outp])
+            op = theano.OpFromGraph(inps, [outp])
             # keep a reference to previous gradient
             op.overwritten_grad = op.grad
             # replace the gradient with our own
             op.grad = self.grad
             # Finally, we memoize the new Op
-            self.ops[tensor_type] = op
+            self.ops[tensor_types] = op
         # apply the memoized Op to the input we got
-        return self.ops[tensor_type](x)
+        return self.ops[tensor_types](*args)
 
     @abc.abstractmethod
     def grad(self, inputs, out_grads):
