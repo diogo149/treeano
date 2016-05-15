@@ -85,6 +85,31 @@ class NoScaleBatchNormalizationNode(treeano.NodeImpl):
         )
 
 
+@treeano.register_node("simple_batch_mean_normalization")
+class SimpleBatchMeanNormalizationNode(treeano.NodeImpl):
+
+    def _make_param(self, network, in_vw, name, tags):
+        return network.create_vw(
+            name=name,
+            is_shared=True,
+            shape=(in_vw.shape[1],),
+            tags={"parameter"}.union(tags),
+            default_inits=[],
+        ).variable.dimshuffle("x", 0, *(["x"] * (in_vw.ndim - 2)))
+
+    def compute_output(self, network, in_vw):
+        in_var = in_vw.variable
+        axis = tuple([i for i in range(in_vw.ndim) if i != 1])
+        mean = in_var.mean(axis=axis, keepdims=True)
+        beta = self._make_param(network, in_vw, "beta", {"bias"})
+        network.create_vw(
+            name="default",
+            variable=in_var - mean + beta,
+            shape=in_vw.shape,
+            tags={"output"},
+        )
+
+
 @treeano.register_node("advanced_batch_normalization")
 class AdvancedBatchNormalizationNode(treeano.NodeImpl):
 
