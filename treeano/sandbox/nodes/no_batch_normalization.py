@@ -8,6 +8,32 @@ import treeano.nodes as tn
 fX = theano.config.floatX
 
 
+def no_mean_softmax(x, axis=1):
+    """
+    similar to stable softmax, but using mean instead of max
+    """
+    # TODO test performance on axis
+    # if this way is slow, could reshape, do the softmax, then reshape back
+    if axis == tuple(range(1, x.ndim)):
+        # reshape, do softmax, then reshape back, in order to be differentiable
+        # TODO could do reshape trick for any set of sequential axes
+        # that end with last (eg. 2,3), not only when starting with axis 1
+        return no_mean_softmax(x.flatten(2)).reshape(x.shape)
+    else:
+        e_x = T.exp(x - x.mean(axis=axis, keepdims=True))
+        out = e_x / e_x.sum(axis=axis, keepdims=True)
+        return out
+
+
+@treeano.register_node("no_mean_softmax")
+class NoMeanSoftmaxNode(tn.BaseActivationNode):
+    hyperparameter_names = ("axis",)
+
+    def activation(self, network, in_vw):
+        axis = network.find_hyperparameter(["axis"], 1)
+        return no_mean_softmax(in_vw.variable, axis=axis)
+
+
 @treeano.register_node("no_batch_normalization")
 class NoBatchNormalizationNode(treeano.NodeImpl):
 
