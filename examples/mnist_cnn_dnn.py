@@ -92,7 +92,7 @@ def validate(in_dict, results_dict):
     results_dict["valid_cost"] = valid_out["cost"]
     results_dict["valid_time"] = valid_out["valid_time"]
     results_dict["valid_accuracy"] = sklearn.metrics.accuracy_score(
-        valid, predicted_classes)
+        valid["y"], predicted_classes)
 
 train_fn = canopy.handled_fn(
     network,
