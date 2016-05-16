@@ -3,6 +3,7 @@ import abc
 import six
 import theano
 import theano.tensor as T
+import treeano
 
 fX = theano.config.floatX
 
@@ -61,6 +62,14 @@ class OverwriteGrad(six.with_metaclass(abc.ABCMeta, object)):
         self.ops = {}
 
     def __call__(self, *args):
+        # constants needs to be manually converted to tensors
+        def try_convert_tensor(arg):
+            if treeano.utils.is_variable(arg):
+                return arg
+            else:
+                return T.constant(arg, dtype=fX)
+
+        args = map(try_convert_tensor, args)
         # OpFromGraph is oblique to Theano optimizations, so we need to move
         # things to GPU ourselves if needed.
         if theano.sandbox.cuda.cuda_enabled:
