@@ -185,12 +185,15 @@ def categorical_crossentropy_i32(pred, target):
     return T.nnet.categorical_crossentropy(pred, target)
 
 
-def weighted_binary_crossentropy(output, target, weight):
+def weighted_binary_crossentropy(output, target, weight=1):
     """
     binary cross-entropy with a different weight for the positive class
     """
-    return -(weight * target * T.log(output)
-             + (1.0 - target) * T.log(1.0 - output))
+    if weight == 1:
+        return T.nnet.binary_crossentropy(output, target)
+    else:
+        return -(weight * target * T.log(output)
+                 + (1.0 - target) * T.log(1.0 - output))
 
 
 def weighted_binary_crossentropy_fn(weight):
