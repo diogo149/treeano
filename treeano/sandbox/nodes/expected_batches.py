@@ -214,7 +214,7 @@ class ScaleHyperparameterNode(BaseExpectedBatchesNode):
     input_keys = ("child_output",)
 
     def init_state(self, network):
-        super(GradualDropoutNode, self).init_state(network)
+        super(ScaleHyperparameterNode, self).init_state(network)
 
         # forward to child
         child, = self.architecture_children()
