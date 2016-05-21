@@ -13,7 +13,7 @@ class BaseExpectedBatchesNode(treeano.NodeImpl):
 
     def init_state(self, network):
         expected_batches = network.find_hyperparameter(["expected_batches"])
-
+        expected_batches = treeano.utils.as_fX(expected_batches)
         batch_idx = network.create_vw(
             name="batch_idx",
             is_shared=True,
@@ -32,7 +32,7 @@ class BaseExpectedBatchesNode(treeano.NodeImpl):
     def new_update_deltas(self, network):
         batch_idx = network.get_vw("batch_idx").variable
         ud = treeano.UpdateDeltas()
-        ud[batch_idx] = 1
+        ud[batch_idx] = treeano.utils.as_fX(1)
         return ud
 
     def get_progress(self, network):
