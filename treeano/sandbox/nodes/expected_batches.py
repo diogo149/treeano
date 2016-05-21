@@ -199,3 +199,57 @@ def GradualBatchNormalization(name, **kwargs):
             {"early": bn.BatchNormalizationNode(name + "_bn"),
              "late": tn.IdentityNode(name + "_identity")}),
         **kwargs)
+
+
+@treeano.register_node("scale_hyperparameter")
+class ScaleHyperparameterNode(BaseExpectedBatchesNode):
+
+    hyperparameter_names = ("hyperparameter",
+                            "start_percent",
+                            "end_percent",
+                            "start_scale",
+                            "end_scale",
+                            "scale")
+    children_container = treeano.core.ChildContainer
+    input_keys = ("child_output",)
+
+    def init_state(self, network):
+        super(GradualDropoutNode, self).init_state(network)
+
+        # forward to child
+        child, = self.architecture_children()
+        network.forward_input_to(child.name)
+        network.take_output_from(child.name, to_key="child_output")
+
+        # calculate probability
+        progress = self.get_progress(network)
+        start_percent = network.find_hyperparameter(["start_percent"], 0)
+        end_percent = network.find_hyperparameter(["end_percent"], 0.2)
+
+        late_gate = T.clip((progress - start_percent) / (end_percent - start_percent),
+                           0,
+                           1)
+
+        hyperparameter = network.find_hyperparameter(["hyperparameter"])
+        prev_hp = network.find_hyperparameter([hyperparameter])
+        start_scale = network.find_hyperparameter(["start_scale"], 1)
+        end_scale = network.find_hyperparameter(["end_scale", "scale"])
+
+        scale = end_scale * late_gate + start_scale * (1 - late_gate)
+        value = prev_hp * scale
+
+        network.set_hyperparameter(self.name, hyperparameter, value)
+
+        # create vw for monitoring
+        network.create_vw(
+            name="scale",
+            variable=scale,
+            shape=(),
+            tags={"hyperparameter", "monitor"},
+        )
+        network.create_vw(
+            name="hyperparameter",
+            variable=value,
+            shape=(),
+            tags={"hyperparameter", "monitor"},
+        )
