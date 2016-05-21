@@ -22,15 +22,19 @@ def test_scale_hyperparameter():
         end_percent=1.0,
         scale=0.1,
         expected_batches=2,
-    )
+    ).network()
 
     fn = network.function([], ["c"], include_updates=True)
 
-    nt.assert_equal(42.0,
-                    fn()[0])
-    nt.assert_equal(42.0 * 0.55,
-                    fn()[0])
-    nt.assert_equal(42.0 * 0.1,
-                    fn()[0])
-    nt.assert_equal(42.0 * 0.1,
-                    fn()[0])
+    np.testing.assert_allclose(42.0,
+                               fn()[0],
+                               rtol=1e-5)
+    np.testing.assert_allclose(42.0 * 0.55,
+                               fn()[0],
+                               rtol=1e-5)
+    np.testing.assert_allclose(42.0 * 0.1,
+                               fn()[0],
+                               rtol=1e-5)
+    np.testing.assert_allclose(42.0 * 0.1,
+                               fn()[0],
+                               rtol=1e-5)
