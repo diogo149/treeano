@@ -41,3 +41,16 @@ def hard_bootstrapping_binary_crossentropy_fn(num_taken,
                              num_taken=num_taken,
                              num_skipped=num_skipped,
                              weight=weight)
+
+
+def hard_bootstrap_aggregator(loss, num_taken, num_skipped=0):
+    flat_loss = loss.flatten(2)
+    sorted_flat_loss = T.sort(flat_loss, axis=1)
+    chosen_loss = sorted_flat_loss[:, -(num_taken + num_skipped):-num_skipped]
+    return chosen_loss.mean()
+
+
+def hard_bootstrap_aggregator_fn(num_taken, num_skipped=0):
+    return functools.partial(hard_bootstrap_aggregator,
+                             num_taken=num_taken,
+                             num_skipped=num_skipped)
