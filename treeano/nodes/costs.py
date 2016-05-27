@@ -126,6 +126,7 @@ class AuxiliaryCostNode(core.WrapperNodeImpl):
     children_container = core.DictChildrenContainerSchema(
         target=core.ChildContainer,
         pre_cost=core.ChildContainer,
+        weight=core.ChildContainer,
     )
     hyperparameter_names = ("cost_reference",
                             "cost_function",
@@ -140,12 +141,13 @@ class AuxiliaryCostNode(core.WrapperNodeImpl):
         if "pre_cost" in children:
             nodes.append(children["pre_cost"])
 
+        cost_children = {"pred": simple.IdentityNode(self.name + "_identity"),
+                         "target": target}
+        if "weight" in children:
+            cost_children["weight"] = children["weight"]
         # TODO parameterize cost node (to one that may not just be a function)
         # ie. something stateful
-        nodes.append(TotalCostNode(
-            self.name + "_cost",
-            {"pred": simple.IdentityNode(self.name + "_identity"),
-             "target": target}))
+        nodes.append(TotalCostNode(self.name + "_cost", cost_children))
         nodes += [
             simple.MultiplyConstantNode(
                 self.name + "_multiplyweight"),
