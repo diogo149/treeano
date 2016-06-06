@@ -20,7 +20,8 @@ def test_scale_hyperparameter():
         hyperparameter="value",
         start_percent=0.,
         end_percent=1.0,
-        scale=0.1,
+        start_scale=1.0,
+        end_scale=0.1,
         expected_batches=2,
     ).network()
 
