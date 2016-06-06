@@ -15,7 +15,7 @@ def pool_output_length(input_size,
     """
     calculates the output size along a single axis for a pooling operation
 
-    logic from theano.tensor.signal.DownsampleFactorMax.out_shape
+    logic from theano.tensor.signal.pool.Pool.out_shape
     """
     if input_size is None:
         return None
