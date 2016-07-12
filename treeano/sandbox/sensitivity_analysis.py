@@ -104,6 +104,8 @@ def customizable_sensitivity_analysis_fn(input_name,
     assert "input" not in inputs
     assert "idx" not in inputs
 
+    # make a copy of inputs so that we can mutate
+    inputs = dict(inputs)
     inputs["input"] = input_name
     fn = canopy.handled_fn(network,
                            handlers=handlers,
