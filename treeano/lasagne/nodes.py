@@ -114,10 +114,10 @@ class LasagneApplyUpdatesNode(BaseLasagneUpdatesNode):
     node that provides updates via a provided fn, given cost and parameters
     """
 
-    hyperparameter_names = ("fn",)
+    hyperparameter_names = ("update_fn", "fn")
 
     def _lasagne_updates(self, network, parameter_variables, grads):
-        update_fn = network.find_hyperparameter(["fn"])
+        update_fn = network.find_hyperparameter(["update_fn", "fn"])
         return update_fn(grads, parameter_variables)
 
 
