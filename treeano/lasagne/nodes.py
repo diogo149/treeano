@@ -43,7 +43,7 @@ def wrap_lasagne_node(network, in_vw, param_kwargs, constructor, kwargs):
     )
 
 
-class LasagneUpdatesNode(nodes.StandardUpdatesNode):
+class BaseLasagneUpdatesNode(nodes.StandardUpdatesNode):
 
     """
     node that wraps lasagne update functions
@@ -107,8 +107,22 @@ def ReLUNode(name):
 # ################################# updates #################################
 
 
+@core.register_node("lasagne_apply_updates")
+class LasagneApplyUpdatesNode(BaseLasagneUpdatesNode):
+
+    """
+    node that provides updates via a provided fn, given cost and parameters
+    """
+
+    hyperparameter_names = ("fn",)
+
+    def _lasagne_updates(self, network, parameter_variables, grads):
+        update_fn = network.find_hyperparameter(["fn"])
+        return update_fn(grads, parameter_variables)
+
+
 @core.register_node("lasagne_sgd")
-class SGDNode(LasagneUpdatesNode):
+class SGDNode(BaseLasagneUpdatesNode):
 
     """
     node that provides updates via SGD
@@ -126,7 +140,7 @@ class SGDNode(LasagneUpdatesNode):
 
 
 @core.register_node("lasagne_nesterov_momentum")
-class NesterovMomentumNode(LasagneUpdatesNode):
+class NesterovMomentumNode(BaseLasagneUpdatesNode):
 
     """
     node that provides updates via SGD
