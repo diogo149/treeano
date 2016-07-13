@@ -49,11 +49,6 @@ class LasagneUpdatesNode(nodes.StandardUpdatesNode):
     node that wraps lasagne update functions
     """
 
-    hyperparameter_names = ("cost_reference",
-                            "reference",
-                            "sgd_learning_rate",
-                            "learning_rate")
-
     def _new_update_deltas(self, network, parameters, grads):
         parameter_variables = [p.variable for p in parameters]
         updates = self._lasagne_updates(network, parameter_variables, grads)
