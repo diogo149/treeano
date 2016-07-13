@@ -67,7 +67,8 @@ def sensitivity_analysis_fn(input_name,
     fn = canopy.handled_fn(network,
                            handlers=handlers,
                            inputs={"input": input_name},
-                           outputs={})
+                           outputs={},
+                           **kwargs)
 
     def inner(in_val, idx_val):
         return fn({"input": in_val, "idx": idx_val})["outputs"]
@@ -81,7 +82,6 @@ def customizable_sensitivity_analysis_fn(input_name,
                                          handlers,
                                          inputs,
                                          outputs=None,
-                                         *args,
                                          **kwargs):
     """
     returns a function from input to sensitivity analysis heatmap
@@ -110,6 +110,7 @@ def customizable_sensitivity_analysis_fn(input_name,
     fn = canopy.handled_fn(network,
                            handlers=handlers,
                            inputs=inputs,
-                           outputs=outputs)
+                           outputs=outputs,
+                           **kwargs)
 
     return fn
