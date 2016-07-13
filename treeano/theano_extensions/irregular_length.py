@@ -19,6 +19,34 @@ def group_irregular_length_tensors(tensors):
     return grouped, lengths
 
 
+def ungroup_irregular_length_numpy(x, lengths, pad=True):
+    """
+    ungroups a grouped irregular length numpy tensor into
+    a list of tensors
+
+    pad: if False, returns a list of tensors with different shape.
+    if True, returns a single tensor with 0 padding
+    """
+    assert lengths.ndim == 1
+    if pad:
+        res_shape = lengths.shape + (lengths.max(),) + x.shape[1:]
+        res = np.zeros(res_shape, dtype=x.dtype)
+        start_idx = 0
+        for idx, l in enumerate(lengths.astype(int)):
+            end_idx = start_idx + l
+            res[idx, :l] = x[start_idx:end_idx]
+            start_idx = end_idx
+        return res
+    else:
+        res = []
+        start_idx = 0
+        for idx, l in enumerate(lengths.astype(int)):
+            end_idx = start_idx + l
+            res.append(x[start_idx:end_idx])
+            start_idx = end_idx
+        return res
+
+
 class UngroupIrregularLengthTensorsOp(theano.Op):
 
     """
@@ -40,17 +68,7 @@ class UngroupIrregularLengthTensorsOp(theano.Op):
     def perform(self, node, inputs, output_storage):
         x, lengths = inputs
         z, = output_storage
-
-        # prepare padded output
-        res_shape = lengths.shape + (lengths.max(),) + x.shape[1:]
-        res = np.zeros(res_shape, dtype=x.dtype)
-
-        start_idx = 0
-        for idx, l in enumerate(lengths.astype(int)):
-            end_idx = start_idx + l
-            res[idx, :l] = x[start_idx:end_idx]
-            start_idx = end_idx
-        z[0] = res
+        z[0] = ungroup_irregular_length_numpy(x, lengths, pad=True)
 
     def grad(self, inputs, output_grads):
         return [ungroup_irregular_length_tensors_grad(inputs[0],
