@@ -119,8 +119,8 @@ def xavier_magnitude(shape, in_axes, out_axes, gain):
     shape = np.array(shape)
     other_axes_size = np.prod([s
                                for dim, s in enumerate(shape)
-                               if not ((dim in in_axes)
-                                       or (dim in out_axes))])
+                               if not ((dim in in_axes) or
+                                       (dim in out_axes))])
     in_axes_size = np.prod(shape[in_axes])
     out_axes_size = np.prod(shape[out_axes])
 
