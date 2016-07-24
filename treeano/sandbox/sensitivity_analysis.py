@@ -39,6 +39,7 @@ class SensitivityAnalysisOutput(canopy.handlers.NetworkHandlerImpl):
         network = state.network
         input_var = network[self.input_name].get_vw("default").variable
         logit_var = network[self.logit_name].get_vw("default").variable
+        assert logit_var.ndim == 2
         idx_var = T.iscalar()
         target_var = logit_var[:, idx_var].sum()
         sensitivity_var = T.grad(target_var, input_var)
