@@ -26,6 +26,11 @@ def load_value_dict(network,
                     value_dict,
                     strict_keys=True,
                     ignore_different_shape=False):
+    """
+    strict_keys:
+    whether or not the network must have the exact same set of keys as the
+    value_dict
+    """
     shared_dict = to_shared_dict(network)
     value_keys = set(value_dict.keys())
     network_keys = set(shared_dict.keys())
