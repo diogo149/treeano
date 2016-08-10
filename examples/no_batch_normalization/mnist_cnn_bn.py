@@ -13,6 +13,7 @@ import treeano.nodes as tn
 import canopy
 
 from treeano.sandbox.nodes import no_batch_normalization as nbn
+from treeano.sandbox.nodes import batch_normalization as bn
 
 fX = theano.config.floatX
 
@@ -36,17 +37,20 @@ model = tn.HyperparameterNode(
         [tn.InputNode("x", shape=(None, 1, 28, 28)),
          tn.Conv2DWithBiasNode("conv1"),
          nbn.NoBatchNormalizationNode("bn1"),
+         # bn.SimpleBatchMeanNormalizationNode("bn1"),
          tn.MaxPool2DNode("mp1"),
          tn.ReLUNode("relu1"),
          tn.Conv2DWithBiasNode("conv2"),
          nbn.NoBatchNormalizationNode("bn2"),
+         # bn.SimpleBatchMeanNormalizationNode("bn2"),
          tn.ReLUNode("relu2"),
          tn.MaxPool2DNode("mp2"),
          tn.DenseNode("fc1"),
          nbn.NoBatchNormalizationNode("bn3"),
+         # bn.SimpleBatchMeanNormalizationNode("bn3"),
          tn.ReLUNode("relu3"),
          tn.DenseNode("fc2", num_units=10),
-         nbn.NoBatchNormalizationNode("bn4"),
+         # nbn.NoBatchNormalizationNode("bn4"),
          tn.SoftmaxNode("pred"),
          ]),
     num_filters=32,

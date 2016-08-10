@@ -1,6 +1,3 @@
-from __future__ import division, absolute_import
-from __future__ import print_function, unicode_literals
-
 import itertools
 import numpy as np
 import sklearn.datasets
@@ -13,8 +10,10 @@ import treeano.nodes as tn
 import canopy
 
 from treeano.sandbox.nodes import no_batch_normalization as nbn
+from treeano.sandbox.nodes import batch_normalization as bn
 
 fX = theano.config.floatX
+BATCH_SIZE = 50
 
 # ############################### prepare data ###############################
 
@@ -35,27 +34,36 @@ model = tn.HyperparameterNode(
         "seq",
         [tn.InputNode("x", shape=(None, 28 * 28)),
          tn.DenseNode("fc1"),
+         # nbn.GradualBatchToNoBatchNormalizationNode("bn1"),
          nbn.NoBatchNormalizationNode("bn1"),
+         # bn.BatchNormalizationNode("bn1"),
          tn.ReLUNode("relu1"),
+         # tn.DropoutNode("do2", p=0.5),
          tn.DenseNode("fc2"),
+         # nbn.GradualBatchToNoBatchNormalizationNode("bn2"),
          nbn.NoBatchNormalizationNode("bn2"),
+         # bn.BatchNormalizationNode("bn2"),
          tn.ReLUNode("relu2"),
+         # tn.DropoutNode("do3", p=0.5),
          tn.DenseNode("fc3", num_units=10),
-         nbn.NoBatchNormalizationNode("bn3"),
+         # nbn.GradualBatchToNoBatchNormalizationNode("bn3"),
+         # nbn.NoBatchNormalizationNode("bn3"),
+         # bn.BatchNormalizationNode("bn3"),
          tn.SoftmaxNode("pred"),
          ]),
     num_units=512,
     inits=[treeano.inits.XavierNormalInit()],
-    current_mean_weight=1. / 8.,
-    current_var_weight=1. / 8.,
-    rolling_mean_rate=0.95,
-    rolling_var_rate=0.95,
+    current_mean_weight=1. / 8,
+    current_var_weight=1. / 8,
+    rolling_mean_rate=0.99,
+    rolling_var_rate=0.99,
+    expected_batches=25 * len(X_train) / BATCH_SIZE,
 )
 
 with_updates = tn.HyperparameterNode(
     "with_updates",
     tn.AdamNode(
-        "adam",
+        "updates",
         {"subtree": model,
          "cost": tn.TotalCostNode("cost", {
              "pred": tn.ReferenceNode("pred_ref", reference="model"),
@@ -65,8 +73,6 @@ with_updates = tn.HyperparameterNode(
 )
 network = with_updates.network()
 network.build()  # build eagerly to share weights
-
-BATCH_SIZE = 50
 
 valid_fn = canopy.handled_fn(
     network,
@@ -105,3 +111,4 @@ print("Starting training...")
 canopy.evaluate_until(fn=train_fn,
                       gen=itertools.repeat(in_train),
                       max_iters=25)
+# print network["bn3"].get_vw("gamma").value
