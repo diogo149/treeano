@@ -52,8 +52,8 @@ class ResultWriter(object):
             for f in ["index.html", "monitor.js"]:
                 os.symlink(templates.template_path("monitor_ui", f),
                            os.path.join(dirname, f))
-            # create monitor.json file
-            with open(os.path.join(dirname, "monitor.json"), "w") as f:
+            # create monitor.jsonl file
+            with open(os.path.join(dirname, "monitor.jsonl"), "w") as f:
                 pass
             if default_settings_file is not None:
                 os.symlink(os.path.realpath(default_settings_file),
@@ -63,7 +63,7 @@ class ResultWriter(object):
             if default_settings_file is not None:
                 shutil.copy(os.path.realpath(default_settings_file),
                             os.path.join(dirname, "default_settings.json"))
-        self._json_path = os.path.join(self.dirname, "monitor.json")
+        self._json_path = os.path.join(self.dirname, "monitor.jsonl")
         self._regex = re.compile(self.pattern)
 
     def write(self, res):
