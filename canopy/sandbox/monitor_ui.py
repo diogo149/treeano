@@ -63,7 +63,7 @@ class ResultWriter(object):
             if default_settings_file is not None:
                 shutil.copy(os.path.realpath(default_settings_file),
                             os.path.join(dirname, "default_settings.json"))
-        self._json_path = os.path.join(self.dirname, "monitor.jsonl")
+        self._jsonl_path = os.path.join(self.dirname, "monitor.jsonl")
         self._regex = re.compile(self.pattern)
 
     def write(self, res):
@@ -81,7 +81,7 @@ class ResultWriter(object):
 
         # convert to json and write to file
         json_monitor_data = json.dumps(monitor_data, allow_nan=False)
-        with open(self._json_path, "a") as f:
+        with open(self._jsonl_path, "a") as f:
             f.write(json_monitor_data)
             f.write("\n")
 
