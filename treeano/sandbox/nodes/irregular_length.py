@@ -77,6 +77,8 @@ class _IrregularLengthAttentionSoftmaxNode(treeano.NodeImpl):
         e_x_max_inv = T.exp(-x_max)
         lengths = lengths_vw.variable
         max_len = lengths.max()
+        # FIXME this is wrong, because the padded dimensions may not have
+        # been 0
         num_zeros = max_len - lengths
         num_zeros = num_zeros.dimshuffle([0, "x", "x"])
         denom = e_x.sum(axis=1, keepdims=True) - num_zeros * e_x_max_inv
